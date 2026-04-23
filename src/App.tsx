@@ -6,7 +6,6 @@ import Home from './pages/Home';
 import About from './pages/About';
 import Sarees from './pages/Sarees';
 import NewArrivals from './pages/NewArrivals';
-import TrackOrder from './pages/TrackOrder';
 import ReviewsPage from './pages/ReviewsPage';
 import Blog from './pages/Blog';
 
@@ -23,7 +22,6 @@ function App() {
             <Route path="/sarees" element={<Sarees />} />
             <Route path="/sarees/:category" element={<Sarees />} />
             <Route path="/new-arrivals" element={<NewArrivals />} />
-            <Route path="/track-order" element={<TrackOrder />} />
             <Route path="/reviews" element={<ReviewsPage />} />
             <Route path="/blog" element={<Blog />} />
           </Routes>

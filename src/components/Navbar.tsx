@@ -30,7 +30,6 @@ export default function Navbar() {
     { name: 'About Us', path: '/about' },
     { name: 'Sarees', path: '/sarees', hasDropdown: true },
     { name: 'New Arrivals', path: '/new-arrivals' },
-    { name: 'Track Your Order', path: '/track-order' },
     { name: 'Reviews', path: '/reviews' },
     { name: 'Blog', path: '/blog' },
   ];
