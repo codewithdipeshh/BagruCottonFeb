@@ -27,7 +27,7 @@ export default function Navbar() {
 
   const navItems = [
     { name: 'Home', path: '/' },
-    { name: 'About Us', path: '/about' },
+    { name: 'About', path: '/about' },
     { name: 'Sarees', path: '/sarees', hasDropdown: true },
     { name: 'New Arrivals', path: '/new-arrivals' },
     { name: 'Reviews', path: '/reviews' },

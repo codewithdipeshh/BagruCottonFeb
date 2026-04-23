@@ -14,7 +14,7 @@ const categories = [
 const sarees = [
   {
     id: 1,
-    name: 'Royal Blue Cotton Saree',
+    name: 'Cotton Mulmul Sarees',
     price: 2499,
     originalPrice: 2999,
     image: 'https://images.pexels.com/photos/1078983/pexels-photo-1078983.jpeg?auto=compress&cs=tinysrgb&w=600',
@@ -23,7 +23,7 @@ const sarees = [
   },
   {
     id: 2,
-    name: 'Cotton Linen Saree',
+    name: 'Linen Cotton Sarees',
     price: 3299,
     originalPrice: 3999,
     image: 'https://images.pexels.com/photos/3222073/pexels-photo-3222073.jpeg?auto=compress&cs=tinysrgb&w=600',
@@ -32,11 +32,11 @@ const sarees = [
   },
   {
     id: 3,
-    name: 'Traditional Kotadorya',
+    name: 'kota doria Sarees',
     price: 2799,
     originalPrice: 3499,
     image: 'https://images.pexels.com/photos/1096146/pexels-photo-1096146.jpeg?auto=compress&cs=tinysrgb&w=600',
-    category: 'kotadorya',
+    category: 'kota doria',
     description: 'Authentic kotadorya weave with rich patterns',
   },
   {
@@ -50,25 +50,25 @@ const sarees = [
   },
   {
     id: 5,
-    name: 'Mahsrfe Silk Blend',
+    name: 'Maheshwari Silk Sarees',
     price: 4499,
     originalPrice: 5499,
     image: 'https://images.pexels.com/photos/7679459/pexels-photo-7679459.jpeg?auto=compress&cs=tinysrgb&w=600',
-    category: 'mahsrfe',
+    category: 'Maheshwari Silk',
     description: 'Luxurious mahsrfe saree with silk blend',
   },
   {
     id: 6,
-    name: 'Khadi Cotton Saree',
+    name: 'Chanderi Bagru Sarees',
     price: 2299,
     originalPrice: 2799,
     image: 'https://images.pexels.com/photos/1078983/pexels-photo-1078983.jpeg?auto=compress&cs=tinysrgb&w=600',
-    category: 'khafi',
+    category: 'Chanderi Silk',
     description: 'Comfortable khafi cotton for daily wear',
   },
   {
     id: 7,
-    name: 'Maroon Cotton Elegance',
+    name: 'Cotton Mulmul Sarees',
     price: 2699,
     originalPrice: 3299,
     image: 'https://images.pexels.com/photos/1096146/pexels-photo-1096146.jpeg?auto=compress&cs=tinysrgb&w=600',
@@ -77,7 +77,7 @@ const sarees = [
   },
   {
     id: 8,
-    name: 'Natural Linen Beauty',
+    name: 'Linen Cotton Sarees',
     price: 3599,
     originalPrice: 4299,
     image: 'https://images.pexels.com/photos/3222073/pexels-photo-3222073.jpeg?auto=compress&cs=tinysrgb&w=600',
@@ -86,7 +86,7 @@ const sarees = [
   },
     {
     id: 9,
-    name: 'Natural Linen Beauty',
+    name: 'Linen Cotton Sarees',
     price: 3599,
     originalPrice: 4299,
     image: 'https://images.pexels.com/photos/3222073/pexels-photo-3222073.jpeg?auto=compress&cs=tinysrgb&w=600',
@@ -151,13 +151,13 @@ export default function Sarees() {
           <main className="flex-1">
             {/* Toolbar */}
             <div className="bg-white rounded-xl p-4 mb-6 flex flex-wrap items-center justify-between gap-4">
-              <p className="text-gray-600">
+              {/* <p className="text-gray-600">
                 Showing <span className="font-medium text-[#080616]">{filteredSarees.length}</span> products
-              </p>
+              </p> */}
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-600">Sort by:</span>
-                  <div className="relative">
+                  {/* <div className="relative">
                     <select
                       value={sortBy}
                       onChange={(e) => setSortBy(e.target.value)}
@@ -169,7 +169,7 @@ export default function Sarees() {
                       <option value="newest">Newest First</option>
                     </select>
                     <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-600 pointer-events-none" />
-                  </div>
+                  </div> */}
                 </div>
                 <div className="flex gap-2">
                   <button

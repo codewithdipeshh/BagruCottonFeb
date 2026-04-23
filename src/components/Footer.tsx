@@ -25,9 +25,9 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Quick Links */}
+          {/* Explore */}
           <div>
-            <h4 className="font-semibold mb-4">Quick Links</h4>
+            <h4 className="font-semibold mb-4">Explore</h4>
             <ul className="space-y-2">
               <li>
                 <Link to="/" className="text-gray-400 hover:text-white text-sm transition-colors">
@@ -36,7 +36,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link to="/about" className="text-gray-400 hover:text-white text-sm transition-colors">
-                  About Us
+                  About
                 </Link>
               </li>
               <li>
@@ -62,33 +62,33 @@ export default function Footer() {
             <h4 className="font-semibold mb-4">Categories</h4>
             <ul className="space-y-2">
               <li>
-                <Link to="/sarees/cotton" className="text-gray-400 hover:text-white text-sm transition-colors">
-                  Cotton Sarees
+                <Link to="/sarees/Cotton Mulmul Sarees" className="text-gray-400 hover:text-white text-sm transition-colors">
+                  Cotton Mulmul Sarees
                 </Link>
               </li>
               <li>
-                <Link to="/sarees/linen" className="text-gray-400 hover:text-white text-sm transition-colors">
-                  Linen Sarees
+                <Link to="/sarees/Handblock Printed Cotton Sarees" className="text-gray-400 hover:text-white text-sm transition-colors">
+                  Handblock Printed Cotton Sarees
                 </Link>
               </li>
               <li>
-                <Link to="/sarees/kotadorya" className="text-gray-400 hover:text-white text-sm transition-colors">
-                  Kotadorya Sarees
+                <Link to="/sarees/Linen Cotton Sarees" className="text-gray-400 hover:text-white text-sm transition-colors">
+                  Linen Cotton Sarees
                 </Link>
               </li>
               <li>
-                <Link to="/sarees/mahsrfe" className="text-gray-400 hover:text-white text-sm transition-colors">
-                  Mahsrfe Sarees
+                <Link to="/sarees/kota doria Sarees" className="text-gray-400 hover:text-white text-sm transition-colors">
+                  kota doria Sarees
                 </Link>
               </li>
               <li>
-                <Link to="/sarees/handblo" className="text-gray-400 hover:text-white text-sm transition-colors">
-                  Handblo Sarees
+                <Link to="/sarees/Chanderi Bagru Sarees" className="text-gray-400 hover:text-white text-sm transition-colors">
+                 Chanderi Bagru Sarees
                 </Link>
               </li>
               <li>
-                <Link to="/sarees/khafi" className="text-gray-400 hover:text-white text-sm transition-colors">
-                  Khafi Sarees
+                <Link to="/sarees/Maheshwari Silk Sarees" className="text-gray-400 hover:text-white text-sm transition-colors">
+                  Maheshwari Silk Sarees
                 </Link>
               </li>
             </ul>
@@ -101,7 +101,7 @@ export default function Footer() {
               <li className="flex items-start gap-3">
                 <MapPin className="w-5 h-5 text-gray-400 flex-shrink-0 mt-0.5" />
                 <span className="text-gray-400 text-sm">
-                  123 Textile Market, Bagru, Jaipur, Rajasthan 303007
+                  Bus Stop, Bagru Cotton Feb Green Star Tailar Childran Play School ke Samne Baba Ramdev Mandir, Main, Gaushala Rd, Bagru, Jaipur, Rajasthan 303007
                 </span>
               </li>
               <li className="flex items-center gap-3">

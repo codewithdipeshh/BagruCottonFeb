@@ -5,32 +5,32 @@ import Reviews from '../components/Reviews';
 
 const categories = [
   {
-    name: 'Cotton',
+    name: 'Cotton Mulmul Sarees',
     image: 'https://images.pexels.com/photos/1078983/pexels-photo-1078983.jpeg?auto=compress&cs=tinysrgb&w=600',
-    count: 45,
+    count: 150,
   },
   {
-    name: 'Linen',
+    name: 'Handblock Printed Cotton Sarees',
     image: 'https://images.pexels.com/photos/3222073/pexels-photo-3222073.jpeg?auto=compress&cs=tinysrgb&w=600',
     count: 32,
   },
   {
-    name: 'Kotadorya',
+    name: 'Linen Cotton Sarees',
     image: 'https://images.pexels.com/photos/1096146/pexels-photo-1096146.jpeg?auto=compress&cs=tinysrgb&w=600',
     count: 28,
   },
   {
-    name: 'Mahsrfe',
+    name: 'kota doria Sarees',
     image: 'https://images.pexels.com/photos/7679459/pexels-photo-7679459.jpeg?auto=compress&cs=tinysrgb&w=600',
     count: 19,
   },
   {
-    name: 'Handblo',
+    name: 'Chanderi Bagru Sarees',
     image: 'https://images.pexels.com/photos/5632402/pexels-photo-5632402.jpeg?auto=compress&cs=tinysrgb&w=600',
     count: 36,
   },
   {
-    name: 'Khafi',
+    name: 'Maheshwari Silk Sarees',
     image: 'https://images.pexels.com/photos/3222073/pexels-photo-3222073.jpeg?auto=compress&cs=tinysrgb&w=600',
     count: 24,
   },
@@ -39,7 +39,7 @@ const categories = [
 const featuredProducts = [
   {
     id: 1,
-    name: 'Royal Blue Cotton Saree',
+    name: 'Cotton Mulmul Sarees',
     price: 2499,
     originalPrice: 2999,
     image: 'https://images.pexels.com/photos/1078983/pexels-photo-1078983.jpeg?auto=compress&cs=tinysrgb&w=600',
@@ -47,27 +47,27 @@ const featuredProducts = [
   },
   {
     id: 2,
-    name: 'Elegant Linen Saree',
+    name: 'Handblock Printed Cotton Sarees',
     price: 3299,
     originalPrice: 3999,
     image: 'https://images.pexels.com/photos/3222073/pexels-photo-3222073.jpeg?auto=compress&cs=tinysrgb&w=600',
-    category: 'Linen',
+    category: 'Handblock',
   },
   {
     id: 3,
-    name: 'Traditional Kotadorya',
+    name: 'kota doria Sarees',
     price: 2799,
     originalPrice: 3499,
     image: 'https://images.pexels.com/photos/1096146/pexels-photo-1096146.jpeg?auto=compress&cs=tinysrgb&w=600',
-    category: 'Kotadorya',
+    category: 'kota doria',
   },
   {
     id: 4,
-    name: 'Handblock Print Saree',
+    name: 'Maheshwari Silk Sarees',
     price: 1999,
     originalPrice: 2499,
     image: 'https://images.pexels.com/photos/5632402/pexels-photo-5632402.jpeg?auto=compress&cs=tinysrgb&w=600',
-    category: 'Handblo',
+    category: 'Maheshwari Silk',
   },
 ];
 
