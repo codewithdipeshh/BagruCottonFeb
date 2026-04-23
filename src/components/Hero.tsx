@@ -7,7 +7,7 @@ const heroSlides = [
     title: 'Premium Cotton Sarees',
     subtitle: 'Handcrafted with Love',
     description: 'Discover the elegance of traditional Indian craftsmanship with our exclusive collection of handwoven cotton sarees.',
-    image: 'https://images.pexels.com/photos/1078983/pexels-photo-1078983.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
+    image: 'https://lh3.googleusercontent.com/p/AF1QipN17Tq-t7iQ2vQ55M_RVPc61U1grW6U69zwjhQl=s1360-w1360-h1020-rw',
     cta: 'Shop Cotton',
     link: '/sarees/cotton',
   },

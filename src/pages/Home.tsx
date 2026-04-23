@@ -6,7 +6,7 @@ import Reviews from '../components/Reviews';
 const categories = [
   {
     name: 'Cotton Mulmul Sarees',
-    image: 'https://images.pexels.com/photos/1078983/pexels-photo-1078983.jpeg?auto=compress&cs=tinysrgb&w=600',
+    image: 'https://lh3.googleusercontent.com/p/AF1QipMWdrcRxl_1Q3LZVgPuAF_hfKqXHag68TpCWWX1=s1360-w1360-h1020-rw',
     count: 150,
   },
   {
@@ -16,7 +16,7 @@ const categories = [
   },
   {
     name: 'Linen Cotton Sarees',
-    image: 'https://images.pexels.com/photos/1096146/pexels-photo-1096146.jpeg?auto=compress&cs=tinysrgb&w=600',
+    image: 'https://lh3.googleusercontent.com/p/AF1QipNF9nYIKTUNryxQdahOKe3Jhd6WHLSK7zbRz4S-=s1360-w1360-h1020-rw',
     count: 28,
   },
   {
