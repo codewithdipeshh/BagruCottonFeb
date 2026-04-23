@@ -3,12 +3,12 @@ import { Filter, Grid2x2 as Grid, List, ChevronDown } from 'lucide-react';
 
 const categories = [
   { id: 'all', name: 'All Sarees' },
-  { id: 'cotton', name: 'Cotton' },
-  { id: 'linen', name: 'Linen' },
-  { id: 'kotadorya', name: 'Kotadorya' },
-  { id: 'mahsrfe', name: 'Mahsrfe' },
-  { id: 'handblo', name: 'Handblo' },
-  { id: 'khdi', name: 'Khdi' },
+  { id: 'Cotton Mulmul Sarees', name: 'Cotton Mulmul Sarees' },
+  { id: 'Handblock Printed Cotton Sarees', name: 'Handblock Printed Cotton Sarees' },
+  { id: 'Linen Cotton Sarees', name: 'Linen Cotton Sarees' },
+  { id: 'kota doria Sarees', name: 'kota doria Sarees' },
+  { id: 'Chanderi Bagru Sarees', name: 'Chanderi Bagru Sarees' },
+  { id: 'Maheshwari Silk Sarees', name: 'Maheshwari Silk Sarees' },
 ];
 
 const sarees = [

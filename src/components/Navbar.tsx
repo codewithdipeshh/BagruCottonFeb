@@ -3,12 +3,12 @@ import { Link, useLocation } from 'react-router-dom';
 import { Search, Menu, X, ChevronDown, Globe, ShoppingBag, User, LogOut } from 'lucide-react';
 
 const sareeCategories = [
-  { name: 'Cotton', path: '/sarees/cotton' },
-  { name: 'Linen', path: '/sarees/linen' },
-  { name: 'Kotadorya', path: '/sarees/kotadorya' },
-  { name: 'Mahsrfe', path: '/sarees/mahsrfe' },
-  { name: 'Handblo', path: '/sarees/handblo' },
-  { name: 'Khafi', path: '/sarees/khafi' },
+  { name: 'Cotton Mulmul Sarees', path: '/sarees/Cotton Mulmul Sarees' },
+  { name: 'Handblock Printed Cotton Sarees', path: '/sarees/Handblock Printed Cotton Sarees' },
+  { name: 'Linen Cotton Sarees', path: '/sarees/Linen Cotton Sarees' },
+  { name: 'kota doria Sarees', path: '/sarees/kota doria Sarees' },
+  { name: 'Chanderi Bagru Sarees', path: '/sarees/Chanderi Bagru Sarees' },
+  { name: 'Maheshwari Silk Sarees', path: '/sarees/Maheshwari Silk Sarees' },
 ];
 
 const languages = ['English', 'Hindi', 'Marathi'];
