@@ -8,6 +8,7 @@ import Sarees from './pages/Sarees';
 import NewArrivals from './pages/NewArrivals';
 import ReviewsPage from './pages/ReviewsPage';
 import Blog from './pages/Blog';
+import Privacy from "./pages/Privacy";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             <Route path="/new-arrivals" element={<NewArrivals />} />
             <Route path="/reviews" element={<ReviewsPage />} />
             <Route path="/blog" element={<Blog />} />
+            <Route path="/privacy" element={<Privacy />} />
           </Routes>
         </main>
         <Footer />
