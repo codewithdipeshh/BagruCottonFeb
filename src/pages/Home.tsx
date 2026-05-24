@@ -228,7 +228,7 @@ export default function Home() {
       <Reviews />
 
       {/* Newsletter */}
-      <section className="py-16 bg-[#080616]">
+      {/* <section className="py-16 bg-[#080616]">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold text-white mb-4">
             Subscribe to Our Newsletter
@@ -247,7 +247,7 @@ export default function Home() {
             </button>
           </div>
         </div>
-      </section>
+      </section> */}
     </div>
   );
 }

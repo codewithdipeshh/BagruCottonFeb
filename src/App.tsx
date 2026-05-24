@@ -9,6 +9,7 @@ import NewArrivals from './pages/NewArrivals';
 import ReviewsPage from './pages/ReviewsPage';
 import Blog from './pages/Blog';
 import Privacy from "./pages/Privacy";
+import TermsOfService from './pages/TermsofService';
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
             <Route path="/reviews" element={<ReviewsPage />} />
             <Route path="/blog" element={<Blog />} />
             <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<TermsOfService />} />
           </Routes>
         </main>
         <Footer />

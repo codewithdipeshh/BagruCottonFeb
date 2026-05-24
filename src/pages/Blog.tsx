@@ -162,7 +162,7 @@ export default function Blog() {
       <section className="py-16 bg-[#080616]">
         <div className="max-w-7xl mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold text-white mb-4">
-            Subscribe to Our Blog
+            Subscribe to Our Blog 
           </h2>
           <p className="text-gray-400 mb-8 max-w-2xl mx-auto">
             Get the latest articles, style tips, and stories delivered to your inbox
