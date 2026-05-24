@@ -10,6 +10,8 @@ import ReviewsPage from './pages/ReviewsPage';
 import Blog from './pages/Blog';
 import Privacy from "./pages/Privacy";
 import TermsOfService from './pages/TermsofService';
+import ExchangePolicy from './pages/Exchange';
+import ShippingPolicy from './pages/Shipping';
 
 function App() {
   return (
@@ -28,6 +30,8 @@ function App() {
             <Route path="/blog" element={<Blog />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/exchange-policy" element={<ExchangePolicy />} />
+            <Route path="/shipping" element={<ShippingPolicy />} />
           </Routes>
         </main>
         <Footer />
