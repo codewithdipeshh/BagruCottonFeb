@@ -27,7 +27,7 @@ export default function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
   const location = useLocation();
-  
+
 
   const navItems = [
     { name: 'Home', path: '/' },
@@ -62,11 +62,10 @@ export default function Navbar() {
               >
                 <Link
                   to={item.path}
-                  className={`px-3 py-2 text-sm font-medium transition-colors duration-200 flex items-center ${
-                    isActive(item.path)
+                  className={`px-3 py-2 text-sm font-medium transition-colors duration-200 flex items-center ${isActive(item.path)
                       ? 'text-[#080616] border-b-2 border-[#080616]'
                       : 'text-gray-700 hover:text-[#080616]'
-                  }`}
+                    }`}
                 >
                   {item.name}
                   {item.hasDropdown && <ChevronDown className="ml-1 w-4 h-4" />}
@@ -162,47 +161,49 @@ export default function Navbar() {
                       >
                         My Profile
                       </Link>
+
                       <Link
                         to="/orders"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-[#E8EDF2] hover:text-[#080616] transition-colors"
                       >
                         My Orders
                       </Link>
+
                       <Link
                         to="/wishlist"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-[#E8EDF2] hover:text-[#080616] transition-colors"
                       >
                         Wishlist
                       </Link>
+
                       <Link
                         to="/settings"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-[#E8EDF2] hover:text-[#080616] transition-colors"
                       >
                         Settings
                       </Link>
+
                       <div className="border-t border-gray-200 my-2" />
+
                       <button
                         onClick={() => {
                           setIsLoggedIn(false);
                           setUserName('');
                         }}
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#E8EDF2] hover:text-[#080616] transition-colors flex items-center gap-2"
+                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
                       >
-                        <LogOut className="w-4 h-4" />
                         Logout
                       </button>
                     </>
                   ) : (
                     <>
-                      <button
-                        onClick={() => {
-                          setIsLoggedIn(true);
-                          setUserName('Priya Sharma');
-                        }}
+                      <Link
+                        to="/login"
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-[#E8EDF2] hover:text-[#080616] transition-colors font-medium"
                       >
                         Login
-                      </button>
+                      </Link>
+
                       <Link
                         to="/signup"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-[#E8EDF2] hover:text-[#080616] transition-colors"
@@ -234,11 +235,10 @@ export default function Navbar() {
                   <Link
                     to={item.path}
                     onClick={() => !item.hasDropdown && setIsMenuOpen(false)}
-                    className={`block px-4 py-2 text-sm font-medium ${
-                      isActive(item.path)
+                    className={`block px-4 py-2 text-sm font-medium ${isActive(item.path)
                         ? 'text-[#080616] bg-gray-200'
                         : 'text-gray-700 hover:bg-gray-100'
-                    }`}
+                      }`}
                   >
                     {item.name}
                   </Link>

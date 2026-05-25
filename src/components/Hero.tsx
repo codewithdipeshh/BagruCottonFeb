@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 
@@ -5,115 +6,179 @@ const heroSlides = [
   {
     id: 1,
     title: 'Premium Cotton Sarees',
-    subtitle: 'Handcrafted with Love',
-    description: 'Discover the elegance of traditional Indian craftsmanship with our exclusive collection of handwoven cotton sarees.',
-    image: 'https://lh3.googleusercontent.com/p/AF1QipN17Tq-t7iQ2vQ55M_RVPc61U1grW6U69zwjhQl=s1360-w1360-h1020-rw',
-    cta: 'Shop Cotton',
-    link: '/sarees/cotton',
+    subtitle: 'Elegant Handcrafted Collection',
+    bgColor: '#E8D9E8',
+    images: [
+      'https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=1200&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=1200&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1610189020382-668f692b5b2f?q=80&w=1200&auto=format&fit=crop',
+    ],
+    link: '/sarees',
   },
-  // {
-  //   id: 2,
-  //   title: 'Linen Collection',
-  //   subtitle: 'Comfort Meets Style',
-  //   description: 'Experience the perfect blend of comfort and sophistication with our premium linen sarees.',
-  //   image: 'https://images.pexels.com/photos/3222073/pexels-photo-3222073.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
-  //   cta: 'Explore Linen',
-  //   link: '/sarees/linen',
-  // },
-  // {
-  //   id: 3,
-  //   title: 'New Arrivals',
-  //   subtitle: 'Fresh Designs Just In',
-  //   description: 'Be the first to explore our latest collection featuring contemporary designs with traditional roots.',
-  //   image: 'https://images.pexels.com/photos/1096146/pexels-photo-1096146.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2',
-  //   cta: 'View Collection',
-  //   link: '/new-arrivals',
-  // },
+
+  {
+    id: 2,
+    title: 'Bagru Handblock Prints',
+    subtitle: 'Traditional Art With Modern Style',
+    bgColor: '#F5E6D3',
+    images: [
+      'https://images.unsplash.com/photo-1583391733956-6c78276477e2?q=80&w=1200&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?q=80&w=1200&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1618244972963-dbad68f7d884?q=80&w=1200&auto=format&fit=crop',
+    ],
+    link: '/new-arrivals',
+  },
+
+  {
+    id: 3,
+    title: 'Luxury Silk Sarees',
+    subtitle: 'Royal & Timeless Beauty',
+    bgColor: '#DAD5F5',
+    images: [
+      'https://images.unsplash.com/photo-1603251579431-8041402bdeda?q=80&w=1200&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1610030469668-8e4d58b93b84?q=80&w=1200&auto=format&fit=crop',
+      'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?q=80&w=1200&auto=format&fit=crop',
+    ],
+    link: '/sarees',
+  },
 ];
 
 export default function Hero() {
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) =>
+        prev === heroSlides.length - 1 ? 0 : prev + 1
+      );
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const activeSlide = heroSlides[currentSlide];
+
   return (
-    <section className="relative bg-[#E8EDF2]">
-      <div className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-0">
-          {/* Left Content */}
-          <div className="flex items-center px-8 py-12 lg:py-20">
-            <div className="max-w-xl">
-              <span className="inline-block px-4 py-1 bg-[#080616] text-white text-sm font-medium rounded-full mb-6">
-                Handcrafted Excellence
-              </span>
-              <h1 className="text-4xl lg:text-6xl font-bold text-[#080616] leading-tight mb-6">
-                Premium Handwoven Sarees
-              </h1>
-              <p className="text-lg text-gray-700 mb-8 leading-relaxed">
-                Discover the timeless beauty of traditional Indian sarees. Each piece tells a story of skilled artisans and rich heritage, bringing elegance to your wardrobe.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <Link
-                  to="/sarees"
-                  className="inline-flex items-center px-8 py-3 bg-[#080616] text-white font-medium rounded-lg hover:bg-gray-800 transition-all duration-300 transform hover:scale-105"
-                >
-                  Shop Collection
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Link>
-                <Link
-                  to="/about"
-                  className="inline-flex items-center px-8 py-3 border-2 border-[#080616] text-[#080616] font-medium rounded-lg hover:bg-[#080616] hover:text-white transition-all duration-300"
-                >
-                  Our Story
-                </Link>
-              </div>
+    <section
+      className="relative overflow-hidden transition-all duration-700"
+      style={{ backgroundColor: activeSlide.bgColor }}
+    >
+      <div className="max-w-7xl mx-auto px-6 lg:px-12 py-16 lg:py-24">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+          
+          {/* LEFT CONTENT */}
+          <div>
+            <span className="inline-block mb-5 px-5 py-2 bg-black text-white text-sm rounded-full tracking-wide">
+              Handcrafted Collection
+            </span>
+
+            <h1 className="text-5xl lg:text-7xl font-bold leading-[0.95] text-black mb-6 uppercase">
+              {activeSlide.title}
+            </h1>
+
+            <p className="text-lg text-black/70 mb-8 tracking-wide">
+              {activeSlide.subtitle}
+            </p>
+
+            <div className="flex gap-4 flex-wrap">
+              <Link
+                to={activeSlide.link}
+                className="inline-flex items-center gap-2 px-8 py-4 bg-black text-white rounded-full hover:scale-105 transition-all duration-300"
+              >
+                Shop Now
+                <ArrowRight className="w-5 h-5" />
+              </Link>
+
+              <Link
+                to="/about"
+                className="inline-flex items-center gap-2 px-8 py-4 border-2 border-black text-black rounded-full hover:bg-black hover:text-white transition-all duration-300"
+              >
+                Our Story
+              </Link>
             </div>
           </div>
 
-          {/* Right Image Grid */}
-          <div className="relative h-[500px] lg:h-auto">
-            <div className="grid grid-cols-2 gap-4 p-4 h-full">
-              {heroSlides.map((slide, index) => (
-                <Link
-                  key={slide.id}
-                  to={slide.link}
-                  className={`relative overflow-hidden rounded-2xl group ${
-                    index === 0 ? 'col-span-2 row-span-1' : ''
-                  }`}
-                >
-                  <img
-                    src={slide.image}
-                    alt={slide.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#080616]/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="absolute bottom-4 left-4 right-4">
-                      <h3 className="text-white font-bold text-lg">{slide.title}</h3>
-                      <p className="text-white/80 text-sm">{slide.subtitle}</p>
-                    </div>
-                  </div>
-                </Link>
-              ))}
+          {/* RIGHT IMAGES */}
+          <div className="relative h-[500px] flex items-center justify-center">
+            
+            {/* Left Small Image */}
+            <div className="absolute left-0 top-24 w-44 h-56 rounded-3xl overflow-hidden shadow-2xl border-4 border-white rotate-[-6deg] hover:scale-105 transition-all duration-500">
+              <img
+                src={activeSlide.images[0]}
+                alt="Saree"
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            {/* Center Big Image */}
+            <div className="relative z-10 w-[340px] h-[430px] rounded-[40px] overflow-hidden shadow-2xl border-4 border-white hover:scale-105 transition-all duration-500">
+              <img
+                src={activeSlide.images[1]}
+                alt="Main Saree"
+                className="w-full h-full object-cover"
+              />
+            </div>
+
+            {/* Right Small Image */}
+            <div className="absolute right-0 bottom-20 w-44 h-56 rounded-3xl overflow-hidden shadow-2xl border-4 border-white rotate-[6deg] hover:scale-105 transition-all duration-500">
+              <img
+                src={activeSlide.images[2]}
+                alt="Collection"
+                className="w-full h-full object-cover"
+              />
             </div>
           </div>
         </div>
+
+        {/* SLIDER DOTS */}
+        <div className="flex justify-center gap-3 mt-12">
+          {heroSlides.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentSlide(index)}
+              className={`h-3 rounded-full transition-all duration-300 ${
+                currentSlide === index
+                  ? 'w-10 bg-black'
+                  : 'w-3 bg-black/30'
+              }`}
+            />
+          ))}
+        </div>
       </div>
 
-      {/* Features Bar */}
-      <div className="bg-[#080616] py-6">
+      {/* FEATURES */}
+      <div className="bg-white py-10 border-t">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 text-center">
+            
             <div>
-              <p className="text-white font-bold text-lg">100% Handwoven</p>
-              <p className="text-gray-400 text-sm">Authentic Craftsmanship</p>
+              <p className="text-3xl mb-2">🌿</p>
+              <p className="font-medium">Natural Prints</p>
             </div>
+
             <div>
-              <p className="text-white font-bold text-lg">Free Shipping</p>
-              <p className="text-gray-400 text-sm">Orders Above Rs. 2000</p>
+              <p className="text-3xl mb-2">🧵</p>
+              <p className="font-medium">Hand Crafted</p>
             </div>
+
             <div>
-              <p className="text-white font-bold text-lg">Easy Returns</p>
-              <p className="text-gray-400 text-sm">7-Day Return Policy</p>
+              <p className="text-3xl mb-2">👗</p>
+              <p className="font-medium">Premium Quality</p>
             </div>
+
             <div>
-              <p className="text-white font-bold text-lg">Secure Payment</p>
-              <p className="text-gray-400 text-sm">100% Secure Checkout</p>
+              <p className="text-3xl mb-2">🚚</p>
+              <p className="font-medium">Fast Delivery</p>
+            </div>
+
+            <div>
+              <p className="text-3xl mb-2">💖</p>
+              <p className="font-medium">Loved By Customers</p>
+            </div>
+
+            <div>
+              <p className="text-3xl mb-2">🛍️</p>
+              <p className="font-medium">Affordable Luxury</p>
             </div>
           </div>
         </div>

@@ -12,6 +12,8 @@ import Privacy from "./pages/Privacy";
 import TermsOfService from './pages/TermsofService';
 import ExchangePolicy from './pages/Exchange';
 import ShippingPolicy from './pages/Shipping';
+import Login from './pages/login';
+import Signup from './pages/SignUp';
 
 function App() {
   return (
@@ -32,6 +34,9 @@ function App() {
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="/exchange-policy" element={<ExchangePolicy />} />
             <Route path="/shipping" element={<ShippingPolicy />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/SignUP" element={<Signup />} />
+            
           </Routes>
         </main>
         <Footer />
