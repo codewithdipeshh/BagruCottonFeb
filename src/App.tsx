@@ -13,7 +13,7 @@ import TermsOfService from './pages/TermsofService';
 import ExchangePolicy from './pages/Exchange';
 import ShippingPolicy from './pages/Shipping';
 import Login from './pages/login';
-import Signup from './pages/SignUp';
+import Signup from './pages/SignUp.tsx';
 
 function App() {
   return (

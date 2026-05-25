@@ -65,7 +65,7 @@ export default function Hero() {
     >
       <div className="max-w-7xl mx-auto px-6 lg:px-12 py-16 lg:py-24">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
-          
+
           {/* LEFT CONTENT */}
           <div>
             <span className="inline-block mb-5 px-5 py-2 bg-black text-white text-sm rounded-full tracking-wide">
@@ -100,7 +100,7 @@ export default function Hero() {
 
           {/* RIGHT IMAGES */}
           <div className="relative h-[500px] flex items-center justify-center">
-            
+
             {/* Left Small Image */}
             <div className="absolute left-0 top-24 w-44 h-56 rounded-3xl overflow-hidden shadow-2xl border-4 border-white rotate-[-6deg] hover:scale-105 transition-all duration-500">
               <img
@@ -136,11 +136,10 @@ export default function Hero() {
             <button
               key={index}
               onClick={() => setCurrentSlide(index)}
-              className={`h-3 rounded-full transition-all duration-300 ${
-                currentSlide === index
+              className={`h-3 rounded-full transition-all duration-300 ${currentSlide === index
                   ? 'w-10 bg-black'
                   : 'w-3 bg-black/30'
-              }`}
+                }`}
             />
           ))}
         </div>
@@ -150,34 +149,58 @@ export default function Hero() {
       <div className="bg-white py-10 border-t">
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 text-center">
-            
+
             <div>
-              <p className="text-3xl mb-2">🌿</p>
+              <img
+                src="/handcrafted/block-1.svg"
+                alt="Hand Crafted"
+                className="w-12 h-12 mx-auto mb-2"
+              />
               <p className="font-medium">Natural Prints</p>
             </div>
 
             <div>
-              <p className="text-3xl mb-2">🧵</p>
+              <img
+                src="/handcrafted/block-2.svg"
+                alt="Hand Crafted"
+                className="w-12 h-12 mx-auto mb-2"
+              />
+              <p className="font-medium">For Women By Women</p>
+            </div>
+
+            <div>
+              <img
+                src="/handcrafted/block-3.svg"
+                alt="Hand Crafted"
+                className="w-12 h-12 mx-auto mb-2"
+              />
               <p className="font-medium">Hand Crafted</p>
             </div>
 
             <div>
-              <p className="text-3xl mb-2">👗</p>
-              <p className="font-medium">Premium Quality</p>
-            </div>
-
-            <div>
-              <p className="text-3xl mb-2">🚚</p>
+              <img
+                src="/handcrafted/block-4.svg"
+                alt="Hand Crafted"
+                className="w-12 h-12 mx-auto mb-2"
+              />
               <p className="font-medium">Fast Delivery</p>
             </div>
 
             <div>
-              <p className="text-3xl mb-2">💖</p>
+              <img
+                src="/handcrafted/block-5.svg"
+                alt="Hand Crafted"
+                className="w-12 h-12 mx-auto mb-2"
+              />
               <p className="font-medium">Loved By Customers</p>
             </div>
 
             <div>
-              <p className="text-3xl mb-2">🛍️</p>
+              <img
+                src="/handcrafted/block-6.svg"
+                alt="Hand Crafted"
+                className="w-12 h-12 mx-auto mb-2"
+              />
               <p className="font-medium">Affordable Luxury</p>
             </div>
           </div>
