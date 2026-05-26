@@ -5,174 +5,173 @@ import {
   Shield,
   RefreshCw,
   Sparkles,
+  Heart,
 } from 'lucide-react';
 
 import Hero from '../components/Hero';
 import Reviews from '../components/Reviews';
+import { sareeCategories } from '../data/sareeCategories';
 
-const categories = [
-  {
-    name: 'Cotton Mulmul Sarees',
+const categoryImages: Record<string, { image: string; count: number }> = {
+  'cotton-mulmul': {
     image:
-      'https://lh3.googleusercontent.com/p/AF1QipMWdrcRxl_1Q3LZVgPuAF_hfKqXHag68TpCWWX1=s1360-w1360-h1020-rw',
+      'https://images.pexels.com/photos/7679720/pexels-photo-7679720.jpeg?auto=compress&cs=tinysrgb&w=1200',
     count: 150,
   },
-  {
-    name: 'Handblock Printed Cotton Sarees',
+  handblock: {
     image:
-      'https://images.pexels.com/photos/3222073/pexels-photo-3222073.jpeg?auto=compress&cs=tinysrgb&w=600',
+      'https://images.pexels.com/photos/5632402/pexels-photo-5632402.jpeg?auto=compress&cs=tinysrgb&w=1200',
     count: 32,
   },
-  {
-    name: 'Linen Cotton Sarees',
+  'linen-cotton': {
     image:
-      'https://lh3.googleusercontent.com/p/AF1QipNF9nYIKTUNryxQdahOKe3Jhd6WHLSK7zbRz4S-=s1360-w1360-h1020-rw',
+      'https://images.pexels.com/photos/3222073/pexels-photo-3222073.jpeg?auto=compress&cs=tinysrgb&w=1200',
     count: 28,
   },
-  {
-    name: 'Kota Doria Sarees',
+  'kota-doria': {
     image:
-      'https://images.pexels.com/photos/7679459/pexels-photo-7679459.jpeg?auto=compress&cs=tinysrgb&w=600',
+      'https://images.pexels.com/photos/7679459/pexels-photo-7679459.jpeg?auto=compress&cs=tinysrgb&w=1200',
     count: 19,
   },
-  {
-    name: 'Chanderi Bagru Sarees',
+  'chanderi-bagru': {
     image:
-      'https://images.pexels.com/photos/5632402/pexels-photo-5632402.jpeg?auto=compress&cs=tinysrgb&w=600',
+      'https://images.pexels.com/photos/1096146/pexels-photo-1096146.jpeg?auto=compress&cs=tinysrgb&w=1200',
     count: 36,
   },
-  {
-    name: 'Maheshwari Silk Sarees',
+  'maheshwari-silk': {
     image:
-      'https://images.pexels.com/photos/3222073/pexels-photo-3222073.jpeg?auto=compress&cs=tinysrgb&w=600',
+      'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=1200',
     count: 24,
   },
-];
+};
 
 const featuredProducts = [
   {
     id: 1,
-    name: 'Cotton Mulmul Saree',
+    name: 'Royal Mulmul Saree',
     price: 2499,
-    originalPrice: 2999,
+    originalPrice: 3499,
     image:
-      'https://images.pexels.com/photos/1078983/pexels-photo-1078983.jpeg?auto=compress&cs=tinysrgb&w=600',
+      'https://images.pexels.com/photos/7679720/pexels-photo-7679720.jpeg?auto=compress&cs=tinysrgb&w=1200',
     category: 'Cotton',
   },
   {
     id: 2,
-    name: 'Handblock Printed Saree',
+    name: 'Bagru Handblock Saree',
     price: 3299,
-    originalPrice: 3999,
+    originalPrice: 4299,
     image:
-      'https://images.pexels.com/photos/3222073/pexels-photo-3222073.jpeg?auto=compress&cs=tinysrgb&w=600',
+      'https://images.pexels.com/photos/5632402/pexels-photo-5632402.jpeg?auto=compress&cs=tinysrgb&w=1200',
     category: 'Handblock',
   },
   {
     id: 3,
-    name: 'Kota Doria Saree',
-    price: 2799,
-    originalPrice: 3499,
+    name: 'Elegant Kota Doria',
+    price: 2899,
+    originalPrice: 3899,
     image:
-      'https://images.pexels.com/photos/1096146/pexels-photo-1096146.jpeg?auto=compress&cs=tinysrgb&w=600',
+      'https://images.pexels.com/photos/7679459/pexels-photo-7679459.jpeg?auto=compress&cs=tinysrgb&w=1200',
     category: 'Kota Doria',
   },
   {
     id: 4,
-    name: 'Maheshwari Silk Saree',
-    price: 1999,
-    originalPrice: 2499,
+    name: 'Premium Silk Saree',
+    price: 4599,
+    originalPrice: 5599,
     image:
-      'https://images.pexels.com/photos/5632402/pexels-photo-5632402.jpeg?auto=compress&cs=tinysrgb&w=600',
+      'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=1200',
     category: 'Silk',
   },
 ];
 
 export default function Home() {
   return (
-    <div className="bg-[#FAFAFA] overflow-hidden">
+    <div className="bg-[#F9F6F1] overflow-hidden">
       {/* Hero */}
       <Hero />
 
-      {/* Offer Banner */}
-      <section className="bg-[#080616] text-white py-4">
-        <div className="max-w-7xl mx-auto px-4 flex items-center justify-center gap-2 text-sm md:text-base font-medium text-center">
-          <Sparkles className="w-5 h-5" />
-          Free Shipping on Orders Above ₹2000 ✨
+      {/* Premium Banner */}
+      <section className="bg-gradient-to-r from-[#080616] via-[#1B142D] to-[#080616] text-white py-4 border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-4 flex items-center justify-center gap-2 text-sm md:text-base font-medium tracking-wide">
+          <Sparkles className="w-5 h-5 text-yellow-400" />
+          Luxury Handcrafted Sarees • Free Shipping Above ₹2000
         </div>
       </section>
 
       {/* Categories */}
-      <section className="py-20 bg-white">
+      <section className="py-24">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-14">
-            <p className="text-sm uppercase tracking-[4px] text-gray-500 mb-3">
+          <div className="text-center mb-16">
+            <p className="text-sm tracking-[5px] uppercase text-[#9A8478] mb-4">
               Collections
             </p>
 
-            <h2 className="text-4xl lg:text-5xl font-bold text-[#080616] mb-4">
+            <h2 className="text-4xl lg:text-6xl font-bold text-[#080616] mb-5">
               Shop by Category
             </h2>
 
             <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-              Discover timeless handcrafted sarees made
-              with tradition, elegance, and love.
+              Discover timeless elegance woven by skilled artisans with love,
+              heritage, and craftsmanship.
             </p>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-5">
-            {categories.map((category) => (
-              <Link
-                key={category.name}
-                to={`/sarees/${category.name}`}
-                className="group relative overflow-hidden rounded-3xl aspect-[3/4] shadow-md"
-              >
-                <img
-                  src={category.image}
-                  alt={category.name}
-                  className="w-full h-full object-cover transition duration-700 group-hover:scale-110"
-                />
+            {sareeCategories.map((category) => {
+              const meta = categoryImages[category.slug];
+              return (
+                <Link
+                  key={category.slug}
+                  to={`/sarees/${category.slug}`}
+                  className="group relative rounded-[30px] overflow-hidden aspect-[3/4] shadow-lg"
+                >
+                  <img
+                    src={meta.image}
+                    alt={category.name}
+                    className="w-full h-full object-cover transition duration-700 group-hover:scale-110"
+                  />
 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
 
-                <div className="absolute bottom-4 left-4 right-4">
-                  <h3 className="text-white font-semibold text-lg leading-tight">
-                    {category.name}
-                  </h3>
+                  <div className="absolute bottom-5 left-4 right-4">
+                    <h3 className="text-white font-semibold text-lg leading-tight">
+                      {category.name.replace(' Sarees', '')}
+                    </h3>
 
-                  <p className="text-white/80 text-sm mt-1">
-                    {category.count} Products
-                  </p>
-                </div>
-              </Link>
-            ))}
+                    <p className="text-white/70 text-sm mt-1">
+                      {meta.count} Products
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>
 
       {/* Featured Products */}
-      <section className="py-20 bg-[#F3F4F6]">
+      <section className="py-24 bg-[#F3EEE7]">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center mb-14 gap-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-6 mb-16">
             <div>
-              <p className="text-sm uppercase tracking-[4px] text-gray-500 mb-3">
-                Trending
+              <p className="text-sm tracking-[5px] uppercase text-[#9A8478] mb-4">
+                Best Sellers
               </p>
 
-              <h2 className="text-4xl lg:text-5xl font-bold text-[#080616] mb-3">
+              <h2 className="text-4xl lg:text-6xl font-bold text-[#080616] mb-4">
                 Featured Products
               </h2>
 
               <p className="text-gray-600 text-lg">
-                Handpicked premium sarees loved by our customers
+                Handpicked luxury sarees crafted for elegance ✨
               </p>
             </div>
 
             <Link
               to="/sarees"
-              className="flex items-center gap-2 px-6 py-3 rounded-full bg-[#080616] text-white hover:bg-black transition-all duration-300"
+              className="flex items-center gap-2 px-7 py-3 rounded-full bg-[#080616] text-white hover:bg-black transition-all duration-300 shadow-lg"
             >
-              View All
+              Explore Collection
               <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
@@ -181,7 +180,7 @@ export default function Home() {
             {featuredProducts.map((product) => (
               <div
                 key={product.id}
-                className="group bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500"
+                className="group bg-white rounded-[30px] overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500"
               >
                 <div className="relative aspect-[3/4] overflow-hidden">
                   <img
@@ -190,25 +189,23 @@ export default function Home() {
                     className="w-full h-full object-cover transition duration-700 group-hover:scale-110"
                   />
 
-                  <div className="absolute top-4 left-4">
-                    <span className="px-4 py-1 bg-[#080616] text-white text-xs rounded-full">
-                      {product.category}
-                    </span>
-                  </div>
+                  <button className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/90 flex items-center justify-center backdrop-blur-sm hover:bg-white">
+                    <Heart className="w-5 h-5 text-[#080616]" />
+                  </button>
 
-                  <div className="absolute top-4 right-4">
-                    <span className="px-4 py-1 bg-red-500 text-white text-xs rounded-full">
-                      SALE
+                  <div className="absolute top-4 left-4">
+                    <span className="px-4 py-1 rounded-full bg-[#080616] text-white text-xs tracking-wide">
+                      {product.category}
                     </span>
                   </div>
                 </div>
 
-                <div className="p-5">
-                  <h3 className="font-semibold text-lg text-[#080616] mb-2">
+                <div className="p-6">
+                  <h3 className="text-xl font-semibold text-[#080616] mb-3">
                     {product.name}
                   </h3>
 
-                  <div className="flex items-center gap-2 mb-5">
+                  <div className="flex items-center gap-3 mb-5">
                     <span className="text-2xl font-bold text-[#080616]">
                       ₹{product.price}
                     </span>
@@ -218,7 +215,7 @@ export default function Home() {
                     </span>
                   </div>
 
-                  <button className="w-full py-3 rounded-xl bg-[#080616] text-white font-medium hover:bg-black transition-all duration-300 hover:scale-[1.02]">
+                  <button className="w-full py-3 rounded-2xl bg-[#080616] text-white font-medium hover:bg-black transition-all duration-300 hover:scale-[1.02]">
                     Add to Cart
                   </button>
                 </div>
@@ -229,66 +226,57 @@ export default function Home() {
       </section>
 
       {/* Why Choose Us */}
-      <section className="py-20 bg-white">
+      <section className="py-24 bg-[#F9F6F1]">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-14">
-            <p className="text-sm uppercase tracking-[4px] text-gray-500 mb-3">
-              Our Promise
+          <div className="text-center mb-16">
+            <p className="text-sm tracking-[5px] uppercase text-[#9A8478] mb-4">
+              Why Us
             </p>
 
-            <h2 className="text-4xl lg:text-5xl font-bold text-[#080616] mb-4">
-              Why Choose Us
+            <h2 className="text-4xl lg:text-6xl font-bold text-[#080616] mb-5">
+              Luxury Experience
             </h2>
 
             <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-              We deliver premium handcrafted sarees with trust,
-              elegance, and unmatched quality.
+              Every saree reflects elegance, premium craftsmanship, and timeless beauty.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Card */}
-            <div className="bg-[#F8F8FA] rounded-3xl p-10 text-center hover:shadow-xl transition duration-300">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#080616] flex items-center justify-center">
-                <Truck className="w-9 h-9 text-white" />
+            {[
+              {
+                icon: <Truck className="w-9 h-9 text-white" />,
+                title: 'Free Shipping',
+                desc: 'Enjoy free shipping across India on premium orders.',
+              },
+              {
+                icon: <Shield className="w-9 h-9 text-white" />,
+                title: 'Premium Quality',
+                desc: 'Every saree is handcrafted and carefully quality checked.',
+              },
+              {
+                icon: <RefreshCw className="w-9 h-9 text-white" />,
+                title: 'Easy Returns',
+                desc: 'Simple and hassle-free return process within 7 days.',
+              },
+            ].map((item, index) => (
+              <div
+                key={index}
+                className="bg-white rounded-[30px] p-10 text-center shadow-md hover:shadow-2xl transition duration-300"
+              >
+                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#080616] flex items-center justify-center shadow-lg">
+                  {item.icon}
+                </div>
+
+                <h3 className="text-2xl font-bold text-[#080616] mb-3">
+                  {item.title}
+                </h3>
+
+                <p className="text-gray-600 leading-relaxed">
+                  {item.desc}
+                </p>
               </div>
-
-              <h3 className="text-2xl font-bold text-[#080616] mb-3">
-                Free Shipping
-              </h3>
-
-              <p className="text-gray-600 leading-relaxed">
-                Free delivery on all orders above ₹2000 across India.
-              </p>
-            </div>
-
-            <div className="bg-[#F8F8FA] rounded-3xl p-10 text-center hover:shadow-xl transition duration-300">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#080616] flex items-center justify-center">
-                <Shield className="w-9 h-9 text-white" />
-              </div>
-
-              <h3 className="text-2xl font-bold text-[#080616] mb-3">
-                Premium Quality
-              </h3>
-
-              <p className="text-gray-600 leading-relaxed">
-                Every saree is carefully handcrafted and quality checked.
-              </p>
-            </div>
-
-            <div className="bg-[#F8F8FA] rounded-3xl p-10 text-center hover:shadow-xl transition duration-300">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#080616] flex items-center justify-center">
-                <RefreshCw className="w-9 h-9 text-white" />
-              </div>
-
-              <h3 className="text-2xl font-bold text-[#080616] mb-3">
-                Easy Returns
-              </h3>
-
-              <p className="text-gray-600 leading-relaxed">
-                Hassle-free 7 day return policy for customer satisfaction.
-              </p>
-            </div>
+            ))}
           </div>
         </div>
       </section>

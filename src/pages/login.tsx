@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useApp } from "../context/AppContext";
 import {
   Eye,
   EyeOff,
@@ -10,6 +11,8 @@ import {
 } from "lucide-react";
 
 export default function Login() {
+  const navigate = useNavigate();
+  const { login } = useApp();
 
   const [showPassword, setShowPassword] =
     useState(false);
@@ -46,12 +49,12 @@ export default function Login() {
 
     // Fake Delay
     setTimeout(() => {
-
-      console.log(formData);
-
+      const displayName =
+        formData.email.split("@")[0]?.replace(/\./g, " ") || "Guest";
+      login(displayName);
       setLoading(false);
-
-    }, 2000);
+      navigate("/");
+    }, 1200);
 
   };
 
@@ -277,12 +280,9 @@ export default function Login() {
 
                 </label>
 
-                <Link
-                  to="/forgot-password"
-                  className="text-sm font-medium text-[#080616] hover:underline"
-                >
+                <span className="text-sm text-gray-400 cursor-default" title="Coming soon">
                   Forgot Password?
-                </Link>
+                </span>
 
               </div>
 

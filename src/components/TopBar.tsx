@@ -1,29 +1,36 @@
 import { useEffect, useState } from 'react';
 
 const announcements = [
-  "Welcome to BAGRU COTTON FEB - Premium Handcrafted Sarees",
-  "Flat 20% OFF on all Cotton Sarees - Limited Time Offer!",
-  "Free Shipping on Orders Above Rs. 2000",
-  "New Arrivals: Explore our latest Linen Collection",
+  'Welcome to BAGRU COTTON FEB — Premium Handcrafted Sarees',
+  'Flat 20% OFF on all Cotton Sarees — Limited Time Offer!',
+  'Free Shipping on Orders Above ₹2000',
+  'New Arrivals: Explore our latest Linen Collection',
 ];
 
 export default function TopBar() {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % announcements.length);
-    }, 3000);
+      setVisible(false);
+      setTimeout(() => {
+        setCurrentIndex((prev) => (prev + 1) % announcements.length);
+        setVisible(true);
+      }, 300);
+    }, 4000);
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="bg-[#080616] text-white py-2 overflow-hidden">
-      <div className="animate-marquee whitespace-nowrap">
-        <span className="mx-8 text-sm font-medium tracking-wide">
-          {announcements[currentIndex]}
-        </span>
-      </div>
+    <div className="fixed top-0 left-0 right-0 bg-[#080616] text-white py-2 px-4 z-[1000]">
+      <p
+        className={`text-center text-xs sm:text-sm font-medium tracking-wide transition-opacity duration-300 ${
+          visible ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
+        {announcements[currentIndex]}
+      </p>
     </div>
   );
 }

@@ -4,7 +4,6 @@ import {
   Clock,
   ShieldCheck,
   CreditCard,
-  AlertTriangle,
   Globe,
   Mail,
   Phone,

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useApp } from '../context/AppContext';
 import {
   Eye,
   EyeOff,
@@ -11,6 +12,9 @@ import {
 } from 'lucide-react';
 
 export default function Signup() {
+  const navigate = useNavigate();
+  const { login } = useApp();
+
   const [showPassword, setShowPassword] =
     useState(false);
 
@@ -90,8 +94,10 @@ export default function Signup() {
       // Firebase Signup Logic Here
 
       setTimeout(() => {
+        login(formData.name.trim() || 'Guest');
         setLoading(false);
-      }, 1500);
+        navigate('/');
+      }, 1200);
     } catch (error) {
       console.log(error);
       setError(
@@ -331,14 +337,14 @@ export default function Signup() {
                 <span>
                   I agree to the{' '}
                   <Link
-                    to="/terms-of-service"
+                    to="/terms"
                     className="text-[#080616] font-medium hover:underline"
                   >
                     Terms & Conditions
                   </Link>{' '}
                   and{' '}
                   <Link
-                    to="/privacy-policy"
+                    to="/privacy"
                     className="text-[#080616] font-medium hover:underline"
                   >
                     Privacy Policy
