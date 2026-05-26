@@ -17,16 +17,21 @@ import Login from './pages/login';
 import Signup from './pages/SignUp';
 import Cart from './pages/Cart';
 import AccountPlaceholder from './pages/AccountPlaceholder';
+import { useApp } from './context/AppContext';
 
-function App() {
+function AppShell() {
+  const { navbarVisible } = useApp();
+
   return (
-    <Router>
-      <AppProvider>
-        <div className="min-h-screen flex flex-col bg-[#F8F4EE] text-[#3B2F2F] antialiased">
-          <TopBar />
-          <Navbar />
-          <main className="flex-1 pt-28 sm:pt-32">
-          <Routes>
+    <div className="min-h-screen flex flex-col bg-[#F8F4EE] text-[#3B2F2F] antialiased">
+      <TopBar />
+      <Navbar />
+      <main
+        className={`flex-1 transition-[padding-top] duration-500 ease-in-out ${
+          navbarVisible ? 'pt-[7.5rem] sm:pt-32' : 'pt-10'
+        }`}
+      >
+        <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
             <Route path="/sarees" element={<Sarees />} />
@@ -47,10 +52,18 @@ function App() {
             <Route path="/wishlist" element={<AccountPlaceholder title="Your Wishlist" description="Save sarees you love and shop them later." />} />
             <Route path="/profile" element={<AccountPlaceholder title="My Profile" description="Manage your account details and preferences." />} />
             <Route path="/orders" element={<AccountPlaceholder title="My Orders" description="Track shipments and view order history." />} />
-          </Routes>
-          </main>
-          <Footer />
-        </div>
+        </Routes>
+      </main>
+      <Footer />
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <AppProvider>
+        <AppShell />
       </AppProvider>
     </Router>
   );

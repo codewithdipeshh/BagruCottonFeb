@@ -23,7 +23,7 @@ export default function TopBar() {
   }, []);
 
   return (
-    <div className="fixed top-0 left-0 right-0 bg-[#080616] text-white py-2 px-4 z-[1000]">
+    <div className="fixed top-0 left-0 right-0 h-10 flex items-center justify-center bg-[#080616] text-white px-4 z-[1000]">
       <p
         className={`text-center text-xs sm:text-sm font-medium tracking-wide transition-opacity duration-300 ${
           visible ? 'opacity-100' : 'opacity-0'
