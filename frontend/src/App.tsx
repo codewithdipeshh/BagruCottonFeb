@@ -19,6 +19,7 @@ import Cart from './pages/Cart';
 import AccountPlaceholder from './pages/AccountPlaceholder';
 import { useApp } from './context/AppContext';
 
+
 function AppShell() {
   const { navbarVisible } = useApp();
 
