@@ -8,7 +8,6 @@ import About from './pages/About';
 import Sarees from './pages/Sarees';
 import NewArrivals from './pages/NewArrivals';
 import ReviewsPage from './pages/ReviewsPage';
-import Blog from './pages/Blog';
 import Privacy from "./pages/Privacy";
 import TermsOfService from './pages/TermsofService';
 import ExchangePolicy from './pages/Exchange';
@@ -17,21 +16,13 @@ import Login from './pages/login';
 import Signup from './pages/SignUp';
 import Cart from './pages/Cart';
 import AccountPlaceholder from './pages/AccountPlaceholder';
-import { useApp } from './context/AppContext';
-
 
 function AppShell() {
-  const { navbarVisible } = useApp();
-
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F4EE] text-[#3B2F2F] antialiased">
       <TopBar />
       <Navbar />
-      <main
-        className={`flex-1 transition-[padding-top] duration-500 ease-in-out ${
-          navbarVisible ? 'pt-[7.5rem] sm:pt-32' : 'pt-10'
-        }`}
-      >
+      <main className="flex-1 pt-10">
         <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
@@ -39,7 +30,6 @@ function AppShell() {
             <Route path="/sarees/:category" element={<Sarees />} />
             <Route path="/new-arrivals" element={<NewArrivals />} />
             <Route path="/reviews" element={<ReviewsPage />} />
-            <Route path="/blog" element={<Blog />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="/exchange-policy" element={<ExchangePolicy />} />

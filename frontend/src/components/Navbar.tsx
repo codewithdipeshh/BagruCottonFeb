@@ -31,11 +31,9 @@ const languages = ['English', 'Hindi', 'Marathi'];
 
 const navItems = [
   { name: 'Home', path: '/' },
-  { name: 'About', path: '/about' },
   { name: 'Sarees', path: '/sarees', hasDropdown: true },
   { name: 'New Arrivals', path: '/new-arrivals' },
   { name: 'Reviews', path: '/reviews' },
-  { name: 'Blog', path: '/blog' },
 ];
 
 function isNavActive(pathname: string, path: string) {
@@ -50,6 +48,8 @@ function isNavActive(pathname: string, path: string) {
 
   return pathname === path;
 }
+
+const TOP_REVEAL_ZONE_PX = 90;
 
 export default function Navbar() {
   const location = useLocation();
@@ -154,41 +154,44 @@ export default function Navbar() {
       }, 4000);
     };
 
+    const revealNavbar = () => {
+      setShowNavbar(true);
+      startTimer();
+    };
+
     startTimer();
 
     const handleScroll = () => {
-      const current =
-        window.scrollY;
+      const current = window.scrollY;
 
       if (current < lastScrollY.current) {
-        setShowNavbar(true);
-        startTimer();
+        revealNavbar();
       } else if (
         current > lastScrollY.current &&
-        current > 80
+        current > 80 &&
+        !isMenuOpen
       ) {
         setShowNavbar(false);
       }
 
-      lastScrollY.current =
-        current;
+      lastScrollY.current = current;
     };
 
-    window.addEventListener(
-      'scroll',
-      handleScroll
-    );
+    const handleMouseMove = (e: MouseEvent) => {
+      if (e.clientY <= TOP_REVEAL_ZONE_PX) {
+        revealNavbar();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
 
     return () => {
-      window.removeEventListener(
-        'scroll',
-        handleScroll
-      );
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('mousemove', handleMouseMove);
 
       if (hideTimer.current) {
-        clearTimeout(
-          hideTimer.current
-        );
+        clearTimeout(hideTimer.current);
       }
     };
   }, [isMenuOpen]);
@@ -262,14 +265,13 @@ export default function Navbar() {
   return (
     <>
       <nav
-        className={`fixed top-10 left-1/2 -translate-x-1/2 z-[999]
+        className={`fixed top-10 left-1/2 z-[999]
         w-[99%] sm:w-[97%] lg:w-[96%] xl:w-[95%]
-        transition-all duration-500
-        
+        transition-transform duration-500 ease-in-out will-change-transform
         ${
           showNavbar
-            ? 'translate-y-0 opacity-100'
-            : '-translate-y-[140%] opacity-100'
+            ? '-translate-x-1/2 translate-y-0 pointer-events-auto'
+            : '-translate-x-1/2 -translate-y-[140%] pointer-events-none'
         }`}
       >
         <div

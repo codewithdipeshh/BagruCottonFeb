@@ -12,9 +12,6 @@ type AppContextValue = {
   isLoggedIn: boolean;
   userName: string;
   cartCount: number;
-  /** True when the floating navbar (or mobile menu) is taking layout space */
-  navbarVisible: boolean;
-  setNavbarVisible: (visible: boolean) => void;
   login: (name: string) => void;
   logout: () => void;
   setCartCount: (value: number | ((prev: number) => number)) => void;
@@ -52,7 +49,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
   const [cartCount, setCartCountState] = useState(0);
-  const [navbarVisible, setNavbarVisible] = useState(true);
 
   useEffect(() => {
     const auth = readAuth();
@@ -91,13 +87,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       isLoggedIn,
       userName,
       cartCount,
-      navbarVisible,
-      setNavbarVisible,
       login,
       logout,
       setCartCount,
     }),
-    [isLoggedIn, userName, cartCount, navbarVisible, login, logout, setCartCount]
+    [isLoggedIn, userName, cartCount, login, logout, setCartCount]
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
-import { useApp } from '../context/AppContext';
 
 const heroSlides = [
   {
@@ -45,7 +44,6 @@ const heroSlides = [
 ];
 
 export default function Hero() {
-  const { navbarVisible } = useApp();
   const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
@@ -62,11 +60,7 @@ export default function Hero() {
 
   return (
     <section
-      className={`relative overflow-hidden transition-all duration-500 ${
-        navbarVisible
-          ? ''
-          : 'min-h-[calc(100dvh-2.5rem)] flex flex-col justify-center'
-      }`}
+      className="relative overflow-hidden"
       style={{ backgroundColor: activeSlide.bgColor }}
     >
       {/* Premium Background Blur */}
