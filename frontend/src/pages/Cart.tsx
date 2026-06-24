@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Minus, Plus } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
-// Luxury handloom & guarantee icons crafted as high-fidelity inline SVGs
 const PremiumSealIcon = () => (
   <svg className="w-5 h-5 text-amber-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
@@ -27,88 +27,36 @@ const GiftIcon = () => (
   </svg>
 );
 
-// Luxury Mock Saree inventory to map dynamically to the user's cartCount context
-const LUXURY_SAREES_DATABASE = [
-  {
-    id: 'saree-indigo-dabu',
-    name: 'Ancient Indigo Dabu Handblock Saree',
-    type: 'Organic Mulmul Cotton',
-    price: 18500,
-    image: 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=600&auto=format&fit=crop',
-    details: 'Dyed with natural vegetable indigo block stencils.'
-  },
-  {
-    id: 'saree-chanderi-gold',
-    name: 'Royal Chanderi Kora Tissue Silk Drape',
-    type: 'Pure Chanderi Handloom Silk',
-    price: 32000,
-    image: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=600&auto=format&fit=crop',
-    details: 'Woven with refined real gold-plated zari warps.'
-  },
-  {
-    id: 'saree-bagru-madder',
-    name: 'Heritage Bagru Syahi Madder Red Saree',
-    type: 'Clay-resist Handwoven Linen',
-    price: 24000,
-    image: 'https://images.unsplash.com/photo-1610189020382-668f692b5b2f?q=80&w=600&auto=format&fit=crop',
-    details: 'Traditional clay mud hand-printing process.'
-  },
-  {
-    id: 'saree-banarasi-zari',
-    name: 'Atelier Banarasi Brocade Satin Masterpiece',
-    type: '100% Fine Mulberry Silk',
-    price: 45000,
-    image: 'https://images.unsplash.com/photo-1603251579431-8041402bdeda?q=80&w=600&auto=format&fit=crop',
-    details: 'Hand-loomed in the sacred ghats of Varanasi.'
-  }
-];
-
 export default function Cart() {
-  const { cartCount, setCartCount } = useApp();
+  const {
+    cartItems,
+    cartCount,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+  } = useApp();
 
-  // Local premium options
   const [isGiftWrapSelected, setIsGiftWrapSelected] = useState(false);
   const [promoCode, setPromoCode] = useState('');
-  const [appliedDiscount, setAppliedDiscount] = useState(0); // 0% to 100%
+  const [appliedDiscount, setAppliedDiscount] = useState(0);
   const [promoError, setPromoError] = useState('');
   const [promoSuccess, setPromoSuccess] = useState('');
+  const [checkoutNotice, setCheckoutNotice] = useState('');
 
-  // Dynamically map mock item objects from db according to the global cartCount
-  const activeCartItems = useMemo(() => {
-    const items = [];
-    for (let i = 0; i < cartCount; i++) {
-      // Rotate seamlessly through mock database if count exceeds database length
-      const sareeTemplate = LUXURY_SAREES_DATABASE[i % LUXURY_SAREES_DATABASE.length];
-      items.push({
-        ...sareeTemplate,
-        cartIndex: i, // uniquely identify duplicates if they occur
-        quantity: 1 // base quantity per unique line item allocation
-      });
-    }
-    return items;
-  }, [cartCount]);
+  const rawSubtotal = useMemo(
+    () => cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0),
+    [cartItems]
+  );
 
-  // Update local visual states while consistently mutating parent cartCount context
-  const handleItemRemoval = (targetIndex: number) => {
-    setCartCount((c: number) => Math.max(0, c - 1));
-  };
+  const discountAmount = useMemo(
+    () => Math.round(rawSubtotal * appliedDiscount),
+    [rawSubtotal, appliedDiscount]
+  );
 
-  const handleClearCart = () => {
-    setCartCount(0);
-  };
-
-  // Pricing math metrics
-  const rawSubtotal = useMemo(() => {
-    return activeCartItems.reduce((acc, item) => acc + item.price, 0);
-  }, [activeCartItems]);
-
-  const discountAmount = useMemo(() => {
-    return Math.round(rawSubtotal * appliedDiscount);
-  }, [rawSubtotal, appliedDiscount]);
-
-  const giftWrappingCost = isGiftWrapSelected ? 1200 : 0; // High-end wooden box packaging
-  const complimentaryTax = Math.round((rawSubtotal - discountAmount) * 0.05); // 5% GST
-  const finalAtelierTotal = rawSubtotal - discountAmount + giftWrappingCost + complimentaryTax;
+  const giftWrappingCost = isGiftWrapSelected ? 1200 : 0;
+  const complimentaryTax = Math.round((rawSubtotal - discountAmount) * 0.05);
+  const finalAtelierTotal =
+    rawSubtotal - discountAmount + giftWrappingCost + complimentaryTax;
 
   const handleApplyPromo = (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,10 +65,10 @@ export default function Cart() {
 
     const formattedCode = promoCode.trim().toUpperCase();
     if (formattedCode === 'JAIPUR10' || formattedCode === 'HERITAGE10') {
-      setAppliedDiscount(0.10); // 10% exclusive discount
+      setAppliedDiscount(0.1);
       setPromoSuccess('10% Patron appreciation discount applied.');
     } else if (formattedCode === 'ROYALDRAFT') {
-      setAppliedDiscount(0.15); // 15% VIP discount
+      setAppliedDiscount(0.15);
       setPromoSuccess('15% Atelier collection discount applied.');
     } else {
       setPromoError('This invitation code is invalid or has expired.');
@@ -128,10 +76,8 @@ export default function Cart() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] pt-28 pb-20 select-none">
+    <div className="min-h-screen bg-[#FAF8F5] pt-8 pb-20 select-none">
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
-        
-        {/* Editorial Cart Header Banner */}
         <div className="border-b border-stone-200 pb-8 mb-12">
           <p className="text-[10px] uppercase tracking-[0.35em] text-[#A68F81] font-bold">
             Atelier Curator Collection
@@ -141,8 +87,9 @@ export default function Cart() {
               Your Exhibition Bag
             </h1>
             {cartCount > 0 && (
-              <button 
-                onClick={handleClearCart}
+              <button
+                type="button"
+                onClick={clearCart}
                 className="text-[10px] font-bold uppercase tracking-widest text-stone-400 hover:text-stone-800 transition-colors py-1 self-start md:self-auto border-b border-transparent hover:border-stone-400"
               >
                 Relinquish All Items
@@ -171,68 +118,82 @@ export default function Cart() {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
-            
-            {/* LEFT COLUMN: LIST OF CART ITEMS */}
             <div className="lg:col-span-8 space-y-6">
-              {activeCartItems.map((item, index) => (
-                <div 
-                  key={`${item.id}-${index}`} 
+              {cartItems.map((item) => (
+                <div
+                  key={item.id}
                   className="bg-white border border-stone-200/60 rounded-[24px] p-5 sm:p-6 flex flex-col sm:flex-row gap-6 shadow-[0_4px_25px_-5px_rgba(26,18,12,0.03)] transition-all hover:border-stone-300"
                 >
-                  {/* Photo Canvas */}
                   <div className="w-full sm:w-28 h-36 rounded-2xl overflow-hidden border border-stone-100 flex-shrink-0 bg-stone-50">
-                    <img 
-                      src={item.image} 
-                      alt={item.name} 
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-700" 
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
                     />
                   </div>
 
-                  {/* Metadata Stack */}
                   <div className="flex-grow flex flex-col justify-between">
                     <div>
                       <div className="flex items-start justify-between gap-4">
                         <div>
                           <p className="text-[10px] uppercase tracking-widest text-[#A68F81] font-semibold">
-                            {item.type}
+                            {item.fabric ?? 'Handloom'}
                           </p>
                           <h3 className="font-serif text-lg text-[#080616] font-light tracking-wide mt-1">
                             {item.name}
                           </h3>
                         </div>
-                        <button 
-                          onClick={() => handleItemRemoval(index)}
+                        <button
+                          type="button"
+                          onClick={() => removeFromCart(item.id)}
                           className="p-1 text-stone-400 hover:text-red-700 transition-colors"
                           title="Relinquish Item"
                         >
                           <TrashIcon />
                         </button>
                       </div>
-                      <p className="text-xs text-stone-500 font-sans font-light mt-2 italic">
-                        {item.details}
-                      </p>
+                      {item.description && (
+                        <p className="text-xs text-stone-500 font-sans font-light mt-2 italic line-clamp-2">
+                          {item.description}
+                        </p>
+                      )}
                     </div>
 
-                    {/* Pricing Tag and Quantity Seal */}
-                    <div className="flex items-end justify-between border-t border-stone-100 pt-4 mt-4">
-                      <div className="flex items-center gap-1.5 text-stone-500 text-xs font-sans">
-                        <PremiumSealIcon />
-                        <span>Craftsmanship Guaranteed</span>
+                    <div className="flex items-end justify-between border-t border-stone-100 pt-4 mt-4 gap-4">
+                      <div className="inline-flex items-center rounded border border-stone-200 bg-stone-50">
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          className="flex h-9 w-9 items-center justify-center text-stone-600 hover:bg-stone-100"
+                          aria-label="Decrease quantity"
+                        >
+                          <Minus className="h-3.5 w-3.5" />
+                        </button>
+                        <span className="min-w-[2rem] text-center text-sm font-medium">
+                          {item.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          className="flex h-9 w-9 items-center justify-center text-stone-600 hover:bg-stone-100"
+                          aria-label="Increase quantity"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                        </button>
                       </div>
                       <p className="text-lg font-serif font-light text-stone-900 tracking-wide">
-                        ₹{item.price.toLocaleString('en-IN')}
+                        ₹{(item.price * item.quantity).toLocaleString('en-IN')}
                       </p>
                     </div>
                   </div>
                 </div>
               ))}
 
-              {/* Gifting Box Customizer Block */}
-              <div 
+              <div
                 onClick={() => setIsGiftWrapSelected(!isGiftWrapSelected)}
                 className={`border rounded-3xl p-6 cursor-pointer transition-all flex items-start gap-5 ${
-                  isGiftWrapSelected 
-                    ? 'border-amber-800 bg-[#F5ECE2]/30 shadow-md' 
+                  isGiftWrapSelected
+                    ? 'border-amber-800 bg-[#F5ECE2]/30 shadow-md'
                     : 'border-stone-200/80 bg-white hover:border-stone-300 shadow-[0_4px_25px_-5px_rgba(26,18,12,0.03)]'
                 }`}
               >
@@ -249,14 +210,14 @@ export default function Cart() {
                     </span>
                   </div>
                   <p className="text-xs text-stone-500 font-sans font-light leading-relaxed mt-1">
-                    Encased in solid, sustainably-sourced pinewood bearing direct calligraphed notes on handmade rice-parchment envelopes. Ideal for wedding heirlooms.
+                    Encased in solid, sustainably-sourced pinewood bearing direct calligraphed notes on handmade rice-parchment envelopes.
                   </p>
                   <div className="mt-3 flex items-center gap-2">
-                    <input 
-                      type="checkbox" 
+                    <input
+                      type="checkbox"
                       checked={isGiftWrapSelected}
-                      onChange={() => {}} // handled by parent div click
-                      className="accent-amber-800 rounded border-stone-300" 
+                      onChange={() => {}}
+                      className="accent-amber-800 rounded border-stone-300"
                     />
                     <span className="text-[10px] uppercase tracking-wider font-bold text-[#A68F81]">
                       {isGiftWrapSelected ? 'Presentation Selected' : 'Add Heritage Packaging'}
@@ -266,7 +227,6 @@ export default function Cart() {
               </div>
             </div>
 
-            {/* RIGHT COLUMN: LUXURY ORDER SUMMARY CARD */}
             <div className="lg:col-span-4 bg-white border border-stone-200/80 rounded-[32px] p-6 sm:p-8 shadow-[0_15px_50px_-15px_rgba(26,18,12,0.05)] sticky top-36">
               <h2 className="text-xs uppercase tracking-[0.25em] font-bold text-stone-800 border-b border-stone-100 pb-4 mb-6">
                 Investment Ledger
@@ -304,7 +264,6 @@ export default function Cart() {
                   </span>
                 </div>
 
-                {/* Main Total */}
                 <div className="border-t border-stone-100 pt-5 mt-5 flex justify-between items-baseline">
                   <span className="text-stone-900 font-serif text-lg tracking-wide">Atelier Total</span>
                   <span className="text-2xl font-serif text-[#080616] tracking-wide font-light">
@@ -313,20 +272,19 @@ export default function Cart() {
                 </div>
               </div>
 
-              {/* Promo invitation code input */}
               <form onSubmit={handleApplyPromo} className="mt-8 border-t border-stone-100 pt-6">
                 <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block mb-3">
                   Promo / Invitation Code
                 </label>
                 <div className="flex gap-2">
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     placeholder="Enter Invitation Code"
                     value={promoCode}
                     onChange={(e) => setPromoCode(e.target.value)}
                     className="flex-grow bg-[#FAF8F5] border border-stone-200 rounded-xl px-4 py-2.5 text-xs tracking-wider uppercase font-medium focus:outline-none focus:border-stone-900 focus:bg-white transition-all placeholder:text-stone-300"
                   />
-                  <button 
+                  <button
                     type="submit"
                     className="px-5 py-2.5 bg-stone-900 text-white rounded-xl text-xs uppercase tracking-widest font-bold hover:bg-stone-800 transition-colors"
                   >
@@ -341,31 +299,35 @@ export default function Cart() {
                 )}
               </form>
 
-              {/* Secure Checkout Call To Action */}
               <div className="mt-8">
-                <button 
-                  onClick={() => onNotify("Routing checkout sequence safely via SSL pipeline...")}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCheckoutNotice('Routing checkout sequence safely via SSL pipeline...');
+                    window.setTimeout(() => setCheckoutNotice(''), 3000);
+                  }}
                   className="w-full py-4.5 bg-[#080616] hover:bg-amber-950 text-white text-[11px] uppercase tracking-[0.25em] font-sans font-bold shadow-2xl transition-all duration-300 hover:shadow-amber-900/10 active:scale-[0.98] flex items-center justify-center gap-2"
                 >
                   <SecurityIcon />
                   Proceed to Secure Checkout
                 </button>
+                {checkoutNotice && (
+                  <p className="text-[10px] text-center text-emerald-700 font-sans mt-3">
+                    {checkoutNotice}
+                  </p>
+                )}
                 <p className="text-[9px] text-center text-stone-400 font-sans tracking-wide mt-3 flex items-center justify-center gap-1">
                   100% Encrypted Transactions. Secure client dockets.
                 </p>
               </div>
 
-              {/* Quick helper code notifications for testing */}
               <div className="mt-6 p-4 bg-amber-50/50 border border-amber-200/40 rounded-2xl text-[10px] text-stone-500 font-sans leading-relaxed">
                 <span className="font-bold text-amber-800 uppercase block mb-1">Patron Sandbox Invitation Cards</span>
                 Apply <strong className="text-stone-800 font-bold">JAIPUR10</strong> for a 10% appreciation credit or <strong className="text-stone-800 font-bold">ROYALDRAFT</strong> for a 15% luxury VIP draft credit!
               </div>
-
             </div>
-
           </div>
         )}
-
       </div>
     </div>
   );

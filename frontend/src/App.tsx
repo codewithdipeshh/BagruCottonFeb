@@ -15,20 +15,23 @@ import ShippingPolicy from './pages/Shipping';
 import Login from './pages/login';
 import Signup from './pages/SignUp';
 import Cart from './pages/Cart';
+import ProductDetail from './pages/ProductDetail';
 import AccountPlaceholder from './pages/AccountPlaceholder';
+
 
 function AppShell() {
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F4EE] text-[#3B2F2F] antialiased">
       <TopBar />
       <Navbar />
-      <main className="flex-1 pt-10">
+      <main className="flex-1 pt-28 lg:pt-32">
         <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
             <Route path="/sarees" element={<Sarees />} />
             <Route path="/sarees/:category" element={<Sarees />} />
             <Route path="/new-arrivals" element={<NewArrivals />} />
+            <Route path="/products/:id" element={<ProductDetail />} />
             <Route path="/reviews" element={<ReviewsPage />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<TermsOfService />} />
