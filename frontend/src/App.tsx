@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import TopBar from './components/TopBar';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -55,11 +55,9 @@ function AppShell() {
 
 function App() {
   return (
-    <Router>
-      <AppProvider>
-        <AppShell />
-      </AppProvider>
-    </Router>
+    <AppProvider>
+      <AppShell />
+    </AppProvider>
   );
 }
 

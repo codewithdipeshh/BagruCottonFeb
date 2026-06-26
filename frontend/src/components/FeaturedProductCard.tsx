@@ -65,7 +65,10 @@ export default function FeaturedProductCard({
 
         <button
           type="button"
-          onClick={() => setIsWishlisted((value) => !value)}
+          onClick={(event) => {
+            event.stopPropagation();
+            setIsWishlisted((value) => !value);
+          }}
           className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white text-luxury-black shadow-sm transition-colors duration-300 hover:text-luxury-crimson"
           aria-label={isWishlisted ? `Remove ${product.name} from wishlist` : `Save ${product.name}`}
         >
@@ -76,7 +79,10 @@ export default function FeaturedProductCard({
 
         <button
           type="button"
-          onClick={() => onQuickView(product)}
+          onClick={(event) => {
+            event.stopPropagation();
+            onQuickView(product);
+          }}
           className="absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 bg-white px-6 py-2.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-luxury-black shadow-[0_10px_28px_-8px_rgba(0,0,0,0.35)] transition-opacity duration-300 hover:bg-luxury-black hover:text-white md:opacity-0 md:group-hover:opacity-100"
         >
           Quick View

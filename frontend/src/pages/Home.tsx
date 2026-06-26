@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
@@ -20,7 +20,10 @@ import Reviews from '../components/Reviews';
 import FeaturedProductCard from '../components/FeaturedProductCard';
 import QuickViewModal from '../components/QuickViewModal';
 import { sareeCategories } from '../data/sareeCategories';
+import { getFeaturedProducts } from '../data/products';
 import type { SareeProduct } from '../types/product';
+
+const featuredProducts = getFeaturedProducts();
 
 const categoryImages: Record<string, { image: string; count: number; origin: string }> = {
   'cotton-mulmul': {
@@ -55,54 +58,6 @@ const categoryImages: Record<string, { image: string; count: number; origin: str
   },
 };
 
-// Curated collections representing real Indian premium craft values
-const featuredProducts: SareeProduct[] = [
-  {
-    id: 'featured-mulmul',
-    name: 'Royal Indigo Mulmul Saree',
-    fabric: 'Cotton Mulmul',
-    description: 'A flagship mulmul masterpiece — whisper-soft drape, naturally dyed with organic indigo, and printed by heritage block-printing families.',
-    price: 2499,
-    originalPrice: 3499,
-    images: [
-      'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80',
-    ],
-  },
-  {
-    id: 'featured-handblock',
-    name: 'Bagru Mud-Resist Dabu Saree',
-    fabric: 'Handblock Print',
-    description: 'Traditional mud-resist Dabu printing on premium light-woven cotton. Each intricate floral and leaf motif is carefully stamped by hand.',
-    price: 3299,
-    originalPrice: 4299,
-    images: [
-      'https://images.unsplash.com/photo-1610030469668-93535c17b6b3?auto=format&fit=crop&w=800&q=80',
-    ],
-  },
-  {
-    id: 'featured-kota',
-    name: 'Earthy Terracotta Kota Doria',
-    fabric: 'Kota Doria',
-    description: 'Fine translucent Kota weave showcasing the authentic signature square checks pattern. Breathable elegance crafted for festive summer grace.',
-    price: 2899,
-    originalPrice: 3899,
-    images: [
-      'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=800&q=80',
-    ],
-  },
-  {
-    id: 'featured-silk',
-    name: 'Imperial Maheshwari Silk Saree',
-    fabric: 'Maheshwari Silk',
-    description: 'A magnificent blend of royal Chanderi silk with traditional checks weave, finished with classic borders in exquisite gold-toned zari threads.',
-    price: 4599,
-    originalPrice: 5599,
-    images: [
-      'https://images.unsplash.com/photo-1610030470215-6677f5f4ef48?auto=format&fit=crop&w=800&q=80',
-    ],
-  },
-];
-
 export default function Home() {
   const [quickViewProduct, setQuickViewProduct] = useState<SareeProduct | null>(null);
 
@@ -121,13 +76,19 @@ export default function Home() {
     setBookingSubmitted(true);
   };
 
+  useEffect(() => {
+    if (!isBookingOpen) return undefined;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsBookingOpen(false);
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isBookingOpen]);
+
   return (
     <div className="bg-[#FAF9F6] text-[#1A1A1A] antialiased selection:bg-[#9A7B56] selection:text-white min-h-screen">
-      {/* Dynamic Announcement Ticker */}
-      <div className="bg-[#1A1A1A] text-[#FAF9F6] text-[10px] md:text-[11px] tracking-[0.25em] text-center py-2.5 px-4 uppercase font-light border-b border-white/5">
-        Complimentary Insured Shipping Across India • Crafted Sustainably in Small Batches
-      </div>
-
       <Hero />
 
       <section className="py-24 max-w-7xl mx-auto px-4 md:px-8">
@@ -166,7 +127,7 @@ export default function Home() {
                 />
                 
                 {/* Micro Category Tag Accent */}
-                <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-xs px-2 py-0.5 text-[9px] uppercase tracking-wider font-light text-gray-600 border border-gray-100">
+                <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-0.5 text-[9px] uppercase tracking-wider font-light text-gray-600 border border-gray-100">
                   {meta.origin}
                 </div>
 
@@ -237,7 +198,7 @@ export default function Home() {
             </div>
 
             <Link
-              to="/sarees?category=handblock"
+              to="/sarees/handblock"
               className="group inline-flex items-center gap-2.5 border-b border-black pb-1.5 text-[11px] uppercase tracking-[0.18em] font-medium text-black transition-all hover:text-[#9A7B56] hover:border-[#9A7B56]"
             >
               Browse Handblocks
@@ -271,7 +232,7 @@ export default function Home() {
             </div>
 
             <Link
-              to="/sarees?category=linen-cotton"
+              to="/sarees/linen-cotton"
               className="group inline-flex items-center gap-2.5 border-b border-black pb-1.5 text-[11px] uppercase tracking-[0.18em] font-medium text-black transition-all hover:text-[#9A7B56] hover:border-[#9A7B56]"
             >
               Discover Flax Knots
@@ -305,7 +266,7 @@ export default function Home() {
             </div>
 
             <Link
-              to="/sarees?category=maheshwari-silk"
+              to="/sarees/maheshwari-silk"
               className="group inline-flex items-center gap-2.5 border-b border-black pb-1.5 text-[11px] uppercase tracking-[0.18em] font-medium text-black transition-all hover:text-[#9A7B56] hover:border-[#9A7B56]"
             >
               Explore Imperial Silks
@@ -339,7 +300,7 @@ export default function Home() {
             </div>
 
             <Link
-              to="/sarees?category=cotton-mulmul"
+              to="/sarees/cotton-mulmul"
               className="group inline-flex items-center gap-2.5 border-b border-black pb-1.5 text-[11px] uppercase tracking-[0.18em] font-medium text-black transition-all hover:text-[#9A7B56] hover:border-[#9A7B56]"
             >
               View Mulmul Cloud

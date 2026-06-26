@@ -1,4 +1,21 @@
-import type { ProductId, SareeProduct } from '../types/product';
+export type ProductId = string;
+
+export interface SareeProduct {
+  id: string;
+  name: string;
+  fabric: string;
+  description: string;
+  price: number;
+  originalPrice?: number;
+  images: string[];
+  category?: string;
+  rating?: number;
+  inStock?: boolean;
+  badge?: string;
+  discount?: string;
+  color?: string;
+}
+
 
 const img = (base: string, variant: number) =>
   `${base}${base.includes('?') ? '&' : '?'}v=${variant}`;
@@ -51,12 +68,12 @@ const P = {
   chanderi3:
     'https://images.unsplash.com/photo-1610189020382-668f692b5b2f?q=80&w=1200&auto=format&fit=crop',
   chanderi4:
-    'https://images.unsplash.com/photo-1583391733956-6c78276477e2?q=80&w=1200&auto=format&fit=crop',
+    'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?q=80&w=1200&auto=format&fit=crop',
 };
 
 export const sareeProducts: SareeProduct[] = [
   {
-    id: 1,
+    id: '1',
     name: 'Royal Cotton Mulmul Saree',
     price: 2499,
     originalPrice: 2999,
@@ -69,7 +86,7 @@ export const sareeProducts: SareeProduct[] = [
     inStock: true,
   },
   {
-    id: 2,
+    id: '2',
     name: 'Imperial Linen Cotton Saree',
     price: 3299,
     originalPrice: 3999,
@@ -82,7 +99,7 @@ export const sareeProducts: SareeProduct[] = [
     inStock: true,
   },
   {
-    id: 3,
+    id: '3',
     name: 'Delicate Kota Doria Saree',
     price: 2799,
     originalPrice: 3499,
@@ -95,7 +112,7 @@ export const sareeProducts: SareeProduct[] = [
     inStock: false,
   },
   {
-    id: 4,
+    id: '4',
     name: 'Traditional Handblock Print Saree',
     price: 1999,
     originalPrice: 2499,
@@ -108,7 +125,7 @@ export const sareeProducts: SareeProduct[] = [
     inStock: true,
   },
   {
-    id: 5,
+    id: '5',
     name: 'Regal Maheshwari Silk Saree',
     price: 4499,
     originalPrice: 5499,
@@ -121,7 +138,7 @@ export const sareeProducts: SareeProduct[] = [
     inStock: true,
   },
   {
-    id: 6,
+    id: '6',
     name: 'Vintage Chanderi Bagru Saree',
     price: 2299,
     originalPrice: 2799,
@@ -134,7 +151,7 @@ export const sareeProducts: SareeProduct[] = [
     inStock: true,
   },
   {
-    id: 7,
+    id: '7',
     name: 'Royal Mulmul Saree',
     price: 2499,
     originalPrice: 3499,
@@ -147,7 +164,7 @@ export const sareeProducts: SareeProduct[] = [
     inStock: true,
   },
   {
-    id: 8,
+    id: '8',
     name: 'Bagru Handblock Saree',
     price: 3299,
     originalPrice: 4299,
@@ -160,7 +177,7 @@ export const sareeProducts: SareeProduct[] = [
     inStock: true,
   },
   {
-    id: 9,
+    id: '9',
     name: 'Elegant Kota Doria',
     price: 2899,
     originalPrice: 3899,
@@ -173,7 +190,7 @@ export const sareeProducts: SareeProduct[] = [
     inStock: true,
   },
   {
-    id: 10,
+    id: '10',
     name: 'Premium Silk Saree',
     price: 4599,
     originalPrice: 5599,
@@ -186,7 +203,7 @@ export const sareeProducts: SareeProduct[] = [
     inStock: true,
   },
   {
-    id: 11,
+    id: '11',
     name: 'Kota Doriya Saree — Terracotta Mustard',
     price: 1699,
     originalPrice: 3398,
@@ -201,7 +218,7 @@ export const sareeProducts: SareeProduct[] = [
     inStock: true,
   },
   {
-    id: 12,
+    id: '12',
     name: 'Kota Doriya Saree — Aubergine Plum',
     price: 1699,
     originalPrice: 3398,
@@ -216,7 +233,7 @@ export const sareeProducts: SareeProduct[] = [
     inStock: true,
   },
   {
-    id: 13,
+    id: '13',
     name: 'Kota Doriya Saree — Charcoal Black',
     price: 1699,
     originalPrice: 3398,
@@ -231,7 +248,7 @@ export const sareeProducts: SareeProduct[] = [
     inStock: true,
   },
   {
-    id: 14,
+    id: '14',
     name: 'Summer Special Kota Saree',
     price: 1699,
     originalPrice: 3398,
@@ -246,7 +263,7 @@ export const sareeProducts: SareeProduct[] = [
     inStock: true,
   },
   {
-    id: 15,
+    id: '15',
     name: 'Chanderi Silk Kota Saree',
     price: 2299,
     originalPrice: 4598,
@@ -261,7 +278,7 @@ export const sareeProducts: SareeProduct[] = [
     inStock: true,
   },
   {
-    id: 16,
+    id: '16',
     name: 'Handblock Mangalgiri Saree',
     price: 1999,
     originalPrice: 3998,
@@ -276,7 +293,7 @@ export const sareeProducts: SareeProduct[] = [
     inStock: true,
   },
   {
-    id: 17,
+    id: '17',
     name: 'Ajrakh Print Cotton Saree',
     price: 2499,
     originalPrice: 4998,
@@ -291,7 +308,7 @@ export const sareeProducts: SareeProduct[] = [
     inStock: true,
   },
   {
-    id: 18,
+    id: '18',
     name: 'Classic Dabu Kota Saree',
     price: 1699,
     originalPrice: 3398,
@@ -307,7 +324,7 @@ export const sareeProducts: SareeProduct[] = [
   },
 ];
 
-export const featuredProductIds: ProductId[] = [7, 8, 9, 10];
+export const featuredProductIds: ProductId[] = ['7', '8', '9', '10'];
 
 export function getProductById(id: ProductId): SareeProduct | undefined {
   return sareeProducts.find(
@@ -322,9 +339,9 @@ export function getFeaturedProducts(): SareeProduct[] {
 }
 
 export function getNewArrivals(): SareeProduct[] {
-  return sareeProducts.filter((product) => product.id >= 11);
+  return sareeProducts.filter((product) => Number(product.id) >= 11);
 }
 
 export function getCatalogProducts(): SareeProduct[] {
-  return sareeProducts.filter((product) => product.id <= 6);
+  return sareeProducts.filter((product) => Number(product.id) <= 6);
 }

@@ -1,31 +1,22 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Minus, Plus } from 'lucide-react';
+import { 
+  Minus, 
+  Plus, 
+  Trash2, 
+  Gift, 
+  Lock, 
+  ArrowRight, 
+  Check, 
+  Sparkles, 
+  ShoppingBag,
+  Percent
+} from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
-const PremiumSealIcon = () => (
-  <svg className="w-5 h-5 text-amber-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
-  </svg>
-);
-
-const TrashIcon = () => (
-  <svg className="w-4 h-4 text-stone-400 hover:text-red-700 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-  </svg>
-);
-
-const SecurityIcon = () => (
-  <svg className="w-4 h-4 text-emerald-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-  </svg>
-);
-
-const GiftIcon = () => (
-  <svg className="w-5 h-5 text-amber-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-  </svg>
-);
+function formatPrice(price: number) {
+  return `₹${price.toLocaleString('en-IN')}`;
+}
 
 export default function Cart() {
   const {
@@ -76,21 +67,23 @@ export default function Cart() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] pt-8 pb-20 select-none">
+    <div className="min-h-screen bg-[#FAF9F6] pt-12 pb-24 select-none font-sans text-stone-900 antialiased">
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
-        <div className="border-b border-stone-200 pb-8 mb-12">
-          <p className="text-[10px] uppercase tracking-[0.35em] text-[#A68F81] font-bold">
+        
+        {/* Editorial Header */}
+        <div className="border-b border-stone-200 pb-8 mb-12 text-left">
+          <span className="text-[10px] uppercase tracking-[0.35em] text-[#F7DA96] font-bold block mb-2.5">
             Atelier Curator Collection
-          </p>
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mt-2">
-            <h1 className="text-4xl sm:text-5xl font-serif font-light text-[#080616] tracking-wide">
+          </span>
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <h1 className="text-4xl sm:text-5xl font-serif font-light text-stone-950 tracking-wide">
               Your Exhibition Bag
             </h1>
             {cartCount > 0 && (
               <button
                 type="button"
                 onClick={clearCart}
-                className="text-[10px] font-bold uppercase tracking-widest text-stone-400 hover:text-stone-800 transition-colors py-1 self-start md:self-auto border-b border-transparent hover:border-stone-400"
+                className="text-[10px] font-bold uppercase tracking-widest text-stone-400 hover:text-[#F7DA96] transition-colors py-1 self-start md:self-auto border-b border-transparent hover:border-[#F7DA96]"
               >
                 Relinquish All Items
               </button>
@@ -99,32 +92,38 @@ export default function Cart() {
         </div>
 
         {cartCount === 0 ? (
-          <div className="max-w-xl mx-auto py-24 text-center">
-            <div className="w-20 h-20 mx-auto mb-8 rounded-full border border-stone-200 flex items-center justify-center bg-white/40 shadow-inner">
-              <svg className="w-8 h-8 text-[#A68F81] stroke-[1]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-              </svg>
+          /* Elegant Empty State */
+          <div className="max-w-xl mx-auto py-20 text-center">
+            <div className="w-20 h-20 mx-auto mb-8 rounded-full border border-stone-200/80 flex items-center justify-center bg-white shadow-sm">
+              <ShoppingBag className="w-7 h-7 text-stone-400 stroke-[1]" />
             </div>
-            <h2 className="text-2xl font-serif text-stone-900 font-light tracking-wide mb-3">Your drape archive is empty</h2>
-            <p className="text-sm text-stone-500 font-sans font-light leading-relaxed mb-10 max-w-sm mx-auto">
-              You have not selected any handcrafted masterpieces yet. Explore our clay-resist Bagru prints and gold-wire zari threads.
+            <h2 className="text-2xl font-serif text-stone-900 font-light tracking-wide mb-3">
+              Your drape archive is empty
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-500 font-light leading-relaxed mb-10 max-w-sm mx-auto">
+              You have not selected any handcrafted masterpieces yet. Explore our clay-resist Bagru prints and gold-wire zari threads to begin your collection.
             </p>
             <Link
               to="/sarees"
-              className="inline-flex items-center justify-center px-10 py-4.5 bg-[#080616] text-[#FAF8F5] text-[11px] uppercase tracking-[0.25em] font-sans font-bold hover:bg-amber-950 transition-colors shadow-2xl"
+              className="inline-flex items-center justify-center px-10 py-4 bg-neutral-950 text-white text-[11px] uppercase tracking-[0.25em] font-bold hover:bg-[#F7DA96] hover:text-black transition-all duration-300 rounded-xl shadow-md"
             >
               Examine Sarees Archive
             </Link>
           </div>
         ) : (
+          /* Multi-column Exhibition Bag Ledger */
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+            
+            {/* Left Side: Items & Packaging details */}
             <div className="lg:col-span-8 space-y-6">
               {cartItems.map((item) => (
                 <div
                   key={item.id}
-                  className="bg-white border border-stone-200/60 rounded-[24px] p-5 sm:p-6 flex flex-col sm:flex-row gap-6 shadow-[0_4px_25px_-5px_rgba(26,18,12,0.03)] transition-all hover:border-stone-300"
+                  className="bg-white border border-stone-200 rounded-3xl p-5 sm:p-6 flex flex-col sm:flex-row gap-6 shadow-[0_12px_32px_-18px_rgba(26,26,26,0.08)] hover:shadow-[0_20px_40px_-15px_rgba(247,218,150,0.12)] transition-all duration-500 hover:border-[#F7DA96]/30 text-left"
                 >
-                  <div className="w-full sm:w-28 h-36 rounded-2xl overflow-hidden border border-stone-100 flex-shrink-0 bg-stone-50">
+                  {/* Item Image Stage */}
+                  <div className="w-full sm:w-28 h-36 rounded-2xl overflow-hidden border border-stone-100 flex-shrink-0 bg-stone-50 relative">
+                    <div className="absolute inset-1.5 border border-[#F7DA96]/10 rounded-xl pointer-events-none z-10" />
                     <img
                       src={item.image}
                       alt={item.name}
@@ -132,24 +131,25 @@ export default function Cart() {
                     />
                   </div>
 
+                  {/* Item Details */}
                   <div className="flex-grow flex flex-col justify-between">
                     <div>
                       <div className="flex items-start justify-between gap-4">
                         <div>
-                          <p className="text-[10px] uppercase tracking-widest text-[#A68F81] font-semibold">
-                            {item.fabric ?? 'Handloom'}
-                          </p>
-                          <h3 className="font-serif text-lg text-[#080616] font-light tracking-wide mt-1">
+                          <span className="text-[10px] uppercase tracking-widest text-[#F7DA96] font-bold">
+                            {item.fabric ?? 'Handloom Heritage'}
+                          </span>
+                          <h3 className="font-serif text-lg text-stone-900 font-light tracking-wide mt-1">
                             {item.name}
                           </h3>
                         </div>
                         <button
                           type="button"
                           onClick={() => removeFromCart(item.id)}
-                          className="p-1 text-stone-400 hover:text-red-700 transition-colors"
+                          className="p-2 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all duration-300"
                           title="Relinquish Item"
                         >
-                          <TrashIcon />
+                          <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                       {item.description && (
@@ -160,66 +160,69 @@ export default function Cart() {
                     </div>
 
                     <div className="flex items-end justify-between border-t border-stone-100 pt-4 mt-4 gap-4">
-                      <div className="inline-flex items-center rounded border border-stone-200 bg-stone-50">
+                      {/* Interactive Quantity Counter */}
+                      <div className="inline-flex items-center rounded-xl border border-stone-200 bg-stone-50 p-1">
                         <button
                           type="button"
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          className="flex h-9 w-9 items-center justify-center text-stone-600 hover:bg-stone-100"
+                          className="flex h-8 w-8 items-center justify-center text-stone-500 hover:text-black hover:bg-stone-200 rounded-lg transition-all"
                           aria-label="Decrease quantity"
                         >
                           <Minus className="h-3.5 w-3.5" />
                         </button>
-                        <span className="min-w-[2rem] text-center text-sm font-medium">
+                        <span className="min-w-[2.5rem] text-center text-xs font-semibold text-stone-800">
                           {item.quantity}
                         </span>
                         <button
                           type="button"
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="flex h-9 w-9 items-center justify-center text-stone-600 hover:bg-stone-100"
+                          className="flex h-8 w-8 items-center justify-center text-stone-500 hover:text-black hover:bg-stone-200 rounded-lg transition-all"
                           aria-label="Increase quantity"
                         >
                           <Plus className="h-3.5 w-3.5" />
                         </button>
                       </div>
+                      
+                      {/* Item Total Price */}
                       <p className="text-lg font-serif font-light text-stone-900 tracking-wide">
-                        ₹{(item.price * item.quantity).toLocaleString('en-IN')}
+                        {formatPrice(item.price * item.quantity)}
                       </p>
                     </div>
                   </div>
                 </div>
               ))}
 
+              {/* Pinewood Gift Wrap Option */}
               <div
                 onClick={() => setIsGiftWrapSelected(!isGiftWrapSelected)}
-                className={`border rounded-3xl p-6 cursor-pointer transition-all flex items-start gap-5 ${
+                className={`border rounded-3xl p-6 cursor-pointer transition-all duration-500 flex items-start gap-5 text-left ${
                   isGiftWrapSelected
-                    ? 'border-amber-800 bg-[#F5ECE2]/30 shadow-md'
-                    : 'border-stone-200/80 bg-white hover:border-stone-300 shadow-[0_4px_25px_-5px_rgba(26,18,12,0.03)]'
+                    ? 'border-[#F7DA96] bg-[#FAF9F6] shadow-md'
+                    : 'border-stone-200 bg-white hover:border-[#F7DA96]/50 shadow-[0_12px_32px_-18px_rgba(26,26,26,0.08)]'
                 }`}
               >
-                <div className="w-12 h-12 rounded-2xl bg-amber-100/50 flex items-center justify-center flex-shrink-0">
-                  <GiftIcon />
+                <div className="w-12 h-12 rounded-2xl bg-[#F7DA96]/10 flex items-center justify-center flex-shrink-0 text-[#F7DA96]">
+                  <Gift className="w-5 h-5 stroke-[1.5]" />
                 </div>
                 <div className="flex-grow">
                   <div className="flex justify-between items-center">
-                    <h3 className="font-serif text-base text-[#080616] tracking-wide">
+                    <h3 className="font-serif text-base text-stone-950 tracking-wide">
                       Heritage Pinewood Box Presentation
                     </h3>
-                    <span className="text-xs font-serif font-light text-amber-900">
+                    <span className="text-xs font-serif font-medium text-stone-900">
                       + ₹1,200
                     </span>
                   </div>
-                  <p className="text-xs text-stone-500 font-sans font-light leading-relaxed mt-1">
+                  <p className="text-xs text-stone-500 font-light leading-relaxed mt-1">
                     Encased in solid, sustainably-sourced pinewood bearing direct calligraphed notes on handmade rice-parchment envelopes.
                   </p>
-                  <div className="mt-3 flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      checked={isGiftWrapSelected}
-                      onChange={() => {}}
-                      className="accent-amber-800 rounded border-stone-300"
-                    />
-                    <span className="text-[10px] uppercase tracking-wider font-bold text-[#A68F81]">
+                  <div className="mt-3 flex items-center gap-2.5">
+                    <div className={`w-4.5 h-4.5 rounded border flex items-center justify-center transition-all ${
+                      isGiftWrapSelected ? 'bg-[#F7DA96] border-[#F7DA96]' : 'border-stone-300'
+                    }`}>
+                      {isGiftWrapSelected && <Check className="w-3 h-3 text-black stroke-[3]" />}
+                    </div>
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-stone-500">
                       {isGiftWrapSelected ? 'Presentation Selected' : 'Add Heritage Packaging'}
                     </span>
                   </div>
@@ -227,51 +230,57 @@ export default function Cart() {
               </div>
             </div>
 
-            <div className="lg:col-span-4 bg-white border border-stone-200/80 rounded-[32px] p-6 sm:p-8 shadow-[0_15px_50px_-15px_rgba(26,18,12,0.05)] sticky top-36">
-              <h2 className="text-xs uppercase tracking-[0.25em] font-bold text-stone-800 border-b border-stone-100 pb-4 mb-6">
+            {/* Right Side: Price Ledger Panel */}
+            <div className="lg:col-span-4 bg-white border border-stone-200 rounded-[32px] p-6 sm:p-8 shadow-[0_15px_50px_-15px_rgba(26,18,12,0.06)] sticky top-36 text-left">
+              <h2 className="text-xs uppercase tracking-[0.25em] font-bold text-stone-800 border-b border-stone-100 pb-4 mb-6 flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-[#F7DA96]" />
                 Investment Ledger
               </h2>
 
               <div className="space-y-4">
-                <div className="flex justify-between text-sm font-sans font-light text-stone-600">
+                <div className="flex justify-between text-xs sm:text-sm font-light text-stone-600">
                   <span>Atelier Subtotal</span>
-                  <span className="font-serif">₹{rawSubtotal.toLocaleString('en-IN')}</span>
+                  <span className="font-serif text-stone-900 font-medium">{formatPrice(rawSubtotal)}</span>
                 </div>
 
                 {appliedDiscount > 0 && (
-                  <div className="flex justify-between text-sm font-sans font-medium text-emerald-800">
-                    <span>Exclusive Invitation Discount</span>
-                    <span className="font-serif">- ₹{discountAmount.toLocaleString('en-IN')}</span>
+                  <div className="flex justify-between text-xs sm:text-sm font-medium text-emerald-800">
+                    <span className="flex items-center gap-1.5">
+                      <Percent className="w-3.5 h-3.5" />
+                      Invitation Code
+                    </span>
+                    <span className="font-serif">- {formatPrice(discountAmount)}</span>
                   </div>
                 )}
 
-                <div className="flex justify-between text-sm font-sans font-light text-stone-600">
+                <div className="flex justify-between text-xs sm:text-sm font-light text-stone-600">
                   <span>Pinewood Packaging</span>
-                  <span className="font-serif">
-                    {isGiftWrapSelected ? `₹${giftWrappingCost.toLocaleString('en-IN')}` : 'Complimentary Silk Sleeve'}
+                  <span className="font-serif text-stone-900 font-medium">
+                    {isGiftWrapSelected ? formatPrice(giftWrappingCost) : 'Complimentary Silk Sleeve'}
                   </span>
                 </div>
 
-                <div className="flex justify-between text-sm font-sans font-light text-stone-600">
+                <div className="flex justify-between text-xs sm:text-sm font-light text-stone-600">
                   <span>Estimated Taxes (GST 5%)</span>
-                  <span className="font-serif">₹{complimentaryTax.toLocaleString('en-IN')}</span>
+                  <span className="font-serif text-stone-900 font-medium">{formatPrice(complimentaryTax)}</span>
                 </div>
 
-                <div className="flex justify-between text-sm font-sans font-light text-stone-600">
+                <div className="flex justify-between text-xs sm:text-sm font-light text-stone-600">
                   <span>Insured Express Courier</span>
-                  <span className="text-[10px] uppercase tracking-wider font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded">
+                  <span className="text-[9px] uppercase tracking-wider font-bold text-stone-800 bg-[#F7DA96]/20 px-2 py-0.5 rounded">
                     Free
                   </span>
                 </div>
 
                 <div className="border-t border-stone-100 pt-5 mt-5 flex justify-between items-baseline">
                   <span className="text-stone-900 font-serif text-lg tracking-wide">Atelier Total</span>
-                  <span className="text-2xl font-serif text-[#080616] tracking-wide font-light">
-                    ₹{finalAtelierTotal.toLocaleString('en-IN')}
+                  <span className="text-2xl font-serif text-stone-950 tracking-wide font-light">
+                    {formatPrice(finalAtelierTotal)}
                   </span>
                 </div>
               </div>
 
+              {/* Promo Code Entry Form */}
               <form onSubmit={handleApplyPromo} className="mt-8 border-t border-stone-100 pt-6">
                 <label className="text-[10px] uppercase tracking-widest font-bold text-stone-400 block mb-3">
                   Promo / Invitation Code
@@ -282,11 +291,11 @@ export default function Cart() {
                     placeholder="Enter Invitation Code"
                     value={promoCode}
                     onChange={(e) => setPromoCode(e.target.value)}
-                    className="flex-grow bg-[#FAF8F5] border border-stone-200 rounded-xl px-4 py-2.5 text-xs tracking-wider uppercase font-medium focus:outline-none focus:border-stone-900 focus:bg-white transition-all placeholder:text-stone-300"
+                    className="flex-grow bg-[#FAF8F5] border border-stone-200 rounded-xl px-4 py-2.5 text-xs tracking-wider uppercase font-medium focus:outline-none focus:border-[#F7DA96] focus:bg-white transition-all placeholder:text-stone-300"
                   />
                   <button
                     type="submit"
-                    className="px-5 py-2.5 bg-stone-900 text-white rounded-xl text-xs uppercase tracking-widest font-bold hover:bg-stone-800 transition-colors"
+                    className="px-5 py-2.5 bg-neutral-950 hover:bg-[#F7DA96] hover:text-black text-white rounded-xl text-xs uppercase tracking-widest font-bold transition-all duration-300"
                   >
                     Apply
                   </button>
@@ -299,6 +308,7 @@ export default function Cart() {
                 )}
               </form>
 
+              {/* Secure Checkout Action */}
               <div className="mt-8">
                 <button
                   type="button"
@@ -306,10 +316,10 @@ export default function Cart() {
                     setCheckoutNotice('Routing checkout sequence safely via SSL pipeline...');
                     window.setTimeout(() => setCheckoutNotice(''), 3000);
                   }}
-                  className="w-full py-4.5 bg-[#080616] hover:bg-amber-950 text-white text-[11px] uppercase tracking-[0.25em] font-sans font-bold shadow-2xl transition-all duration-300 hover:shadow-amber-900/10 active:scale-[0.98] flex items-center justify-center gap-2"
+                  className="w-full py-4 bg-neutral-950 hover:bg-[#F7DA96] text-white hover:text-black text-[11px] uppercase tracking-[0.25em] font-bold shadow-lg transition-all duration-300 hover:shadow-xl active:scale-[0.98] flex items-center justify-center gap-2 rounded-xl"
                 >
-                  <SecurityIcon />
-                  Proceed to Secure Checkout
+                  <Lock className="w-3.5 h-3.5 stroke-[2]" />
+                  Secure Checkout
                 </button>
                 {checkoutNotice && (
                   <p className="text-[10px] text-center text-emerald-700 font-sans mt-3">
@@ -321,11 +331,13 @@ export default function Cart() {
                 </p>
               </div>
 
-              <div className="mt-6 p-4 bg-amber-50/50 border border-amber-200/40 rounded-2xl text-[10px] text-stone-500 font-sans leading-relaxed">
-                <span className="font-bold text-amber-800 uppercase block mb-1">Patron Sandbox Invitation Cards</span>
-                Apply <strong className="text-stone-800 font-bold">JAIPUR10</strong> for a 10% appreciation credit or <strong className="text-stone-800 font-bold">ROYALDRAFT</strong> for a 15% luxury VIP draft credit!
+              {/* Sandbox Coupon Helper info badge */}
+              <div className="mt-6 p-4 bg-[#F7DA96]/10 border border-[#F7DA96]/20 rounded-2xl text-[10px] text-stone-600 font-sans leading-relaxed">
+                <span className="font-bold text-stone-900 uppercase block mb-1">Patron Sandbox Invitation Cards</span>
+                Apply <strong className="text-stone-950 font-bold">JAIPUR10</strong> for a 10% appreciation credit or <strong className="text-stone-950 font-bold">ROYALDRAFT</strong> for a 15% luxury VIP draft credit!
               </div>
             </div>
+
           </div>
         )}
       </div>

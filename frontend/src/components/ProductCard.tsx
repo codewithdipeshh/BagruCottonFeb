@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Heart, ShoppingBag } from 'lucide-react';
+import { Heart, ShoppingBag, Eye } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import type { SareeProduct } from '../types/product';
 
@@ -10,7 +10,7 @@ type ProductCardProps = {
 };
 
 function formatPrice(price: number) {
-  return `Rs. ${price.toLocaleString('en-IN')}`;
+  return `₹${price.toLocaleString('en-IN')}`;
 }
 
 export default function ProductCard({
@@ -23,7 +23,7 @@ export default function ProductCard({
   const [currentImage, setCurrentImage] = useState(0);
 
   const images = useMemo(
-    () => (product.images.length > 0 ? product.images : ['']),
+    () => (product.images && product.images.length > 0 ? product.images : ['']),
     [product.images]
   );
 
@@ -45,106 +45,126 @@ export default function ProductCard({
 
   return (
     <article
-      className={`group overflow-hidden rounded-lg border border-luxury-gold/15 bg-white shadow-[0_12px_32px_-18px_rgba(26,26,26,0.22)] transition-all duration-500 hover:-translate-y-1 hover:border-luxury-gold/35 hover:shadow-[0_22px_48px_-22px_rgba(140,98,57,0.3)] ${
-        isList ? 'sm:flex' : 'flex h-full flex-col'
+      className={`group overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-[0_12px_32px_-18px_rgba(26,26,26,0.12)] hover:shadow-[0_24px_48px_-15px_rgba(247,218,150,0.18)] transition-all duration-500 hover:-translate-y-1 hover:border-[#F7DA96]/40 ${
+        isList ? 'sm:flex sm:gap-6' : 'flex h-full flex-col'
       }`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
+      {/* Product Image Stage */}
       <div
-        className={`relative overflow-hidden bg-luxury-cream ${
-          isList ? 'aspect-[3/4] sm:w-64 sm:flex-shrink-0' : 'aspect-[3/4]'
+        className={`relative overflow-hidden bg-stone-50 ${
+          isList ? 'aspect-[3/4] sm:w-72 sm:flex-shrink-0' : 'aspect-[3/4]'
         }`}
       >
+        {/* Double Inner Frame Line for Saree Museum feel */}
+        <div className="absolute inset-2.5 border border-[#F7DA96]/15 rounded-lg pointer-events-none z-10" />
+
         {images.map((image, index) => (
           <img
             key={`${product.id}-${image}-${index}`}
             src={image}
             alt={`${product.name} view ${index + 1}`}
             loading="lazy"
-            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ease-out ${
+            className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-out ${
               index === currentImage ? 'opacity-100' : 'opacity-0'
-            } ${isHovered ? 'scale-105' : 'scale-100'} transition-transform duration-500`}
+            } ${isHovered ? 'scale-105' : 'scale-100'} transition-transform duration-[1200ms]`}
           />
         ))}
 
-        <div className="absolute inset-0 bg-gradient-to-t from-luxury-black/35 via-transparent to-transparent opacity-80 transition-opacity duration-300 group-hover:opacity-100" />
+        {/* Shading Vignette Layer */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-85 transition-opacity duration-300 group-hover:opacity-100" />
 
-        <div className="absolute left-3 top-3 z-10">
-          <span className="rounded bg-luxury-ivory/95 px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-luxury-black shadow-sm backdrop-blur-sm">
-            {product.fabric}
+        {/* Fabric Type Label */}
+        <div className="absolute left-4 top-4 z-20">
+          <span className="rounded bg-black/80 backdrop-blur-md px-3 py-1 text-[9px] uppercase tracking-[0.2em] font-medium text-[#F7DA96] border border-[#F7DA96]/20">
+            {product.fabric || 'Premium weave'}
           </span>
         </div>
 
-        <button
+        {/* Wishlist Icon */}
+        <button 
           type="button"
-          className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full border border-luxury-gold/20 bg-luxury-ivory/90 text-luxury-black shadow-sm backdrop-blur-sm transition-colors duration-300 hover:text-luxury-crimson"
-          aria-label={`Save ${product.name}`}
+          aria-label="Add to Wishlist"
+          className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/95 text-stone-700 hover:text-red-500 flex items-center justify-center shadow-md transition-all duration-300 hover:scale-105 active:scale-95"
         >
           <Heart className="h-4 w-4" />
         </button>
 
+        {/* Quick View Interactive Center Button */}
         <button
           type="button"
           onClick={() => onQuickView(product)}
-          className="absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 rounded-[4px] bg-white px-5 py-2.5 text-[11px] font-semibold uppercase tracking-luxury text-luxury-black opacity-100 shadow-[0_8px_24px_-6px_rgba(0,0,0,0.25)] transition-opacity duration-300 hover:bg-luxury-black hover:text-white md:opacity-0 md:group-hover:opacity-100"
+          className="absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/95 backdrop-blur-sm px-6 py-3 text-[10px] font-bold uppercase tracking-wider text-black opacity-100 md:opacity-0 md:group-hover:opacity-100 shadow-[0_12px_24px_rgba(0,0,0,0.18)] transition-all duration-300 hover:bg-[#F7DA96] hover:text-black flex items-center gap-1.5"
         >
+          <Eye className="w-3.5 h-3.5" />
           Quick View
         </button>
 
+        {/* Pagination dots for Multi-images */}
         {images.length > 1 && (
-        <div className="absolute bottom-3 left-0 right-0 z-10 flex justify-center gap-1.5">
-          {images.map((_, index) => (
-            <button
-              key={`${product.id}-dot-${index}`}
-              type="button"
-              onClick={() => setCurrentImage(index)}
-              className={`h-1.5 rounded-full transition-all duration-300 ${
-                index === currentImage ? 'w-5 bg-white' : 'w-1.5 bg-white/55'
-              }`}
-              aria-label={`Show ${product.name} image ${index + 1}`}
-            />
-          ))}
-        </div>
+          <div className="absolute bottom-4 left-0 right-0 z-20 flex justify-center gap-2">
+            {images.map((_, index) => (
+              <button
+                key={`${product.id}-dot-${index}`}
+                type="button"
+                onClick={() => setCurrentImage(index)}
+                className={`h-[3px] rounded-full transition-all duration-300 ${
+                  index === currentImage ? 'w-6 bg-[#F7DA96]' : 'w-2 bg-white/50'
+                }`}
+                aria-label={`Show image ${index + 1}`}
+              />
+            ))}
+          </div>
         )}
       </div>
 
-      <div className="flex flex-1 flex-col justify-between gap-5 p-5 text-left">
-        <div>
-          <p className="mb-2 text-[10px] font-semibold uppercase tracking-epic text-luxury-gold">
-            {product.category ?? product.fabric}
+      {/* Details Meta Block */}
+      <div className="flex flex-col flex-1 justify-between gap-5 p-5">
+        <div className="space-y-2">
+          {/* Subtle Category/Collection Tag */}
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F7DA96]">
+            Atelier Curated
           </p>
-          <h3 className="font-serif text-xl font-medium leading-tight tracking-wide text-luxury-black transition-colors duration-300 group-hover:text-luxury-clay">
+          
+          {/* Saree Heading */}
+          <h3 className="font-serif text-lg sm:text-xl font-normal leading-tight tracking-wide text-stone-900 group-hover:text-[#F7DA96] transition-colors duration-300">
             {product.name}
           </h3>
-          <p className="mt-2 line-clamp-2 text-xs font-light leading-relaxed text-luxury-charcoal">
+          
+          {/* Fabric Description */}
+          <p className="line-clamp-2 text-xs font-light leading-relaxed text-stone-500">
             {product.description}
           </p>
         </div>
 
         <div className="space-y-4">
-          <div className="flex flex-wrap items-baseline gap-2">
-            <span className="text-base font-semibold text-luxury-black">
+          {/* Price Layout */}
+          <div className="flex flex-wrap items-baseline gap-2.5">
+            <span className="text-lg font-medium text-stone-900">
               {formatPrice(product.price)}
             </span>
             {product.originalPrice && (
-              <span className="text-xs font-light text-luxury-charcoal/45 line-through">
+              <span className="text-xs font-light text-stone-400 line-through">
                 {formatPrice(product.originalPrice)}
               </span>
             )}
-            {product.discount && (
-              <span className="text-[10px] font-medium uppercase tracking-wider text-luxury-crimson">
-                {product.discount}
+            
+            {/* Discount Stamp */}
+            {product.originalPrice && product.price < product.originalPrice && (
+              <span className="text-[9px] font-bold uppercase tracking-wider text-red-500 bg-red-50 px-2 py-0.5 rounded">
+                Save {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
               </span>
             )}
           </div>
 
+          {/* Quick Add To Cart Primary Action CTA */}
           <button
             type="button"
             onClick={() => addToCart(product)}
-            className="flex w-full items-center justify-center gap-2 rounded bg-luxury-black px-4 py-3 text-[11px] font-semibold uppercase tracking-luxury text-luxury-ivory transition-colors duration-300 hover:bg-luxury-clay"
+            className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-neutral-950 px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-white hover:text-black transition-all duration-300 hover:bg-[#F7DA96] shadow-sm active:scale-98"
           >
-            <ShoppingBag className="h-3.5 w-3.5" />
+            <ShoppingBag className="h-4 w-4" />
             Add to Cart
           </button>
         </div>

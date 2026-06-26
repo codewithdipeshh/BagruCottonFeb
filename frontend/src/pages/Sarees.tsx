@@ -18,6 +18,7 @@ export default function Sarees() {
   const { category: categorySlug } = useParams<{ category?: string }>();
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('q')?.trim().toLowerCase() ?? '';
+  const categoryQuery = searchParams.get('category')?.trim() ?? '';
 
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -26,9 +27,9 @@ export default function Sarees() {
   const [quickViewProduct, setQuickViewProduct] = useState<SareeProduct | null>(null);
 
   useEffect(() => {
-    const match = getCategoryBySlug(categorySlug);
+    const match = getCategoryBySlug(categorySlug ?? categoryQuery);
     setSelectedCategory(match?.filterId ?? 'all');
-  }, [categorySlug]);
+  }, [categorySlug, categoryQuery]);
 
   const filteredSarees = useMemo(() => {
     let list =

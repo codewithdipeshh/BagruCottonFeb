@@ -71,53 +71,88 @@ export default function Navbar() {
   const [showNavbar, setShowNavbar] = useState(true);
 
 
-  useEffect(() => {
-    let inactivityTimer: ReturnType<typeof setTimeout>;
+useEffect(() => {
+  let inactivityTimer: ReturnType<typeof setTimeout>;
 
-    const resetTimer = () => {
-      clearTimeout(inactivityTimer);
-      inactivityTimer = setTimeout(() => {
-        setShowNavbar(false);
-      }, 5000);
-    };
+  const closeDropdowns = () => {
+    setIsSareesOpen(false);
+    setIsProfileOpen(false);
+    setIsLangOpen(false);
+  };
 
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      const lastScrollY = lastScrollYRef.current;
+  const hideNavbar = () => {
+    setShowNavbar(false);
+    closeDropdowns();
+  };
 
-      if (currentScrollY < 60) {
-        setShowNavbar(true);
-      } else if (currentScrollY > lastScrollY + 4) {
-        setShowNavbar(false);
-      } else if (currentScrollY < lastScrollY - 4) {
-        setShowNavbar(true);
+  const showNavbarFn = () => {
+    setShowNavbar(true);
+  };
+
+  const resetTimer = () => {
+    clearTimeout(inactivityTimer);
+
+    inactivityTimer = setTimeout(() => {
+      if (window.scrollY > 150) {
+        hideNavbar();
       }
+    }, 4000);
+  };
 
-      lastScrollYRef.current = currentScrollY;
-      resetTimer();
-    };
+  const handleScroll = () => {
+    const currentScrollY = window.scrollY;
+    const previousScrollY = lastScrollYRef.current;
 
-    const handleActivity = () => {
-      setShowNavbar(true);
-      resetTimer();
-    };
+    if (currentScrollY < 80) {
+      showNavbarFn();
+    } else if (currentScrollY > previousScrollY + 5) {
+      hideNavbar();
+    } else if (currentScrollY < previousScrollY - 5) {
+      showNavbarFn();
+    }
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('mousemove', handleActivity);
-    window.addEventListener('click', handleActivity);
-    window.addEventListener('keydown', handleActivity);
-
+    lastScrollYRef.current = currentScrollY;
     resetTimer();
+  };
 
-    return () => {
-      clearTimeout(inactivityTimer);
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('mousemove', handleActivity);
-      window.removeEventListener('click', handleActivity);
-      window.removeEventListener('keydown', handleActivity);
-    };
-  }, []);
+  const handleMouseMove = (e: MouseEvent) => {
+    if (e.clientY <= 80) {
+      showNavbarFn();
+      resetTimer();
+    }
+  };
 
+  const handleActivity = () => {
+    showNavbarFn();
+    resetTimer();
+  };
+
+  window.addEventListener('scroll', handleScroll, {
+    passive: true,
+  });
+
+  window.addEventListener('mousemove', handleMouseMove);
+
+  window.addEventListener('touchstart', handleActivity, {
+    passive: true,
+  });
+
+  window.addEventListener('keydown', handleActivity);
+
+  resetTimer();
+
+  return () => {
+    clearTimeout(inactivityTimer);
+
+    window.removeEventListener('scroll', handleScroll);
+
+    window.removeEventListener('mousemove', handleMouseMove);
+
+    window.removeEventListener('touchstart', handleActivity);
+
+    window.removeEventListener('keydown', handleActivity);
+  };
+}, []);
   const closeAllMenus = useCallback(() => {
     setIsMenuOpen(false);
     setIsSareesOpen(false);
@@ -229,31 +264,31 @@ export default function Navbar() {
                           <div className="grid grid-cols-2 gap-6 text-left">
                           <div className="space-y-2">
                             <h4 className="text-[10px] uppercase tracking-widest text-amber-700 font-bold border-b border-stone-100 pb-1 mb-2">
-                              Atelier Collections
+                              Silk Collection
                             </h4>
-                            <Link to="/sarees" className="block text-xs font-medium text-neutral-900 hover:text-amber-800 py-0.5 transition-colors">
-                              View All Masterpieces
+                            <Link to="/sarees/maheshwari-silk" className="block text-xs font-medium text-neutral-900 hover:text-amber-800 py-0.5 transition-colors">
+                              Maheshwari Silk Saree
                             </Link>
-                            <Link to="/sarees?q=New" className="block text-xs font-semibold text-amber-800 py-0.5 transition-colors">
-                              New Launches ✦
+                            <Link to="/sarees/kota-doria" className="block text-xs font-semibold text-amber-800 py-0.5 transition-colors">
+                              Kota Doria Silk
                             </Link>
-                            <Link to="/sarees?q=Festive" className="block text-xs text-neutral-700 hover:text-black py-0.5 transition-colors">
-                              Regal Festive Drape
+                            <Link to="/sarees/chanderi-bagru" className="block text-xs text-neutral-700 hover:text-black py-0.5 transition-colors">
+                              Chanderi Silk Saree
                             </Link>
                           </div>
 
                           <div className="space-y-2">
                             <h4 className="text-[10px] uppercase tracking-widest text-amber-700 font-bold border-b border-stone-100 pb-1 mb-2">
-                              Heritage Crafts
+                              Cotton Collection
                             </h4>
-                            <Link to="/sarees?q=Cotton" className="block text-xs text-neutral-700 hover:text-black py-0.5 transition-colors">
-                              Premium Cotton Sarees
+                            <Link to="/sarees/cotton-mulmul" className="block text-xs text-neutral-700 hover:text-black py-0.5 transition-colors">
+                               Cotton MulMul Sarees
                             </Link>
-                            <Link to="/sarees?q=Hand+Block" className="block text-xs text-neutral-700 hover:text-black py-0.5 transition-colors">
-                              Hand Wooden Block Print
+                            <Link to="/sarees/handblock" className="block text-xs text-neutral-700 hover:text-black py-0.5 transition-colors">
+                              HandBlock Sarees
                             </Link>
-                            <Link to="/sarees?q=Bagru" className="block text-xs text-neutral-700 hover:text-black py-0.5 transition-colors">
-                              Traditional Bagru Mud-Resist
+                            <Link to="/sarees/linen-cotton" className="block text-xs text-neutral-700 hover:text-black py-0.5 transition-colors">
+                              Cotton Linen Saree
                             </Link>
                           </div>
                           </div>
