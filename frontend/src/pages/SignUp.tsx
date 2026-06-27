@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { GoogleLogin } from '@react-oauth/google';
-// loginWithGoogle action ko import list me add kar diya h
-import { register, loginWithGoogle, getUser } from '../State/Auth/Action'; 
+import { useGoogleLogin } from '@react-oauth/google'; 
+import { register, loginWithGoogle, getUser } from '../State/Auth/Action';
 import {
   Eye,
   EyeOff,
@@ -59,14 +58,13 @@ export default function Signup() {
     agree: false,
   });
 
-  // UI state
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<TouchedFields>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Check if passwords match
+ 
   const passwordsMatch = formData.password && formData.confirmPassword && formData.password === formData.confirmPassword;
 
   useEffect(() => {
@@ -75,6 +73,35 @@ export default function Signup() {
       navigate('/');
     }
   }, [jwt, navigate]);
+
+ 
+  const googleLoginTrigger = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+  
+      const googleToken = tokenResponse.access_token;
+      console.log('Google Access Token Catch Ho Gaya:', googleToken);
+      
+      if (googleToken) {
+        setIsSubmitting(true);
+        try {
+          // Token ko seedhe hamare custom action pipeline me pass kar rahe hain
+          await dispatch(loginWithGoogle(googleToken));
+          
+          const freshToken = localStorage.getItem('jwt');
+          if (freshToken) {
+            await dispatch(getUser(freshToken));
+          }
+        } catch (err) {
+          console.error('Google custom layout routing failed:', err);
+        } finally {
+          setIsSubmitting(false);
+        }
+      }
+    },
+    onError: () => {
+      console.error('Google secure verification failed');
+    }
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -177,8 +204,7 @@ export default function Signup() {
         password: formData.password.trim(),
       };
 
-      console.log('📝 Submitting signup:', userData);
-
+      console.log('Submitting signup:', userData);
       const resultAction = await dispatch(register(userData));
 
       if (resultAction?.type?.includes('SUCCESS') || localStorage.getItem('jwt')) {
@@ -197,6 +223,7 @@ export default function Signup() {
     <div className="min-h-screen bg-gradient-to-br from-[#F8F8FA] via-[#F5EFEA] to-[#E8EDF2] flex items-center justify-center px-4 py-20">
       <div className="w-full max-w-7xl grid lg:grid-cols-2 bg-white rounded-[40px] overflow-hidden shadow-[0_20px_80px_rgba(0,0,0,0.08)]">
       
+        {/* Left Layout Branding panel */}
         <div className="hidden lg:flex relative bg-[#080616] p-14 flex-col justify-between overflow-hidden">
           <div className="absolute top-0 left-0 w-80 h-80 bg-white/10 rounded-full blur-3xl" />
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#D3B198]/20 rounded-full blur-3xl" />
@@ -221,12 +248,10 @@ export default function Signup() {
                 <CheckCircle className="w-5 h-5 text-[#D3B198]" />
                 <span>Premium Handcrafted Collections</span>
               </div>
-
               <div className="flex items-center gap-3 text-white">
                 <CheckCircle className="w-5 h-5 text-[#D3B198]" />
                 <span>Exclusive Member Discounts</span>
               </div>
-
               <div className="flex items-center gap-3 text-white">
                 <CheckCircle className="w-5 h-5 text-[#D3B198]" />
                 <span>Fast & Secure Checkout</span>
@@ -243,6 +268,7 @@ export default function Signup() {
           </div>
         </div>
 
+        {/* Right Form Panel */}
         <div className="p-8 sm:p-12 lg:p-16 flex items-center">
           <div className="max-w-md mx-auto w-full">
             <div className="mb-10">
@@ -260,9 +286,7 @@ export default function Signup() {
             <form onSubmit={handleSubmit} className="space-y-5" noValidate>
               {/* Name Field */}
               <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Full Name
-                </label>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
                 <div className="relative">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                   <input
@@ -290,9 +314,7 @@ export default function Signup() {
 
               {/* Email Field */}
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                  Email Address
-                </label>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                   <input
@@ -320,9 +342,7 @@ export default function Signup() {
 
               {/* Password Field */}
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                  Password
-                </label>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">Password</label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                   <input
@@ -358,9 +378,7 @@ export default function Signup() {
 
               {/* Confirm Password Field */}
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-                  Confirm Password
-                </label>
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                   <input
@@ -414,13 +432,9 @@ export default function Signup() {
                 />
                 <span className="group-hover:text-gray-700 transition-colors">
                   I agree to the{' '}
-                  <Link to="/terms" className="text-[#080616] font-medium hover:underline">
-                    Terms & Conditions
-                  </Link>{' '}
+                  <Link to="/terms" className="text-[#080616] font-medium hover:underline">Terms & Conditions</Link>{' '}
                   and{' '}
-                  <Link to="/privacy" className="text-[#080616] font-medium hover:underline">
-                    Privacy Policy
-                  </Link>
+                  <Link to="/privacy" className="text-[#080616] font-medium hover:underline">Privacy Policy</Link>
                 </span>
               </label>
               {touched.agree && errors.agree && (
@@ -458,53 +472,28 @@ export default function Signup() {
                 </div>
               </div>
 
-              {/* FIXED DYNAMIC GOOGLE COMPONENT BLOCK */}
-              <div className="w-full flex justify-center relative z-20">
-                <GoogleLogin
-                  width="100%"
-                  theme="outline"
-                  size="large"
-                  shape="rectangular"
-                  logo_alignment="center"
-                  onSuccess={async (credentialResponse) => {
-                    const googleToken = credentialResponse.credential;
-                    console.log('Google Security Verification Token:', googleToken);
-                    
-                    if (googleToken) {
-                      setIsSubmitting(true);
-                      try {
-                        // Action thunk executes core auth verification pipelines
-                        await dispatch(loginWithGoogle(googleToken));
-                        
-                        const freshToken = localStorage.getItem('jwt');
-                        if (freshToken) {
-                          await dispatch(getUser(freshToken));
-                        }
-                      } catch (err) {
-                        console.error('Google authorization routing failed:', err);
-                      } finally {
-                        setIsSubmitting(false);
-                      }
-                    }
-                  }}
-                  onError={() => {
-                    console.error('Google secure verification payload empty');
-                  }}
-                />
-              </div>
+              
+              <button
+                type="button"
+                onClick={() => googleLoginTrigger()}
+                disabled={isLoading || isSubmitting}
+                className="w-full flex items-center justify-center gap-3 py-4 border border-gray-200 rounded-2xl font-medium hover:bg-gray-50 hover:scale-[1.01] transition-all duration-300 disabled:opacity-50"
+              >
+                <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
+                Continue with Google
+              </button>
             </form>
 
             {/* Login Link */}
             <div className="mt-10 text-center">
               <p className="text-gray-500">
                 Already have an account?{' '}
-                <Link to="/login" className="font-semibold text-[#080616] hover:underline">
-                  Login
-                </Link>
+                <Link to="/login" className="font-semibold text-[#080616] hover:underline">Login</Link>
               </p>
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );

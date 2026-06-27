@@ -58,12 +58,12 @@ export const login = (userData: any): any => async (dispatch: Dispatch) => {
   }
 };
 
-// 🌟 GOOGLE AUTHENTICATION ACTION THUNK
-// Yeh action aapke naye '/auth/google' backend endpoint par Google token pass karega
+
+
 export const loginWithGoogle = (googleToken: string): any => async (dispatch: Dispatch) => {
-  dispatch(loginRequest()); // Triggers global loading spinner state
+  dispatch(loginRequest()); 
   try {
-    console.log("🔗 Redux pipeline firing Google ID Token to backend...");
+    console.log("Redux pipeline firing Google ID Token to backend...");
     const response = await axios.post<AuthResponse>(`${API_BASE_URL}/auth/google`, { 
       token: googleToken 
     });
@@ -71,7 +71,7 @@ export const loginWithGoogle = (googleToken: string): any => async (dispatch: Di
     
     if (data.jwt) {
       localStorage.setItem("jwt", data.jwt);
-      dispatch(loginSuccess(data.jwt)); // Direct mapping to standard success node
+      dispatch(loginSuccess(data.jwt)); 
       return data.jwt;
     } else {
       dispatch(loginFailure("Google validation token missing from backend response"));
@@ -99,7 +99,7 @@ export const getUser = (jwt: string): any => async (dispatch: Dispatch) => {
     
     dispatch(getUserSuccess(user));
   } catch (error: any) {
-    // Backend security practice: If token is expired or altered (401), clear it out
+   
     if (error.response?.status === 401) {
       localStorage.removeItem("jwt");
       dispatch({ type: LOGOUT, payload: null });

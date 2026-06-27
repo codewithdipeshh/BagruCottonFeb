@@ -22,11 +22,13 @@ import Cart from './pages/Cart';
 import ProductDetail from './pages/ProductDetail';
 import AccountPlaceholder from './pages/AccountPlaceholder';
 
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
+
 function AppShell() {
   const dispatch = useDispatch();
   const jwt = localStorage.getItem("jwt");
 
-  
   useEffect(() => {
     if (jwt) {
       dispatch(getUser(jwt));
@@ -68,13 +70,13 @@ function AppShell() {
 
 function App() {
   return (
-    <GoogleOAuthProvider clientId="480465463650-do74278rj0o75bue8pn9oemmrmonptan.apps.googleusercontent.com">
+   
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
       <AppProvider>
         <AppShell />
       </AppProvider>
     </GoogleOAuthProvider>
   );
 }
-
 
 export default App;

@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux"; // Added Redux hooks
-import { GoogleLogin } from '@react-oauth/google';
-import { login, loginWithGoogle, getUser } from "../State/Auth/Action"; // Imported real actions
+import { useDispatch, useSelector } from "react-redux";
+
+import { useGoogleLogin } from '@react-oauth/google'; 
+import { login, loginWithGoogle, getUser } from "../State/Auth/Action"; 
 import {
   Eye,
   EyeOff,
@@ -27,13 +28,37 @@ export default function Login() {
     password: "",
   });
 
-  // Session dynamic monitor loop
+ 
   useEffect(() => {
     const token = localStorage.getItem('jwt') || jwt;
     if (token) {
       navigate('/');
     }
   }, [jwt, navigate]);
+
+ 
+  const googleLoginTrigger = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      // access_token extraction
+      const googleToken = tokenResponse.access_token;
+      console.log('Google Access Token Received (Login):', googleToken);
+
+      if (googleToken) {
+        try {
+          await dispatch(loginWithGoogle(googleToken));
+          const freshToken = localStorage.getItem('jwt');
+          if (freshToken) {
+            await dispatch(getUser(freshToken));
+          }
+        } catch (err) {
+          console.error('Google cross-routing validation collapsed:', err);
+        }
+      }
+    },
+    onError: () => {
+      console.error('Google custom layout login failed');
+    }
+  });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
@@ -42,7 +67,6 @@ export default function Login() {
     });
   };
 
-  // Fixed: Linked form to actual Redux login server system
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -81,7 +105,7 @@ export default function Login() {
 
           <div className="relative z-10">
             <span className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/10 text-white text-sm font-medium mb-6 border border-white/10">
-              Welcome Back
+               Welcome Back
             </span>
 
             <h1 className="text-5xl font-bold text-white leading-tight mb-6">
@@ -194,7 +218,6 @@ export default function Login() {
                     className="w-full pl-12 pr-12 py-4 bg-[#F8F8FA] border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#080616]/20 focus:border-[#080616] transition-all duration-300"
                     required
                   />
-                  {/* Yahan par toggle logic ko perfectly close kar diya hai */}
                   <button
                     type="button"
                     aria-label="Toggle Password Visibility"
@@ -204,6 +227,10 @@ export default function Login() {
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
+              </div>
+
+              {/* Remember + Forgot */}
+              <div className="flex items-center justify-between">
                 <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
                   <input
                     type="checkbox"
@@ -247,35 +274,20 @@ export default function Login() {
                 </div>
               </div>
 
-              {/* FIXED DYNAMIC GOOGLE COMPONENT BLOCK */}
-              <div className="w-full flex justify-center relative z-20">
-                <GoogleLogin
-                  width="100%"
-                  theme="outline"
-                  size="large"
-                  shape="rectangular"
-                  logo_alignment="center"
-                  onSuccess={async (credentialResponse) => {
-                    const googleToken = credentialResponse.credential;
-                    console.log('Google Security Verification Token (Login):', googleToken);
-
-                    if (googleToken) {
-                      try {
-                        await dispatch(loginWithGoogle(googleToken));
-                        const freshToken = localStorage.getItem('jwt');
-                        if (freshToken) {
-                          await dispatch(getUser(freshToken));
-                        }
-                      } catch (err) {
-                        console.error('Google cross-routing validation collapsed:', err);
-                      }
-                    }
-                  }}
-                  onError={() => {
-                    console.error('Google safe secure credential callback failed');
-                  }}
+             
+              <button
+                type="button"
+                onClick={() => googleLoginTrigger()}
+                disabled={isLoading}
+                className="w-full flex items-center justify-center gap-3 py-4 border border-gray-200 rounded-2xl font-medium hover:bg-gray-50 hover:scale-[1.01] transition-all duration-300 disabled:opacity-50"
+              >
+                <img
+                  src="https://www.svgrepo.com/show/475656/google-color.svg"
+                  alt="Google"
+                  className="w-5 h-5"
                 />
-              </div>
+                Continue with Google
+              </button>
 
             </form>
 
