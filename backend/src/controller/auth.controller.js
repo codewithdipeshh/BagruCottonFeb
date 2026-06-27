@@ -5,22 +5,23 @@ const cartService = require("../services/cart.service");
 
 const register = async (req, res) => {
     try {
-        const { password, confirmPassword } = req.body;
+        const { email, password } = req.body;
 
-        // Check password and confirm password
-        if (password !== confirmPassword) {
+        // 1. Pehle check karein ki kya yeh email pehle se registered toh nahi hai
+        const existingUser = await userService.getUserByEmail(email).catch(() => null);
+        if (existingUser) {
             return res.status(400).send({
-                message: "Passwords do not match"
+                error: "Email is already registered with another account"
             });
         }
 
-        // 1. User create hua
+        // 2. User create hua (Password hashing userService ke andar hi honi chahiye)
         const user = await userService.createUser(req.body);
 
-        // 🚀 FINAL FIX: User bante hi uske liye database me ek fresh empty Cart create kar do!
+        // 3. User bante hi uske liye database me ek fresh empty Cart create karein
         await cartService.createCart(user);
 
-        // 2. JWT Token generate hua
+        // 4. JWT Token generate karein
         const jwt = jwtProvider.generateToken(user._id);
 
         return res.status(201).send({
@@ -29,6 +30,7 @@ const register = async (req, res) => {
         });
 
     } catch (error) {
+        // Redux standard ke liye yahan 'error:' property hi return karein
         return res.status(500).send({
             error: error.message
         });
@@ -43,7 +45,7 @@ const login = async (req, res) => {
 
         if (!user) {
             return res.status(404).send({
-                message: "User not found with this email",
+                error: "User not found with this email",
             });
         }
 
@@ -54,7 +56,7 @@ const login = async (req, res) => {
         
         if (!isPasswordValid) {
             return res.status(401).send({
-                message: "Invalid Password",
+                error: "Invalid Password",
             });
         }
 

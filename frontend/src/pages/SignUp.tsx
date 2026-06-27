@@ -14,7 +14,6 @@ import {
 
 export default function Signup() {
   const navigate = useNavigate();
-  
   const dispatch = useDispatch() as any;
   
   const { isLoading, error: authError, jwt } = useSelector((state: any) => state.auth);
@@ -38,26 +37,34 @@ export default function Signup() {
     }
   }, [jwt, dispatch, navigate]);
 
+  // ✅ Strictly target standard input behaviors
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-
-    setFormData({
-      ...formData,
+    
+    setFormData((prevData) => ({
+      ...prevData,
       [name]: type === 'checkbox' ? checked : value,
-    });
+    }));
 
     setValidationError('');
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setValidationError('');
 
-    if (formData.password !== formData.confirmPassword) {
+    const p1 = formData.password ? formData.password.trim() : "";
+    const p2 = formData.confirmPassword ? formData.confirmPassword.trim() : "";
+
+    // 🔍 Debugging log: Apne browser console me check kijiye dono me kya value aa rahi hai
+    console.log("Password 1:", `"${p1}"`, "Password 2:", `"${p2}"`);
+
+    if (p1 !== p2) {
       setValidationError('Passwords do not match');
       return;
     }
 
-    if (formData.password.length < 6) {
+    if (p1.length < 6) {
       setValidationError('Password must be at least 6 characters');
       return;
     }
@@ -71,7 +78,7 @@ export default function Signup() {
       firstName: formData.name.split(' ')[0] || formData.name,
       lastName: formData.name.split(' ').slice(1).join(' ') || '',
       email: formData.email,
-      password: formData.password,
+      password: p1,
     };
 
     dispatch(register(userData));
@@ -201,6 +208,7 @@ export default function Signup() {
                     value={formData.password}
                     onChange={handleChange}
                     placeholder="Create password"
+                    autoComplete="new-password"
                     className="w-full pl-12 pr-12 py-4 bg-[#F8F8FA] border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#080616]/10 focus:border-[#080616] transition-all duration-300"
                     required
                   />
@@ -227,6 +235,7 @@ export default function Signup() {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     placeholder="Confirm password"
+                    autoComplete="new-password"
                     className="w-full pl-12 pr-12 py-4 bg-[#F8F8FA] border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#080616]/10 focus:border-[#080616] transition-all duration-300"
                     required
                   />
