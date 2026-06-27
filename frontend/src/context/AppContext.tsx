@@ -7,6 +7,8 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { useSelector, useDispatch } from 'react-redux'; // Added Redux Hooks
+import { logout as reduxLogoutAction } from '../State/Auth/Action'; // Import your redux logout action
 import type { ProductId, SareeProduct } from '../types/product';
 
 export type CartItem = {
@@ -34,22 +36,7 @@ type AppContextValue = {
 
 const AppContext = createContext<AppContextValue | null>(null);
 
-const AUTH_KEY = 'bagru_auth';
 const CART_KEY = 'bagru_cart';
-
-function readAuth() {
-  try {
-    const raw = localStorage.getItem(AUTH_KEY);
-    if (!raw) return { isLoggedIn: false, userName: '' };
-    const parsed = JSON.parse(raw) as { userName?: string };
-    return {
-      isLoggedIn: true,
-      userName: parsed.userName ?? 'Guest',
-    };
-  } catch {
-    return { isLoggedIn: false, userName: '' };
-  }
-}
 
 function readCartCount() {
   try {
@@ -85,14 +72,31 @@ function persistCart(items: CartItem[]) {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  const dispatch = useDispatch();
+  
+  const { user, jwt } = useSelector((state: any) => state.auth);
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
+  
   useEffect(() => {
-    const auth = readAuth();
-    setIsLoggedIn(auth.isLoggedIn);
-    setUserName(auth.userName);
+    if (jwt && user) {
+      setIsLoggedIn(true);
+     
+      setUserName(user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Patron');
+    } else if (localStorage.getItem("jwt")) {
+     
+      setIsLoggedIn(true);
+      setUserName('Patron');
+    } else {
+      setIsLoggedIn(false);
+      setUserName('');
+    }
+  }, [user, jwt]);
+
+  useEffect(() => {
     setCartItems(readCartCount());
   }, []);
 
@@ -100,14 +104,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const trimmed = name.trim() || 'Guest';
     setIsLoggedIn(true);
     setUserName(trimmed);
-    localStorage.setItem(AUTH_KEY, JSON.stringify({ userName: trimmed }));
   }, []);
 
+  
   const logout = useCallback(() => {
     setIsLoggedIn(false);
     setUserName('');
-    localStorage.removeItem(AUTH_KEY);
-  }, []);
+    localStorage.removeItem("jwt"); 
+    dispatch(reduxLogoutAction());  
+  }, [dispatch]);
 
   const addToCart = useCallback((product: SareeProduct, quantity = 1) => {
     const safeQuantity = Math.max(1, Math.floor(quantity));

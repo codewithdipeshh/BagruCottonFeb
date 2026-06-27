@@ -5,7 +5,6 @@ import {
   LOGOUT 
 } from "./ActionType";
 
-
 interface AuthState {
   user: any;
   isLoading: boolean;
@@ -13,13 +12,13 @@ interface AuthState {
   jwt: string | null;
 }
 
+// Fixed: State directly checks localStorage during initialization
 const intialState: AuthState = {
     user: null,
     isLoading: false,
     error: null,
-    jwt: null
+    jwt: typeof window !== "undefined" ? localStorage.getItem("jwt") : null
 };
-
 
 export const authReducer = (state = intialState, action: any): AuthState => {
     switch (action.type) {
@@ -41,7 +40,12 @@ export const authReducer = (state = intialState, action: any): AuthState => {
             return { ...state, isLoading: false, error: action.payload };
             
         case LOGOUT:
-            return { ...intialState };
+            return {
+              user: null,
+              isLoading: false,
+              error: null,
+              jwt: null
+            };
             
         default:
             return state;

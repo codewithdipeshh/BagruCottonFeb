@@ -1,4 +1,7 @@
+import { useEffect } from 'react'; // Added useEffect
+import { useDispatch } from 'react-redux'; // Added Redux hooks
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { getUser } from './State/Auth/Action'; 
 import TopBar from './components/TopBar';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -18,8 +21,17 @@ import Cart from './pages/Cart';
 import ProductDetail from './pages/ProductDetail';
 import AccountPlaceholder from './pages/AccountPlaceholder';
 
-
 function AppShell() {
+  const dispatch = useDispatch();
+  const jwt = localStorage.getItem("jwt");
+
+  
+  useEffect(() => {
+    if (jwt) {
+      dispatch(getUser(jwt));
+    }
+  }, [jwt, dispatch]);
+
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F4EE] text-[#3B2F2F] antialiased">
       <TopBar />
