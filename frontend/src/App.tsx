@@ -1,6 +1,7 @@
 import { useEffect } from 'react'; // Added useEffect
 import { useDispatch } from 'react-redux'; // Added Redux hooks
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { getUser } from './State/Auth/Action'; 
 import TopBar from './components/TopBar';
 import Navbar from './components/Navbar';
@@ -67,10 +68,13 @@ function AppShell() {
 
 function App() {
   return (
-    <AppProvider>
-      <AppShell />
-    </AppProvider>
+    <GoogleOAuthProvider clientId="480465463650-do74278rj0o75bue8pn9oemmrmonptan.apps.googleusercontent.com">
+      <AppProvider>
+        <AppShell />
+      </AppProvider>
+    </GoogleOAuthProvider>
   );
 }
+
 
 export default App;

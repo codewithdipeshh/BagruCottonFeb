@@ -58,12 +58,34 @@ export const login = (userData: any): any => async (dispatch: Dispatch) => {
   }
 };
 
+// 🌟 GOOGLE AUTHENTICATION ACTION THUNK
+// Yeh action aapke naye '/auth/google' backend endpoint par Google token pass karega
+export const loginWithGoogle = (googleToken: string): any => async (dispatch: Dispatch) => {
+  dispatch(loginRequest()); // Triggers global loading spinner state
+  try {
+    console.log("🔗 Redux pipeline firing Google ID Token to backend...");
+    const response = await axios.post<AuthResponse>(`${API_BASE_URL}/auth/google`, { 
+      token: googleToken 
+    });
+    const data = response.data;
+    
+    if (data.jwt) {
+      localStorage.setItem("jwt", data.jwt);
+      dispatch(loginSuccess(data.jwt)); // Direct mapping to standard success node
+      return data.jwt;
+    } else {
+      dispatch(loginFailure("Google validation token missing from backend response"));
+    }
+  } catch (error: any) {
+    dispatch(loginFailure(error.response?.data?.message || error.message));
+  }
+};
+
 // Get User Profile Actions
 const getUserRequest = () => ({ type: GET_USER_REQUEST });
 const getUserSuccess = (user: any) => ({ type: GET_USER_SUCCESS, payload: user });
 const getUserFailure = (error: string) => ({ type: GET_USER_FAILURE, payload: error });
 
-  
 export const getUser = (jwt: string): any => async (dispatch: Dispatch) => {
   dispatch(getUserRequest());
   try {

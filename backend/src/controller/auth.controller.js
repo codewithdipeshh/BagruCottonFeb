@@ -2,12 +2,16 @@ const userService = require("../services/user.service");
 const jwtProvider = require("../config/jwtProvider");
 const bcrypt = require("bcrypt");
 const cartService = require("../services/cart.service");
+const { OAuth2Client } = require("google-auth-library");
+
+// Google Security Core Client Initialization
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const register = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // 1. Pehle check karein ki kya yeh email pehle se registered toh nahi hai
+        
         const existingUser = await userService.getUserByEmail(email).catch(() => null);
         if (existingUser) {
             return res.status(400).send({
@@ -15,13 +19,12 @@ const register = async (req, res) => {
             });
         }
 
-        // 2. User create hua (Password hashing userService ke andar hi honi chahiye)
         const user = await userService.createUser(req.body);
 
-        // 3. User bante hi uske liye database me ek fresh empty Cart create karein
+        
         await cartService.createCart(user);
 
-        // 4. JWT Token generate karein
+      
         const jwt = jwtProvider.generateToken(user._id);
 
         return res.status(201).send({
@@ -30,7 +33,7 @@ const register = async (req, res) => {
         });
 
     } catch (error) {
-        // Redux standard ke liye yahan 'error:' property hi return karein
+       
         return res.status(500).send({
             error: error.message
         });
@@ -74,7 +77,64 @@ const login = async (req, res) => {
     }
 };
 
+
+const googleLogin = async (req, res) => {
+    try {
+        const { token } = req.body;
+
+        if (!token) {
+            return res.status(400).send({ error: "Google token payload is required" });
+        }
+
+        // 1. Google OAuth Server Verification Sequence
+        const ticket = await client.verifyIdToken({
+            idToken: token,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+
+        const payload = ticket.getPayload();
+        const { email, given_name, family_name } = payload;
+
+        
+        let user = await userService.getUserByEmail(email).catch(() => null);
+
+        if (!user) {
+            console.log(`✨ Creating organic Google Identity record for: ${email}`);
+            
+           
+            const newUserData = {
+                firstName: given_name || "Google",
+                lastName: family_name || "User",
+                email: email.trim().toLowerCase(),
+                
+                password: `OAUTH_SYSTEM_BYPASS_${Math.random().toString(36).slice(-10)}` 
+            };
+
+            
+            user = await userService.createUser(newUserData);
+
+            
+            await cartService.createCart(user);
+        }
+
+        
+        const jwt = jwtProvider.generateToken(user._id);
+
+        return res.status(200).send({
+            jwt,
+            message: "Google Auth Success"
+        });
+
+    } catch (error) {
+        
+        return res.status(500).send({
+            error: error.message || "Google Authentication processing collapsed"
+        });
+    }
+};
+
 module.exports = {
     register,
     login,
+    googleLogin, 
 };

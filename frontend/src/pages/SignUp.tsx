@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { register } from '../State/Auth/Action';
+import { GoogleLogin } from '@react-oauth/google';
+// loginWithGoogle action ko import list me add kar diya h
+import { register, loginWithGoogle, getUser } from '../State/Auth/Action'; 
 import {
   Eye,
   EyeOff,
@@ -13,7 +15,6 @@ import {
   AlertCircle,
   Check,
 } from 'lucide-react';
-
 
 interface FormData {
   name: string;
@@ -39,19 +40,16 @@ interface TouchedFields {
   agree?: boolean;
 }
 
-
 const validateEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };
-
 
 export default function Signup() {
   const navigate = useNavigate();
   const dispatch = useDispatch() as any;
 
   const { isLoading, error: authError, jwt } = useSelector((state: any) => state.auth);
-
 
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -71,7 +69,6 @@ export default function Signup() {
   // Check if passwords match
   const passwordsMatch = formData.password && formData.confirmPassword && formData.password === formData.confirmPassword;
 
-  
   useEffect(() => {
     const token = localStorage.getItem('jwt') || jwt;
     if (token) {
@@ -79,7 +76,6 @@ export default function Signup() {
     }
   }, [jwt, navigate]);
 
-  
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
 
@@ -88,7 +84,6 @@ export default function Signup() {
       [name]: type === 'checkbox' ? checked : value,
     }));
 
-    
     if (errors[name as keyof FormErrors]) {
       setErrors((prev) => ({
         ...prev,
@@ -97,7 +92,6 @@ export default function Signup() {
     }
   };
 
- 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     const { name } = e.target;
     setTouched((prev) => ({
@@ -107,7 +101,6 @@ export default function Signup() {
     validateField(name, formData[name as keyof FormData]);
   };
 
-  
   const validateField = (fieldName: string, value: any): string | undefined => {
     switch (fieldName) {
       case 'name':
@@ -140,7 +133,6 @@ export default function Signup() {
     }
   };
 
-  // Validate entire form
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
 
@@ -150,7 +142,6 @@ export default function Signup() {
     newErrors.confirmPassword = validateField('confirmPassword', formData.confirmPassword);
     newErrors.agree = validateField('agree', formData.agree);
 
-    // Remove undefined errors
     Object.keys(newErrors).forEach((key) => {
       if (newErrors[key as keyof FormErrors] === undefined) {
         delete newErrors[key as keyof FormErrors];
@@ -161,11 +152,9 @@ export default function Signup() {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    // Mark all fields as touched
     setTouched({
       name: true,
       email: true,
@@ -174,7 +163,6 @@ export default function Signup() {
       agree: true,
     });
 
-    // Validate form
     if (!validateForm()) {
       return;
     }
@@ -191,13 +179,12 @@ export default function Signup() {
 
       console.log('📝 Submitting signup:', userData);
 
-      // Dispatch register action and wait for it
       const resultAction = await dispatch(register(userData));
 
-      // Check if registration was successful
       if (resultAction?.type?.includes('SUCCESS') || localStorage.getItem('jwt')) {
         console.log('Registration successful!');
-        // Navigation will happen automatically via useEffect watching jwt
+        const rawToken = localStorage.getItem('jwt');
+        if (rawToken) await dispatch(getUser(rawToken));
       }
     } catch (error) {
       console.error('Signup error:', error);
@@ -211,11 +198,9 @@ export default function Signup() {
       <div className="w-full max-w-7xl grid lg:grid-cols-2 bg-white rounded-[40px] overflow-hidden shadow-[0_20px_80px_rgba(0,0,0,0.08)]">
       
         <div className="hidden lg:flex relative bg-[#080616] p-14 flex-col justify-between overflow-hidden">
-          {/* Background blur effects */}
           <div className="absolute top-0 left-0 w-80 h-80 bg-white/10 rounded-full blur-3xl" />
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#D3B198]/20 rounded-full blur-3xl" />
 
-          {/* Content */}
           <div className="relative z-10">
             <span className="inline-block px-5 py-2 rounded-full bg-white/10 text-white text-sm font-medium backdrop-blur-md mb-8">
               Premium Shopping Experience
@@ -258,16 +243,13 @@ export default function Signup() {
           </div>
         </div>
 
-     
         <div className="p-8 sm:p-12 lg:p-16 flex items-center">
           <div className="max-w-md mx-auto w-full">
-            {/* Header */}
             <div className="mb-10">
               <h2 className="text-4xl font-bold text-[#080616] mb-3">Create Account</h2>
               <p className="text-gray-500 leading-relaxed">Start your premium shopping journey with Bagru Cotton.</p>
             </div>
 
-            {/* Server Error Alert */}
             {authError && (
               <div className="mb-6 px-4 py-3 rounded-2xl bg-red-50 border border-red-200 text-red-600 text-sm font-medium flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
@@ -275,7 +257,6 @@ export default function Signup() {
               </div>
             )}
 
-            {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-5" noValidate>
               {/* Name Field */}
               <div>
@@ -298,12 +279,10 @@ export default function Signup() {
                         : 'border-gray-200 focus:ring-[#080616]/10 focus:border-[#080616]'
                     }`}
                     required
-                    aria-invalid={touched.name && !!errors.name}
-                    aria-describedby={touched.name && errors.name ? 'name-error' : undefined}
                   />
                 </div>
                 {touched.name && errors.name && (
-                  <p id="name-error" className="text-xs text-red-500 mt-2 flex items-center gap-1">
+                  <p className="text-xs text-red-500 mt-2 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" /> {errors.name}
                   </p>
                 )}
@@ -330,12 +309,10 @@ export default function Signup() {
                         : 'border-gray-200 focus:ring-[#080616]/10 focus:border-[#080616]'
                     }`}
                     required
-                    aria-invalid={touched.email && !!errors.email}
-                    aria-describedby={touched.email && errors.email ? 'email-error' : undefined}
                   />
                 </div>
                 {touched.email && errors.email && (
-                  <p id="email-error" className="text-xs text-red-500 mt-2 flex items-center gap-1">
+                  <p className="text-xs text-red-500 mt-2 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" /> {errors.email}
                   </p>
                 )}
@@ -363,22 +340,17 @@ export default function Signup() {
                         : 'border-gray-200 focus:ring-[#080616]/10 focus:border-[#080616]'
                     }`}
                     required
-                    aria-invalid={touched.password && !!errors.password}
-                    aria-describedby={touched.password && errors.password ? 'password-error' : undefined}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#080616] transition-colors"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
-
-                {/* Error message */}
                 {touched.password && errors.password && (
-                  <p id="password-error" className="text-xs text-red-500 mt-2 flex items-center gap-1">
+                  <p className="text-xs text-red-500 mt-2 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" /> {errors.password}
                   </p>
                 )}
@@ -408,22 +380,17 @@ export default function Signup() {
                           : 'border-gray-200 focus:ring-[#080616]/10 focus:border-[#080616]'
                     }`}
                     required
-                    aria-invalid={touched.confirmPassword && !!errors.confirmPassword}
-                    aria-describedby={touched.confirmPassword && errors.confirmPassword ? 'confirm-error' : undefined}
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#080616] transition-colors"
-                    aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                   >
                     {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                   </button>
                 </div>
-
-                {/* Error or success message */}
                 {touched.confirmPassword && errors.confirmPassword && (
-                  <p id="confirm-error" className="text-xs text-red-500 mt-2 flex items-center gap-1">
+                  <p className="text-xs text-red-500 mt-2 flex items-center gap-1">
                     <AlertCircle className="w-3 h-3" /> {errors.confirmPassword}
                   </p>
                 )}
@@ -444,7 +411,6 @@ export default function Signup() {
                   onChange={handleChange}
                   onBlur={handleBlur}
                   className="mt-1 accent-[#080616] cursor-pointer"
-                  aria-invalid={touched.agree && !!errors.agree}
                 />
                 <span className="group-hover:text-gray-700 transition-colors">
                   I agree to the{' '}
@@ -467,7 +433,7 @@ export default function Signup() {
               <button
                 type="submit"
                 disabled={isLoading || isSubmitting}
-                className="w-full flex items-center justify-center gap-2 py-4 bg-[#080616] text-white rounded-2xl font-semibold hover:bg-black hover:scale-[1.02] transition-all duration-300 shadow-lg disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="w-full flex items-center justify-center gap-2 py-4 bg-[#080616] text-white rounded-2xl font-semibold hover:bg-black hover:scale-[1.02] transition-all duration-300 shadow-lg disabled:opacity-70"
               >
                 {isLoading || isSubmitting ? (
                   <>
@@ -476,7 +442,7 @@ export default function Signup() {
                   </>
                 ) : (
                   <>
-                    Create Account
+                    <span className="font-semibold">Create Account</span>
                     <ArrowRight className="w-5 h-5" />
                   </>
                 )}
@@ -492,14 +458,40 @@ export default function Signup() {
                 </div>
               </div>
 
-              {/* Google Login */}
-              <button
-                type="button"
-                className="w-full flex items-center justify-center gap-3 py-4 border border-gray-200 rounded-2xl font-medium hover:bg-gray-50 transition-all duration-300"
-              >
-                <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
-                Continue with Google
-              </button>
+              {/* FIXED DYNAMIC GOOGLE COMPONENT BLOCK */}
+              <div className="w-full flex justify-center relative z-20">
+                <GoogleLogin
+                  width="100%"
+                  theme="outline"
+                  size="large"
+                  shape="rectangular"
+                  logo_alignment="center"
+                  onSuccess={async (credentialResponse) => {
+                    const googleToken = credentialResponse.credential;
+                    console.log('Google Security Verification Token:', googleToken);
+                    
+                    if (googleToken) {
+                      setIsSubmitting(true);
+                      try {
+                        // Action thunk executes core auth verification pipelines
+                        await dispatch(loginWithGoogle(googleToken));
+                        
+                        const freshToken = localStorage.getItem('jwt');
+                        if (freshToken) {
+                          await dispatch(getUser(freshToken));
+                        }
+                      } catch (err) {
+                        console.error('Google authorization routing failed:', err);
+                      } finally {
+                        setIsSubmitting(false);
+                      }
+                    }
+                  }}
+                  onError={() => {
+                    console.error('Google secure verification payload empty');
+                  }}
+                />
+              </div>
             </form>
 
             {/* Login Link */}
