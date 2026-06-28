@@ -1,25 +1,45 @@
 export type SareeCategory = {
   slug: string;
   name: string;
-  filterId: string;
+  filterId: string; 
 };
 
 export const sareeCategories: SareeCategory[] = [
-  { slug: 'cotton-mulmul', name: 'Cotton Mulmul Sarees', filterId: 'cotton' },
-  {
-    slug: 'handblock',
-    name: 'Handblock Printed Cotton Sarees',
-    filterId: 'handblock',
+  { 
+    slug: 'mulmul-cotton', 
+    name: 'Mulmul Cotton Sarees', 
+    filterId: 'mulmul_cotton' 
   },
-  { slug: 'linen-cotton', name: 'Linen Cotton Sarees', filterId: 'linen' },
-  { slug: 'kota-doria', name: 'Kota Doria Sarees', filterId: 'kota' },
-  { slug: 'chanderi-bagru', name: 'Chanderi Bagru Sarees', filterId: 'chanderi' },
-  { slug: 'maheshwari-silk', name: 'Maheshwari Silk Sarees', filterId: 'maheshwari' },
+  {
+    slug: 'cotton-handblock',
+    name: 'Cotton HandBlock Sarees',
+    filterId: 'cotton_handblock',
+  },
+  { 
+    slug: 'cotton-linen', 
+    name: 'Cotton Linen Saree', 
+    filterId: 'cotton_linen' 
+  },
+  { 
+    slug: 'maheshwari-silk', 
+    name: 'Maheshwari Silk Saree', 
+    filterId: 'maheshwari_silk' 
+  },
+  { 
+    slug: 'kota-doria-silk', 
+    name: 'Kota Doria Silk', 
+    filterId: 'kota_doria' 
+  },
+  { 
+    slug: 'chanderi-silk', 
+    name: 'Chanderi Silk Saree', 
+    filterId: 'chanderi_silk' 
+  },
 ];
 
 export function getCategoryBySlug(slug: string | undefined) {
   if (!slug) return undefined;
   return sareeCategories.find(
-    (c) => c.slug === decodeURIComponent(slug).toLowerCase()
+    (c) => c.slug === decodeURIComponent(slug).toLowerCase().trim()
   );
 }

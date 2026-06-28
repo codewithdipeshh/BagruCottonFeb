@@ -21,6 +21,8 @@ import Signup from './pages/SignUp';
 import Cart from './pages/Cart';
 import ProductDetail from './pages/ProductDetail';
 import AccountPlaceholder from './pages/AccountPlaceholder';
+import Profile from './pages/Profile';
+import Checkout from './pages/Checkout';
 
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
@@ -58,9 +60,11 @@ function AppShell() {
             <Route path="/terms-of-service" element={<Navigate to="/terms" replace />} />
             <Route path="/privacy-policy" element={<Navigate to="/privacy" replace />} />
             <Route path="/cart" element={<Cart />} />
+            <Route path="/profile" element={<Profile />} />
             <Route path="/wishlist" element={<AccountPlaceholder title="Your Wishlist" description="Save sarees you love and shop them later." />} />
             <Route path="/profile" element={<AccountPlaceholder title="My Profile" description="Manage your account details and preferences." />} />
             <Route path="/orders" element={<AccountPlaceholder title="My Orders" description="Track shipments and view order history." />} />
+            <Route path="/checkout" element={<Checkout />} />
         </Routes>
       </main>
       <Footer />

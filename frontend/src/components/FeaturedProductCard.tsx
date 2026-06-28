@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { Heart, ShoppingBag } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import { addItemToCart } from '../State/Cart/Action';
 import type { SareeProduct } from '../types/product';
 
 type FeaturedProductCardProps = {
@@ -16,7 +17,7 @@ export default function FeaturedProductCard({
   product,
   onQuickView,
 }: FeaturedProductCardProps) {
-  const { addToCart } = useApp();
+  const dispatch = useDispatch<any>();
   const [isHovered, setIsHovered] = useState(false);
   const [currentImage, setCurrentImage] = useState(0);
   const [isWishlisted, setIsWishlisted] = useState(false);
@@ -40,6 +41,13 @@ export default function FeaturedProductCard({
     if (!isHovered) setCurrentImage(0);
   }, [isHovered]);
 
+  const handleAddToCartClick = () => {
+  const itemData = {
+    productId: (product as any)._id || product.id,
+    quantity: 1
+  };
+  dispatch(addItemToCart(itemData));
+};
   return (
     <article
       className="group flex h-full flex-col overflow-hidden rounded-[12px] bg-white shadow-[0_8px_30px_-12px_rgba(26,26,26,0.12)] transition-shadow duration-300 hover:shadow-[0_16px_40px_-14px_rgba(26,26,26,0.16)]"
@@ -132,7 +140,7 @@ export default function FeaturedProductCard({
 
           <button
             type="button"
-            onClick={() => addToCart(product)}
+            onClick={handleAddToCartClick}
             className="flex w-full items-center justify-center gap-2 bg-luxury-black px-4 py-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-white transition-all duration-300 hover:opacity-90 active:scale-[0.99]"
           >
             <ShoppingBag className="h-3.5 w-3.5" />

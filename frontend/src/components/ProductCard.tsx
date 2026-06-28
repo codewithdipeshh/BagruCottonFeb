@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { Heart, ShoppingBag, Eye } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import { addItemToCart } from '../State/Cart/Action';
 import type { SareeProduct } from '../types/product';
 
 type ProductCardProps = {
@@ -18,7 +19,7 @@ export default function ProductCard({
   onQuickView,
   layout = 'grid',
 }: ProductCardProps) {
-  const { addToCart } = useApp();
+  const dispatch = useDispatch<any>();
   const [isHovered, setIsHovered] = useState(false);
   const [currentImage, setCurrentImage] = useState(0);
 
@@ -41,6 +42,14 @@ export default function ProductCard({
     setCurrentImage(0);
   }, [product.id]);
 
+  const handleAddToCartClick = () => {
+    const itemData = {
+      productId: product._id || product.id,
+      quantity: 1
+    };
+    dispatch(addItemToCart(itemData));
+  };
+
   const isList = layout === 'list';
 
   return (
@@ -51,13 +60,11 @@ export default function ProductCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Product Image Stage */}
       <div
         className={`relative overflow-hidden bg-stone-50 ${
           isList ? 'aspect-[3/4] sm:w-72 sm:flex-shrink-0' : 'aspect-[3/4]'
         }`}
       >
-        {/* Double Inner Frame Line for Saree Museum feel */}
         <div className="absolute inset-2.5 border border-[#F7DA96]/15 rounded-lg pointer-events-none z-10" />
 
         {images.map((image, index) => (
@@ -72,17 +79,14 @@ export default function ProductCard({
           />
         ))}
 
-        {/* Shading Vignette Layer */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-85 transition-opacity duration-300 group-hover:opacity-100" />
 
-        {/* Fabric Type Label */}
         <div className="absolute left-4 top-4 z-20">
           <span className="rounded bg-black/80 backdrop-blur-md px-3 py-1 text-[9px] uppercase tracking-[0.2em] font-medium text-[#F7DA96] border border-[#F7DA96]/20">
             {product.fabric || 'Premium weave'}
           </span>
         </div>
 
-        {/* Wishlist Icon */}
         <button 
           type="button"
           aria-label="Add to Wishlist"
@@ -91,7 +95,6 @@ export default function ProductCard({
           <Heart className="h-4 w-4" />
         </button>
 
-        {/* Quick View Interactive Center Button */}
         <button
           type="button"
           onClick={() => onQuickView(product)}
@@ -101,7 +104,6 @@ export default function ProductCard({
           Quick View
         </button>
 
-        {/* Pagination dots for Multi-images */}
         {images.length > 1 && (
           <div className="absolute bottom-4 left-0 right-0 z-20 flex justify-center gap-2">
             {images.map((_, index) => (
@@ -119,27 +121,22 @@ export default function ProductCard({
         )}
       </div>
 
-      {/* Details Meta Block */}
       <div className="flex flex-col flex-1 justify-between gap-5 p-5">
         <div className="space-y-2">
-          {/* Subtle Category/Collection Tag */}
           <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-[#F7DA96]">
             Atelier Curated
           </p>
           
-          {/* Saree Heading */}
           <h3 className="font-serif text-lg sm:text-xl font-normal leading-tight tracking-wide text-stone-900 group-hover:text-[#F7DA96] transition-colors duration-300">
             {product.name}
           </h3>
           
-          {/* Fabric Description */}
           <p className="line-clamp-2 text-xs font-light leading-relaxed text-stone-500">
             {product.description}
           </p>
         </div>
 
         <div className="space-y-4">
-          {/* Price Layout */}
           <div className="flex flex-wrap items-baseline gap-2.5">
             <span className="text-lg font-medium text-stone-900">
               {formatPrice(product.price)}
@@ -150,7 +147,6 @@ export default function ProductCard({
               </span>
             )}
             
-            {/* Discount Stamp */}
             {product.originalPrice && product.price < product.originalPrice && (
               <span className="text-[9px] font-bold uppercase tracking-wider text-red-500 bg-red-50 px-2 py-0.5 rounded">
                 Save {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
@@ -158,10 +154,9 @@ export default function ProductCard({
             )}
           </div>
 
-          {/* Quick Add To Cart Primary Action CTA */}
           <button
             type="button"
-            onClick={() => addToCart(product)}
+            onClick={handleAddToCartClick}
             className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-neutral-950 px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-white hover:text-black transition-all duration-300 hover:bg-[#F7DA96] shadow-sm active:scale-98"
           >
             <ShoppingBag className="h-4 w-4" />

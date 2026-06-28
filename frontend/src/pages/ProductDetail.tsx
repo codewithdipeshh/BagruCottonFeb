@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+
 import { 
   Minus, 
   Plus, 
@@ -8,7 +9,6 @@ import {
   Ruler, 
   Scissors, 
   ShieldCheck, 
-  Heart,
   ChevronRight
 } from 'lucide-react';
 import { getProductById } from '../data/products';
@@ -233,7 +233,7 @@ export default function ProductDetail() {
                     className="flex h-10 w-10 items-center justify-center text-stone-600 hover:bg-stone-200 rounded-l-xl transition-colors active:scale-95"
                     aria-label="Decrease quantity"
                   >
-                    <Minus className="h-3.5 h-3.5" />
+                    <Minus className="h-3.5 " />
                   </button>
                   <span className="min-w-[2.5rem] text-center text-xs font-bold text-stone-900">
                     {quantity}
@@ -244,7 +244,7 @@ export default function ProductDetail() {
                     className="flex h-10 w-10 items-center justify-center text-stone-600 hover:bg-stone-200 rounded-r-xl transition-colors active:scale-95"
                     aria-label="Increase quantity"
                   >
-                    <Plus className="h-3.5 h-3.5" />
+                    <Plus className="h-3.5 " />
                   </button>
                 </div>
               </div>

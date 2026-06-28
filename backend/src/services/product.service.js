@@ -15,9 +15,9 @@ async function createProduct(productData) {
       description: productData.description,
       price: productData.price,
       discountedPrice: productData.discountedPrice,
-      discountPercent: productData.discountPercent, // ✅ Fixed spelling (c instead of s)
+      discountPercent: productData.discountPercent, // 
       quantity: productData.quantity,
-      imageUrl: productData.imageUrl, // ✅ Fixed spelling (imageUrl)
+      imageUrl: productData.imageUrl, // 
       category: category._id,
     });
 
@@ -34,7 +34,7 @@ async function findProductById(productId) {
     const product = await Product.findById(productId)
       .populate("category")
       .populate("reviews")
-      .populate("ratings"); // ✅ Fixed: "ratings" (with 's' to match schema)
+      .populate("ratings"); 
 
     if (!product) {
       throw new Error(`Product not found with id: ${productId}`);
@@ -46,13 +46,13 @@ async function findProductById(productId) {
   }
 }
 
-// ✅ Changed function name from getAllProducts to findAllProducts to match controller
+
 async function findAllProducts() {
   try {
     const products = await Product.find()
       .populate("category")
       .populate("reviews")
-      .populate("ratings"); // ✅ Fixed: "ratings"
+      .populate("ratings"); 
 
     return products;
   } catch (error) {
@@ -69,9 +69,9 @@ async function updateProduct(productId, reqData) {
     product.description = reqData.description || product.description;
     product.price = reqData.price || product.price;
     product.discountedPrice = reqData.discountedPrice || product.discountedPrice;
-    product.discountPercent = reqData.discountPercent || product.discountPercent; // ✅ Fixed spelling
+    product.discountPercent = reqData.discountPercent || product.discountPercent;
     product.quantity = reqData.quantity || product.quantity;
-    product.imageUrl = reqData.imageUrl || product.imageUrl; // ✅ Fixed spelling
+    product.imageUrl = reqData.imageUrl || product.imageUrl; 
 
     if (reqData.category) {
       const category = await Category.findById(reqData.category);
@@ -111,7 +111,7 @@ async function findProductsByCategory(categoryId) {
 module.exports = {
   createProduct,
   findProductById,
-  findAllProducts, // ✅ Sahi naam export kar diya
+  findAllProducts, 
   updateProduct,
   deleteProduct,
   findProductsByCategory,

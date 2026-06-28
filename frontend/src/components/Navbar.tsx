@@ -27,9 +27,7 @@ import {
 
 import { useApp } from '../context/AppContext';
 
-
 const languages = ['English', 'Hindi', 'Marathi'];
-
 
 const navItems = [
   { name: 'Home', path: '/' },
@@ -45,6 +43,22 @@ function isNavActive(pathname: string, path: string) {
   }
   return pathname === path;
 }
+
+// 🌟 Strict TypeScript Interface for Categories to resolve type errors
+interface SareeCategory {
+  slug: string;
+  name: string;
+  filterId: string;
+}
+
+const sareeCategories: SareeCategory[] = [
+  { slug: 'mulmul-cotton', name: 'Mulmul Cotton Sarees', filterId: 'mulmul_cotton' },
+  { slug: 'cotton-handblock', name: 'Cotton HandBlock Sarees', filterId: 'cotton_handblock' },
+  { slug: 'cotton-linen', name: 'Cotton Linen Saree', filterId: 'cotton_linen' },
+  { slug: 'maheshwari-silk', name: 'Maheshwari Silk Saree', filterId: 'maheshwari_silk' },
+  { slug: 'kota-doria-silk', name: 'Kota Doria Silk', filterId: 'kota_doria' },
+  { slug: 'chanderi-silk', name: 'Chanderi Silk Saree', filterId: 'chanderi_silk' },
+];
 
 export default function Navbar() {
   const location = useLocation();
@@ -71,89 +85,85 @@ export default function Navbar() {
   const lastScrollYRef = useRef(0);
   const [showNavbar, setShowNavbar] = useState(true);
 
+  useEffect(() => {
+    let inactivityTimer: ReturnType<typeof setTimeout>;
 
-useEffect(() => {
-  let inactivityTimer: ReturnType<typeof setTimeout>;
+    const closeDropdowns = () => {
+      setIsSareesOpen(false);
+      setIsProfileOpen(false);
+      setIsLangOpen(false);
+    };
 
-  const closeDropdowns = () => {
-    setIsSareesOpen(false);
-    setIsProfileOpen(false);
-    setIsLangOpen(false);
-  };
+    const hideNavbar = () => {
+      setShowNavbar(false);
+      closeDropdowns();
+    };
 
-  const hideNavbar = () => {
-    setShowNavbar(false);
-    closeDropdowns();
-  };
+    const showNavbarFn = () => {
+      setShowNavbar(true);
+    };
 
-  const showNavbarFn = () => {
-    setShowNavbar(true);
-  };
+    const resetTimer = () => {
+      clearTimeout(inactivityTimer);
 
-  const resetTimer = () => {
-    clearTimeout(inactivityTimer);
+      inactivityTimer = setTimeout(() => {
+        if (window.scrollY > 150) {
+          hideNavbar();
+        }
+      }, 4000);
+    };
 
-    inactivityTimer = setTimeout(() => {
-      if (window.scrollY > 150) {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const previousScrollY = lastScrollYRef.current;
+
+      if (currentScrollY < 80) {
+        showNavbarFn();
+      } else if (currentScrollY > previousScrollY + 5) {
         hideNavbar();
+      } else if (currentScrollY < previousScrollY - 5) {
+        showNavbarFn();
       }
-    }, 4000);
-  };
 
-  const handleScroll = () => {
-    const currentScrollY = window.scrollY;
-    const previousScrollY = lastScrollYRef.current;
+      lastScrollYRef.current = currentScrollY;
+      resetTimer();
+    };
 
-    if (currentScrollY < 80) {
-      showNavbarFn();
-    } else if (currentScrollY > previousScrollY + 5) {
-      hideNavbar();
-    } else if (currentScrollY < previousScrollY - 5) {
-      showNavbarFn();
-    }
+    const handleMouseMove = (e: MouseEvent) => {
+      if (e.clientY <= 80) {
+        showNavbarFn();
+        resetTimer();
+      }
+    };
 
-    lastScrollYRef.current = currentScrollY;
-    resetTimer();
-  };
-
-  const handleMouseMove = (e: MouseEvent) => {
-    if (e.clientY <= 80) {
+    const handleActivity = () => {
       showNavbarFn();
       resetTimer();
-    }
-  };
+    };
 
-  const handleActivity = () => {
-    showNavbarFn();
+    window.addEventListener('scroll', handleScroll, {
+      passive: true,
+    });
+
+    window.addEventListener('mousemove', handleMouseMove);
+
+    window.addEventListener('touchstart', handleActivity, {
+      passive: true,
+    });
+
+    window.addEventListener('keydown', handleActivity);
+
     resetTimer();
-  };
 
-  window.addEventListener('scroll', handleScroll, {
-    passive: true,
-  });
+    return () => {
+      clearTimeout(inactivityTimer);
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('touchstart', handleActivity);
+      window.removeEventListener('keydown', handleActivity);
+    };
+  }, []);
 
-  window.addEventListener('mousemove', handleMouseMove);
-
-  window.addEventListener('touchstart', handleActivity, {
-    passive: true,
-  });
-
-  window.addEventListener('keydown', handleActivity);
-
-  resetTimer();
-
-  return () => {
-    clearTimeout(inactivityTimer);
-
-    window.removeEventListener('scroll', handleScroll);
-
-    window.removeEventListener('mousemove', handleMouseMove);
-
-    window.removeEventListener('touchstart', handleActivity);
-
-    window.removeEventListener('keydown', handleActivity);
-  };
-}, []);
   const closeAllMenus = useCallback(() => {
     setIsMenuOpen(false);
     setIsSareesOpen(false);
@@ -174,7 +184,6 @@ useEffect(() => {
     closeAllMenus();
   };
 
-  // Improved Click Outside Tracing Strategy
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Node;
@@ -231,7 +240,7 @@ useEffect(() => {
               </div>
             </Link>
 
-            {/* DESKTOP DESCRIPTIVE SECTIONS */}
+            {/* DESKTOP NAV ITEMS */}
             <div className="hidden lg:flex items-center gap-2">
               {navItems.map((item) => (
                 <div key={item.name} className="relative">
@@ -253,47 +262,54 @@ useEffect(() => {
                       >
                         {item.name}
                         <ChevronDown
-                          className={`w-3.5 h-3.5 opacity-60 transition-transform duration-300 ${isSareesOpen ? 'rotate-180' : ''
-                            }`}
+                          className={`w-3.5 h-3.5 opacity-60 transition-transform duration-300 ${isSareesOpen ? 'rotate-180' : ''}`}
                         />
                       </button>
 
                       {/* STABLE DROP DOWN ROW GRID */}
                       {isSareesOpen && (
                         <div className="absolute top-full left-0 lg:left-1/2 lg:-translate-x-1/2 pt-2 z-50">
-                          <div className="w-[460px] max-w-[90vw] rounded-2xl bg-white shadow-2xl border border-stone-200 p-6">
-                          <div className="grid grid-cols-2 gap-6 text-left">
-                          <div className="space-y-2">
-                            <h4 className="text-[10px] uppercase tracking-widest text-amber-700 font-bold border-b border-stone-100 pb-1 mb-2">
-                              Silk Collection
-                            </h4>
-                            <Link to="/sarees/maheshwari-silk" className="block text-xs font-medium text-neutral-900 hover:text-amber-800 py-0.5 transition-colors">
-                              Maheshwari Silk Saree
-                            </Link>
-                            <Link to="/sarees/kota-doria" className="block text-xs font-semibold text-amber-800 py-0.5 transition-colors">
-                              Kota Doria Silk
-                            </Link>
-                            <Link to="/sarees/chanderi-bagru" className="block text-xs text-neutral-700 hover:text-black py-0.5 transition-colors">
-                              Chanderi Silk Saree
-                            </Link>
-                          </div>
+                          <div className="w-[520px] max-w-[90vw] rounded-2xl bg-white shadow-2xl border border-stone-200 p-6">
+                            <div className="grid grid-cols-2 gap-6 text-left">
+                              
+                              <div className="space-y-2">
+                                <h4 className="text-[10px] uppercase tracking-widest text-amber-700 font-bold border-b border-stone-100 pb-1 mb-2">
+                                  Silk Masterpieces
+                                </h4>
+                                {sareeCategories
+                                  .filter((c: SareeCategory) => c.slug.includes('silk') || c.slug.includes('doria'))
+                                  .map((cat: SareeCategory) => (
+                                    <Link 
+                                      key={cat.slug} 
+                                      to={`/sarees/${cat.slug}`} 
+                                      className="block text-xs font-medium text-neutral-700 hover:text-amber-800 py-0.5 transition-colors"
+                                    >
+                                      {cat.name}
+                                    </Link>
+                                  ))
+                                }
+                              </div>
 
-                          <div className="space-y-2">
-                            <h4 className="text-[10px] uppercase tracking-widest text-amber-700 font-bold border-b border-stone-100 pb-1 mb-2">
-                              Cotton Collection
-                            </h4>
-                            <Link to="/sarees/cotton-mulmul" className="block text-xs text-neutral-700 hover:text-black py-0.5 transition-colors">
-                               Cotton MulMul Sarees
-                            </Link>
-                            <Link to="/sarees/handblock" className="block text-xs text-neutral-700 hover:text-black py-0.5 transition-colors">
-                              HandBlock Sarees
-                            </Link>
-                            <Link to="/sarees/linen-cotton" className="block text-xs text-neutral-700 hover:text-black py-0.5 transition-colors">
-                              Cotton Linen Saree
-                            </Link>
+                              <div className="space-y-2">
+                                <h4 className="text-[10px] uppercase tracking-widest text-amber-700 font-bold border-b border-stone-100 pb-1 mb-2">
+                                  Cotton Legacies
+                                </h4>
+                                {sareeCategories
+                                  .filter((c: SareeCategory) => c.slug.includes('cotton') || c.slug.includes('mulmul') || c.slug.includes('handblock'))
+                                  .map((cat: SareeCategory) => (
+                                    <Link 
+                                      key={cat.slug} 
+                                      to={`/sarees/${cat.slug}`} 
+                                      className="block text-xs text-neutral-700 hover:text-black py-0.5 transition-colors"
+                                    >
+                                      {cat.name}
+                                    </Link>
+                                  ))
+                                }
+                              </div>
+
+                            </div>
                           </div>
-                          </div>
-                        </div>
                         </div>
                       )}
                     </div>
@@ -314,8 +330,6 @@ useEffect(() => {
 
             {/* UTILITY CONTROL RACK */}
             <div className="hidden lg:flex items-center gap-3">
-
-              {/* COMPACT SEARCH BAR */}
               <form onSubmit={handleSearch} className="relative">
                 <input
                   type="search"
@@ -329,7 +343,6 @@ useEffect(() => {
                 </button>
               </form>
 
-              {/* LOCALIZATION DRAWER */}
               <div className="relative" ref={langRef}>
                 <button
                   onClick={() => setIsLangOpen((prev) => !prev)}
@@ -348,8 +361,7 @@ useEffect(() => {
                           setSelectedLang(lang);
                           setIsLangOpen(false);
                         }}
-                        className={`w-full text-left px-3 py-1.5 rounded-lg text-xs transition-colors ${selectedLang === lang ? 'bg-neutral-900 text-white' : 'text-neutral-700 hover:bg-stone-100'
-                          }`}
+                        className={`w-full text-left px-3 py-1.5 rounded-lg text-xs transition-colors ${selectedLang === lang ? 'bg-neutral-900 text-white' : 'text-neutral-700 hover:bg-stone-100'}`}
                       >
                         {lang}
                       </button>
@@ -358,12 +370,10 @@ useEffect(() => {
                 )}
               </div>
 
-              {/* WISHLIST BUTTON */}
               <Link to="/wishlist" className="w-9 h-9 rounded-full border border-stone-300 flex items-center justify-center text-neutral-700 hover:text-red-500 hover:bg-stone-50 transition-colors" aria-label="Wishlist">
                 <Heart className="w-4 h-4" />
               </Link>
 
-              {/* CART CHIP BUTTON */}
               <Link to="/cart" className="relative w-9 h-9 rounded-full bg-neutral-900 text-white flex items-center justify-center hover:bg-neutral-800 transition-colors shadow-sm" aria-label="Cart">
                 <ShoppingBag className="w-4 h-4" />
                 {cartCount > 0 && (
@@ -373,7 +383,6 @@ useEffect(() => {
                 )}
               </Link>
 
-              {/* ACCOUNT GATE PANELS */}
               <div className="relative" ref={profileRef}>
                 <button
                   onClick={() => setIsProfileOpen((prev) => !prev)}
@@ -399,12 +408,8 @@ useEffect(() => {
                       </>
                     ) : (
                       <>
-                        <Link to="/login" className="block w-full text-center py-2 text-xs font-medium text-neutral-900 hover:bg-stone-100 rounded-lg transition-colors">
-                          Login
-                        </Link>
-                        <Link to="/signup" className="block w-full text-center py-2 text-xs font-bold bg-neutral-900 text-white hover:bg-neutral-800 rounded-lg transition-all">
-                          Sign Up
-                        </Link>
+                        <Link to="/login" className="block w-full text-center py-2 text-xs font-medium text-neutral-900 hover:bg-stone-100 rounded-lg transition-colors">Log In</Link>
+                        <Link to="/signup" className="block w-full text-center py-2 text-xs font-bold bg-neutral-900 text-white hover:bg-neutral-800 rounded-lg transition-all">Sign Up</Link>
                       </>
                     )}
                   </div>
@@ -412,12 +417,11 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* MOBILE INTERACTION HUD LAYOUT */}
+            {/* MOBILE INTERACTION HUD */}
             <div className="lg:hidden flex items-center gap-2">
               <Link to="/wishlist" className="w-9 h-9 rounded-full border border-stone-300 flex items-center justify-center text-neutral-700 hover:text-red-500 transition-colors" aria-label="Wishlist">
                 <Heart className="w-4 h-4" />
               </Link>
-
               <Link to="/cart" className="relative w-9 h-9 rounded-full bg-neutral-900 text-white flex items-center justify-center hover:bg-neutral-800 transition-colors" aria-label="Cart">
                 <ShoppingBag className="w-4 h-4" />
                 {cartCount > 0 && (
@@ -426,7 +430,6 @@ useEffect(() => {
                   </span>
                 )}
               </Link>
-
               <button
                 onClick={() => setIsMenuOpen((prev) => !prev)}
                 className="w-9 h-9 rounded-lg bg-neutral-900 text-white flex items-center justify-center active:scale-95 transition-transform"
@@ -454,11 +457,12 @@ useEffect(() => {
                         </button>
                         {isMobileSareesOpen && (
                           <div className="pl-3 py-1 space-y-1 mt-1 bg-stone-50 rounded-lg">
-                            <Link to="/sarees" onClick={closeAllMenus} className="block py-1.5 text-xs font-medium text-black">View All</Link>
-                            <Link to="/sarees?q=New" onClick={closeAllMenus} className="block py-1.5 text-xs font-semibold text-amber-800">New Launches ✦</Link>
-                            <Link to="/sarees?q=Cotton" onClick={closeAllMenus} className="block py-1.5 text-xs text-neutral-600">Cotton Sarees</Link>
-                            <Link to="/sarees?q=Hand+Block" onClick={closeAllMenus} className="block py-1.5 text-xs text-neutral-600">Hand Block</Link>
-                            <Link to="/sarees?q=Bagru" onClick={closeAllMenus} className="block py-1.5 text-xs text-neutral-600">Bagru Mud-Resist</Link>
+                            <Link to="/sarees" onClick={closeAllMenus} className="block py-1.5 text-xs font-semibold text-black">View All Collections</Link>
+                            {sareeCategories.map((cat: SareeCategory) => (
+                              <Link key={cat.slug} to={`/sarees/${cat.slug}`} onClick={closeAllMenus} className="block py-1.5 text-xs text-neutral-600">
+                                {cat.name}
+                              </Link>
+                            ))}
                           </div>
                         )}
                       </div>
@@ -471,31 +475,15 @@ useEffect(() => {
                 ))}
               </div>
 
-              {/* MOBILE ACCOUNT HOOKS */}
               <div className="pt-2">
                 {isLoggedIn ? (
-                  <button
-                    onClick={handleLogout}
-                    className="w-full py-2 rounded-xl border border-red-200 text-xs font-medium text-red-600 text-center transition-colors"
-                  >
+                  <button onClick={handleLogout} className="w-full py-2 rounded-xl border border-red-200 text-xs font-medium text-red-600 text-center">
                     Logout ({userName})
                   </button>
                 ) : (
                   <div className="grid grid-cols-2 gap-2">
-                    <Link
-                      to="/login"
-                      onClick={closeAllMenus}
-                      className="py-2 border border-stone-200 rounded-xl text-center text-xs text-neutral-900 bg-stone-50"
-                    >
-                      Login
-                    </Link>
-                    <Link
-                      to="/signup"
-                      onClick={closeAllMenus}
-                      className="py-2 rounded-xl text-center text-xs font-bold bg-neutral-900 text-white"
-                    >
-                      Sign Up
-                    </Link>
+                    <Link to="/login" onClick={closeAllMenus} className="py-2 border border-stone-200 rounded-xl text-center text-xs text-neutral-900 bg-stone-50">Log In</Link>
+                    <Link to="/signup" onClick={closeAllMenus} className="py-2 rounded-xl text-center text-xs font-bold bg-neutral-900 text-white">Sign Up</Link>
                   </div>
                 )}
               </div>

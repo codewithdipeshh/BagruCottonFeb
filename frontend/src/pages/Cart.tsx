@@ -1,31 +1,29 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { 
   Minus, 
   Plus, 
   Trash2, 
   Gift, 
   Lock, 
-  ArrowRight, 
   Check, 
   Sparkles, 
   ShoppingBag,
   Percent
 } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+
+import { getCart, removeCartItem, updateCartItem } from '../State/Cart/Action'; 
 
 function formatPrice(price: number) {
-  return `₹${price.toLocaleString('en-IN')}`;
+  return `₹${(price || 0).toLocaleString('en-IN')}`;
 }
 
 export default function Cart() {
-  const {
-    cartItems,
-    cartCount,
-    removeFromCart,
-    updateQuantity,
-    clearCart,
-  } = useApp();
+  const dispatch = useDispatch<any>();
+  
+    // 🌟 Redux State se Cart data fetch karein
+  const { cart, loading } = useSelector((state: any) => state.cart);
 
   const [isGiftWrapSelected, setIsGiftWrapSelected] = useState(false);
   const [promoCode, setPromoCode] = useState('');
@@ -34,10 +32,22 @@ export default function Cart() {
   const [promoSuccess, setPromoSuccess] = useState('');
   const [checkoutNotice, setCheckoutNotice] = useState('');
 
-  const rawSubtotal = useMemo(
-    () => cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0),
-    [cartItems]
-  );
+  // 🌟 Page Mount hote hi database se dynamic cart load karein
+  useEffect(() => {
+    dispatch(getCart());
+  }, [dispatch]);
+
+  // 🌟 Backend Data safely arrays extract karne ke liye safe check
+  const cartItems = cart?.cartItems || [];
+  const cartCount = cartItems.reduce((acc: number, item: any) => acc + item.quantity, 0);
+
+  // 🌟 Subtotal calculation via Database elements
+  const rawSubtotal = useMemo(() => {
+    return cartItems.reduce((acc: number, item: any) => {
+      const price = item.product?.price || 0;
+      return acc + price * item.quantity;
+    }, 0);
+  }, [cartItems]);
 
   const discountAmount = useMemo(
     () => Math.round(rawSubtotal * appliedDiscount),
@@ -46,8 +56,26 @@ export default function Cart() {
 
   const giftWrappingCost = isGiftWrapSelected ? 1200 : 0;
   const complimentaryTax = Math.round((rawSubtotal - discountAmount) * 0.05);
-  const finalAtelierTotal =
-    rawSubtotal - discountAmount + giftWrappingCost + complimentaryTax;
+  
+  // 🌟 Agar backend directly total bhejta hai toh cart.totalPrice use kar sakte hain
+  // Varna automatic calculated ledger total:
+  const finalAtelierTotal = rawSubtotal - discountAmount + giftWrappingCost + complimentaryTax;
+
+  // 🌟 Quantity Update Control Logic
+  const handleUpdateQuantity = (cartItemId: string, currentQuantity: number, step: number) => {
+    const newQuantity = currentQuantity + step;
+    if (newQuantity >= 1) {
+      dispatch(updateCartItem({
+        cartItemId,
+        data: { quantity: newQuantity }
+      }));
+    }
+  };
+
+  // 🌟 Item Remove Trigger
+  const handleRemoveItem = (cartItemId: string) => {
+    dispatch(removeCartItem(cartItemId));
+  };
 
   const handleApplyPromo = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +94,17 @@ export default function Cart() {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center font-serif text-stone-600">
+        <div className="text-center space-y-3">
+          <Sparkles className="w-6 h-6 animate-spin text-[#F7DA96] mx-auto" />
+          <p className="text-xs uppercase tracking-[0.2em]">Curating Your Drape Archive...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#FAF9F6] pt-12 pb-24 select-none font-sans text-stone-900 antialiased">
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
@@ -79,15 +118,6 @@ export default function Cart() {
             <h1 className="text-4xl sm:text-5xl font-serif font-light text-stone-950 tracking-wide">
               Your Exhibition Bag
             </h1>
-            {cartCount > 0 && (
-              <button
-                type="button"
-                onClick={clearCart}
-                className="text-[10px] font-bold uppercase tracking-widest text-stone-400 hover:text-[#F7DA96] transition-colors py-1 self-start md:self-auto border-b border-transparent hover:border-[#F7DA96]"
-              >
-                Relinquish All Items
-              </button>
-            )}
           </div>
         </div>
 
@@ -116,17 +146,17 @@ export default function Cart() {
             
             {/* Left Side: Items & Packaging details */}
             <div className="lg:col-span-8 space-y-6">
-              {cartItems.map((item) => (
+              {cartItems.map((item: any) => (
                 <div
-                  key={item.id}
+                  key={item._id}
                   className="bg-white border border-stone-200 rounded-3xl p-5 sm:p-6 flex flex-col sm:flex-row gap-6 shadow-[0_12px_32px_-18px_rgba(26,26,26,0.08)] hover:shadow-[0_20px_40px_-15px_rgba(247,218,150,0.12)] transition-all duration-500 hover:border-[#F7DA96]/30 text-left"
                 >
                   {/* Item Image Stage */}
                   <div className="w-full sm:w-28 h-36 rounded-2xl overflow-hidden border border-stone-100 flex-shrink-0 bg-stone-50 relative">
                     <div className="absolute inset-1.5 border border-[#F7DA96]/10 rounded-xl pointer-events-none z-10" />
                     <img
-                      src={item.image}
-                      alt={item.name}
+                      src={item.product?.images?.[0] || 'https://images.pexels.com/photos/7679720/pexels-photo-7679720.jpeg'}
+                      alt={item.product?.name}
                       className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
                     />
                   </div>
@@ -137,24 +167,24 @@ export default function Cart() {
                       <div className="flex items-start justify-between gap-4">
                         <div>
                           <span className="text-[10px] uppercase tracking-widest text-[#F7DA96] font-bold">
-                            {item.fabric ?? 'Handloom Heritage'}
+                            {item.product?.fabric ?? 'Handloom Heritage'}
                           </span>
                           <h3 className="font-serif text-lg text-stone-900 font-light tracking-wide mt-1">
-                            {item.name}
+                            {item.product?.name}
                           </h3>
                         </div>
                         <button
                           type="button"
-                          onClick={() => removeFromCart(item.id)}
+                          onClick={() => handleRemoveItem(item._id)}
                           className="p-2 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all duration-300"
                           title="Relinquish Item"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
-                      {item.description && (
+                      {item.product?.description && (
                         <p className="text-xs text-stone-500 font-sans font-light mt-2 italic line-clamp-2">
-                          {item.description}
+                          {item.product.description}
                         </p>
                       )}
                     </div>
@@ -164,7 +194,7 @@ export default function Cart() {
                       <div className="inline-flex items-center rounded-xl border border-stone-200 bg-stone-50 p-1">
                         <button
                           type="button"
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          onClick={() => handleUpdateQuantity(item._id, item.quantity, -1)}
                           className="flex h-8 w-8 items-center justify-center text-stone-500 hover:text-black hover:bg-stone-200 rounded-lg transition-all"
                           aria-label="Decrease quantity"
                         >
@@ -175,7 +205,7 @@ export default function Cart() {
                         </span>
                         <button
                           type="button"
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => handleUpdateQuantity(item._id, item.quantity, 1)}
                           className="flex h-8 w-8 items-center justify-center text-stone-500 hover:text-black hover:bg-stone-200 rounded-lg transition-all"
                           aria-label="Increase quantity"
                         >
@@ -185,7 +215,7 @@ export default function Cart() {
                       
                       {/* Item Total Price */}
                       <p className="text-lg font-serif font-light text-stone-900 tracking-wide">
-                        {formatPrice(item.price * item.quantity)}
+                        {formatPrice((item.product?.price || 0) * item.quantity)}
                       </p>
                     </div>
                   </div>
@@ -322,7 +352,7 @@ export default function Cart() {
                   Secure Checkout
                 </button>
                 {checkoutNotice && (
-                  <p className="text-[10px] text-center text-emerald-700 font-sans mt-3">
+                  <p className="text-box text-center text-emerald-700 font-sans mt-3">
                     {checkoutNotice}
                   </p>
                 )}
@@ -331,7 +361,7 @@ export default function Cart() {
                 </p>
               </div>
 
-              {/* Sandbox Coupon Helper info badge */}
+              {/* Sandbox Coupon Helper */}
               <div className="mt-6 p-4 bg-[#F7DA96]/10 border border-[#F7DA96]/20 rounded-2xl text-[10px] text-stone-600 font-sans leading-relaxed">
                 <span className="font-bold text-stone-900 uppercase block mb-1">Patron Sandbox Invitation Cards</span>
                 Apply <strong className="text-stone-950 font-bold">JAIPUR10</strong> for a 10% appreciation credit or <strong className="text-stone-950 font-bold">ROYALDRAFT</strong> for a 15% luxury VIP draft credit!
