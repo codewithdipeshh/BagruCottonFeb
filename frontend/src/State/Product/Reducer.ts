@@ -8,10 +8,10 @@ import {
 } from './ActionType';
 
 const initialState = {
-  products: [],         // Saari sarees ka array list karne ke liye
-  product: null,        // Single product detail page ke liye
-  loading: false,       // Loading state skeleton animations ke liye
-  error: null           // Error storage
+  products: [],         
+  product: null,        
+  loading: false,       
+  error: null           
 };
 
 export const customerProductReducer = (state = initialState, action: any) => {
@@ -28,7 +28,7 @@ export const customerProductReducer = (state = initialState, action: any) => {
       return { 
         ...state, 
         loading: false, 
-        products: action.payload, // Database data updated globally
+        products: action.payload || [], 
         error: null 
       };
 
@@ -36,7 +36,7 @@ export const customerProductReducer = (state = initialState, action: any) => {
       return { 
         ...state, 
         loading: false, 
-        product: action.payload, // Single saree item updated
+        product: action.payload, 
         error: null 
       };
 

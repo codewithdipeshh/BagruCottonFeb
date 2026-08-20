@@ -8,15 +8,14 @@ import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import { Minus, Plus, X } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import type { SareeProduct } from '../types/product';
 
 type QuickViewModalProps = {
-  product: SareeProduct | null;
+  product: any;
   onClose: () => void;
 };
 
 function formatPrice(price: number) {
-  return `Rs. ${price.toLocaleString('en-IN')}`;
+  return `₹${(price || 0).toLocaleString('en-IN')}`;
 }
 
 export default function QuickViewModal({
@@ -78,10 +77,10 @@ export default function QuickViewModal({
 
   if (!product) return null;
 
-  const images = product.images.length > 0 ? product.images : [''];
+  const images = product.images && product.images.length > 0 ? product.images : [''];
   const thumbnails = images
-    .map((image, index) => ({ image, index }))
-    .filter((item) => item.index !== selectedImage)
+    .map((image: string, index: number) => ({ image, index }))
+    .filter((item: any) => item.index !== selectedImage)
     .slice(0, 3);
 
   const handleBackdropClick = (event: MouseEvent<HTMLDivElement>) => {
@@ -108,7 +107,7 @@ export default function QuickViewModal({
     >
       <div
         ref={panelRef}
-        className="quick-view-panel relative flex h-full w-full flex-col overflow-y-auto bg-luxury-ivory shadow-2xl outline-none md:h-auto md:max-h-[90vh] md:max-w-5xl md:rounded-lg md:grid md:grid-cols-[1.05fr_0.95fr]"
+        className="quick-view-panel relative flex h-full w-full flex-col overflow-y-auto bg-stone-50 shadow-2xl outline-none md:h-auto md:max-h-[90vh] md:max-w-5xl md:rounded-lg md:grid md:grid-cols-[1.05fr_0.95fr]"
         role="dialog"
         aria-modal="true"
         aria-labelledby="quick-view-title"
@@ -117,17 +116,17 @@ export default function QuickViewModal({
           ref={closeButtonRef}
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-luxury-black shadow-md transition-colors duration-300 hover:bg-luxury-black hover:text-white"
+          className="absolute right-4 top-4 z-30 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 text-stone-900 shadow-md transition-colors duration-300 hover:bg-stone-900 hover:text-white"
           aria-label="Close quick view"
         >
           <X className="h-4 w-4" />
         </button>
 
-        <div className="bg-luxury-cream p-4 sm:p-6">
+        <div className="bg-stone-100 p-4 sm:p-6">
           <div className="relative aspect-[3/4] overflow-hidden rounded bg-white">
-            {images.map((image, index) => (
+            {images.map((image: string, index: number) => (
               <img
-                key={`${product.id}-main-${index}`}
+                key={`${product._id || product.id}-main-${index}`}
                 src={image}
                 alt={`${product.name} view ${index + 1}`}
                 className={`quick-view-image absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${
@@ -138,12 +137,12 @@ export default function QuickViewModal({
           </div>
 
           <div className="mt-3 grid grid-cols-3 gap-3">
-            {thumbnails.map((thumb) => (
+            {thumbnails.map((thumb: any) => (
               <button
-                key={`${product.id}-thumb-${thumb.index}`}
+                key={`${product._id || product.id}-thumb-${thumb.index}`}
                 type="button"
                 onClick={() => setSelectedImage(thumb.index)}
-                className="aspect-[3/4] overflow-hidden rounded border border-luxury-gold/25 bg-white transition-all duration-300 hover:border-luxury-black"
+                className="aspect-[3/4] overflow-hidden rounded border border-stone-200 bg-white transition-all duration-300 hover:border-stone-900"
                 aria-label={`Show ${product.name} image ${thumb.index + 1}`}
               >
                 <img
@@ -156,52 +155,57 @@ export default function QuickViewModal({
           </div>
         </div>
 
-        <div className="flex flex-1 flex-col justify-between p-6 sm:p-8">
+        <div className="flex flex-1 flex-col justify-between p-6 sm:p-8 text-left bg-white">
           <div>
-            <span className="inline-flex rounded bg-luxury-gold/15 px-3 py-1 text-[10px] font-bold uppercase tracking-luxury text-luxury-clay">
-              {product.fabric}
+            <span className="inline-flex rounded bg-stone-900 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#F7DA96]">
+              {product.tag || 'Certified Handloom'}
             </span>
             <h2
               id="quick-view-title"
-              className="mt-4 font-serif text-3xl font-medium leading-tight tracking-wide text-luxury-black sm:text-4xl"
+              className="mt-4 font-serif text-3xl font-medium leading-tight tracking-wide text-stone-900 sm:text-4xl uppercase"
             >
               {product.name}
             </h2>
             <div className="mt-3 flex flex-wrap items-baseline gap-3">
-              <span className="text-2xl font-semibold text-luxury-black">
-                {formatPrice(product.price)}
+              <span className="text-2xl font-semibold text-stone-900">
+                {formatPrice(product.discountedPrice)}
               </span>
-              {product.originalPrice && (
-                <span className="text-sm font-light text-luxury-charcoal/45 line-through">
-                  {formatPrice(product.originalPrice)}
-                </span>
+              {product.price && product.discountedPrice < product.price && (
+                <>
+                  <span className="text-sm font-light text-stone-400 line-through">
+                    {formatPrice(product.price)}
+                  </span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-red-500 bg-red-50 px-2 py-0.5 rounded-md">
+                    Save {product.discountPercent || Math.round(((product.price - product.discountedPrice) / product.price) * 100)}%
+                  </span>
+                </>
               )}
             </div>
 
-            <p className="mt-5 text-sm font-light leading-7 text-luxury-charcoal">
-              {product.description}
+            <p className="mt-5 text-sm font-light leading-7 text-stone-600">
+              {product.philosophy}
             </p>
 
             <div className="mt-7">
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-epic text-luxury-gold">
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-[#F7DA96]">
                 Quantity
               </p>
-              <div className="inline-flex items-center rounded border border-luxury-gold/30 bg-white">
+              <div className="inline-flex items-center rounded border border-stone-200 bg-white">
                 <button
                   type="button"
                   onClick={() => setQuantity((value) => Math.max(1, value - 1))}
-                  className="flex h-11 w-11 items-center justify-center text-luxury-black transition-colors duration-300 hover:bg-luxury-cream"
+                  className="flex h-11 w-11 items-center justify-center text-stone-900 transition-colors duration-300 hover:bg-stone-100"
                   aria-label="Decrease quantity"
                 >
                   <Minus className="h-4 w-4" />
                 </button>
-                <span className="min-w-[3rem] text-center text-sm font-semibold text-luxury-black">
+                <span className="min-w-[3rem] text-center text-sm font-semibold text-stone-900">
                   {quantity}
                 </span>
                 <button
                   type="button"
                   onClick={() => setQuantity((value) => value + 1)}
-                  className="flex h-11 w-11 items-center justify-center text-luxury-black transition-colors duration-300 hover:bg-luxury-cream"
+                  className="flex h-11 w-11 items-center justify-center text-stone-900 transition-colors duration-300 hover:bg-stone-100"
                   aria-label="Increase quantity"
                 >
                   <Plus className="h-4 w-4" />
@@ -214,24 +218,26 @@ export default function QuickViewModal({
             <button
               type="button"
               onClick={handleAddToCart}
-              className="w-full rounded bg-luxury-black px-5 py-3.5 text-xs font-bold uppercase tracking-luxury text-luxury-ivory transition-colors duration-300 hover:bg-luxury-clay"
+              className="w-full rounded-xl bg-stone-950 px-5 py-4 text-xs font-bold uppercase tracking-widest text-white transition-colors duration-300 hover:bg-[#F7DA96] hover:text-black shadow-md"
             >
               Add to Cart
             </button>
             <button
               type="button"
               onClick={handleBuyNow}
-              className="w-full rounded border border-luxury-black px-5 py-3.5 text-xs font-bold uppercase tracking-luxury text-luxury-black transition-colors duration-300 hover:bg-luxury-black hover:text-luxury-ivory"
+              className="w-full rounded-xl border border-stone-900 bg-white px-5 py-4 text-xs font-bold uppercase tracking-widest text-stone-900 transition-colors duration-300 hover:bg-stone-900 hover:text-white"
             >
               Buy Now
             </button>
-            <Link
-              to={`/products/${product.id}`}
-              onClick={onClose}
-              className="inline-flex text-xs font-semibold uppercase tracking-luxury text-luxury-clay transition-colors duration-300 hover:text-luxury-black"
-            >
-              View Full Details →
-            </Link>
+            <div className="pt-2">
+              <Link
+                to={`/products/${product._id || product.id}`}
+                onClick={onClose}
+                className="inline-flex text-xs font-semibold uppercase tracking-widest text-[#F7DA96] transition-colors duration-300 hover:text-black"
+              >
+                View Full Details &rarr;
+              </Link>
+            </div>
           </div>
         </div>
       </div>

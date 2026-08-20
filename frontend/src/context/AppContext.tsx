@@ -7,8 +7,8 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { useSelector, useDispatch } from 'react-redux'; // Added Redux Hooks
-import { logout as reduxLogoutAction } from '../State/Auth/Action'; // Import your redux logout action
+import { useSelector, useDispatch } from 'react-redux'; 
+import { logout as reduxLogoutAction, getUser } from '../State/Auth/Action'; 
 import type { ProductId, SareeProduct } from '../types/product';
 
 export type CartItem = {
@@ -72,29 +72,43 @@ function persistCart(items: CartItem[]) {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const dispatch = useDispatch();
+  const dispatch = useDispatch() as any;
   
-  const { user, jwt } = useSelector((state: any) => state.auth);
+  // 🎯 Select specific fields to prevent redundant rerenders or object mismatch loops
+  const authState = useSelector((state: any) => state.auth);
+  const user = authState?.user ?? null;
+  const jwt = authState?.jwt ?? null;
+  const loading = authState?.loading ?? false;
+  const error = authState?.error ?? null;
 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-  
+  // 🎯 SECURE DYNAMIC LIFECYCLE SYNC LAYER
   useEffect(() => {
-    if (jwt && user) {
+    const hasLocalToken = localStorage.getItem("jwt");
+
+    if (user) {
+      // 1. User has successfully loaded from backend Redux store
       setIsLoggedIn(true);
-     
-      setUserName(user.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'Patron');
-    } else if (localStorage.getItem("jwt")) {
-     
+      setUserName(`${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Patron');
+    } else if (jwt || hasLocalToken) {
+      // 2. Token is present but user profile is missing from Redux (e.g. Page Reload / Redirect)
       setIsLoggedIn(true);
-      setUserName('Patron');
+      setUserName('Patron'); // Fallback placeholder while fetching details
+
+      // 🔄 TRIGGER SECURE HYBRID SYNC
+      // Only dispatch if we aren't already loading and haven't hit an API error
+      if (!loading && !error) {
+        dispatch(getUser());
+      }
     } else {
+      // 3. Clear slate logout state
       setIsLoggedIn(false);
       setUserName('');
     }
-  }, [user, jwt]);
+  }, [user, jwt, loading, error, dispatch]);
 
   useEffect(() => {
     setCartItems(readCartCount());
@@ -106,7 +120,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setUserName(trimmed);
   }, []);
 
-  
   const logout = useCallback(() => {
     setIsLoggedIn(false);
     setUserName('');

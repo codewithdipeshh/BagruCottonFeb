@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { useGoogleLogin } from '@react-oauth/google'; 
+import { useGoogleLogin } from '@react-oauth/google';
 import { register, loginWithGoogle, getUser } from '../State/Auth/Action';
 import {
   Eye,
@@ -48,7 +48,7 @@ export default function Signup() {
   const navigate = useNavigate();
   const dispatch = useDispatch() as any;
 
-  const { isLoading, error: authError, jwt } = useSelector((state: any) => state.auth);
+  const { isLoading, error: authError, jwt } = useSelector((state: any) => state.auth || { jwt: null });
 
   const [formData, setFormData] = useState<FormData>({
     name: '',
@@ -64,44 +64,22 @@ export default function Signup() {
   const [touched, setTouched] = useState<TouchedFields>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
- 
   const passwordsMatch = formData.password && formData.confirmPassword && formData.password === formData.confirmPassword;
 
   useEffect(() => {
-    const token = localStorage.getItem('jwt') || jwt;
-    if (token) {
+    if (jwt === "COOKIE_STORED" || (jwt && jwt !== "")) {
       navigate('/');
     }
   }, [jwt, navigate]);
 
- 
-  const googleLoginTrigger = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-  
-      const googleToken = tokenResponse.access_token;
-      console.log('Google Access Token Catch Ho Gaya:', googleToken);
-      
-      if (googleToken) {
-        setIsSubmitting(true);
-        try {
-          // Token ko seedhe hamare custom action pipeline me pass kar rahe hain
-          await dispatch(loginWithGoogle(googleToken));
-          
-          const freshToken = localStorage.getItem('jwt');
-          if (freshToken) {
-            await dispatch(getUser(freshToken));
-          }
-        } catch (err) {
-          console.error('Google custom layout routing failed:', err);
-        } finally {
-          setIsSubmitting(false);
-        }
-      }
-    },
-    onError: () => {
-      console.error('Google secure verification failed');
+const googleLoginTrigger = useGoogleLogin({
+  onSuccess: async (tokenResponse) => {
+    const googleToken = tokenResponse.access_token;
+    if (googleToken) {
+      await dispatch(loginWithGoogle(googleToken));
     }
-  });
+  }
+});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
@@ -204,13 +182,11 @@ export default function Signup() {
         password: formData.password.trim(),
       };
 
-      console.log('Submitting signup:', userData);
       const resultAction = await dispatch(register(userData));
 
-      if (resultAction?.type?.includes('SUCCESS') || localStorage.getItem('jwt')) {
-        console.log('Registration successful!');
-        const rawToken = localStorage.getItem('jwt');
-        if (rawToken) await dispatch(getUser(rawToken));
+      if (resultAction?.success) {
+        await dispatch(getUser());
+        navigate('/');
       }
     } catch (error) {
       console.error('Signup error:', error);
@@ -222,8 +198,7 @@ export default function Signup() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#F8F8FA] via-[#F5EFEA] to-[#E8EDF2] flex items-center justify-center px-4 py-20">
       <div className="w-full max-w-7xl grid lg:grid-cols-2 bg-white rounded-[40px] overflow-hidden shadow-[0_20px_80px_rgba(0,0,0,0.08)]">
-      
-        {/* Left Layout Branding panel */}
+
         <div className="hidden lg:flex relative bg-[#080616] p-14 flex-col justify-between overflow-hidden">
           <div className="absolute top-0 left-0 w-80 h-80 bg-white/10 rounded-full blur-3xl" />
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#D3B198]/20 rounded-full blur-3xl" />
@@ -268,7 +243,6 @@ export default function Signup() {
           </div>
         </div>
 
-        {/* Right Form Panel */}
         <div className="p-8 sm:p-12 lg:p-16 flex items-center">
           <div className="max-w-md mx-auto w-full">
             <div className="mb-10">
@@ -284,7 +258,6 @@ export default function Signup() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-              {/* Name Field */}
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
                 <div className="relative">
@@ -297,11 +270,10 @@ export default function Signup() {
                     onChange={handleChange}
                     onBlur={handleBlur}
                     placeholder="Enter your full name"
-                    className={`w-full pl-12 pr-4 py-4 bg-[#F8F8FA] border rounded-2xl focus:outline-none focus:ring-2 transition-all duration-300 ${
-                      touched.name && errors.name
-                        ? 'border-red-400 focus:ring-red-300 focus:border-red-400'
-                        : 'border-gray-200 focus:ring-[#080616]/10 focus:border-[#080616]'
-                    }`}
+                    className={`w-full pl-12 pr-4 py-4 bg-[#F8F8FA] border rounded-2xl focus:outline-none focus:ring-2 transition-all duration-300 ${touched.name && errors.name
+                      ? 'border-red-400 focus:ring-red-300 focus:border-red-400'
+                      : 'border-gray-200 focus:ring-[#080616]/10 focus:border-[#080616]'
+                      }`}
                     required
                   />
                 </div>
@@ -312,7 +284,6 @@ export default function Signup() {
                 )}
               </div>
 
-              {/* Email Field */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
                 <div className="relative">
@@ -325,11 +296,10 @@ export default function Signup() {
                     onChange={handleChange}
                     onBlur={handleBlur}
                     placeholder="Enter your email"
-                    className={`w-full pl-12 pr-4 py-4 bg-[#F8F8FA] border rounded-2xl focus:outline-none focus:ring-2 transition-all duration-300 ${
-                      touched.email && errors.email
-                        ? 'border-red-400 focus:ring-red-300 focus:border-red-400'
-                        : 'border-gray-200 focus:ring-[#080616]/10 focus:border-[#080616]'
-                    }`}
+                    className={`w-full pl-12 pr-4 py-4 bg-[#F8F8FA] border rounded-2xl focus:outline-none focus:ring-2 transition-all duration-300 ${touched.email && errors.email
+                      ? 'border-red-400 focus:ring-red-300 focus:border-red-400'
+                      : 'border-gray-200 focus:ring-[#080616]/10 focus:border-[#080616]'
+                      }`}
                     required
                   />
                 </div>
@@ -340,7 +310,6 @@ export default function Signup() {
                 )}
               </div>
 
-              {/* Password Field */}
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">Password</label>
                 <div className="relative">
@@ -354,11 +323,10 @@ export default function Signup() {
                     onBlur={handleBlur}
                     placeholder="Create password"
                     autoComplete="new-password"
-                    className={`w-full pl-12 pr-12 py-4 bg-[#F8F8FA] border rounded-2xl focus:outline-none focus:ring-2 transition-all duration-300 ${
-                      touched.password && errors.password
-                        ? 'border-red-400 focus:ring-red-300 focus:border-red-400'
-                        : 'border-gray-200 focus:ring-[#080616]/10 focus:border-[#080616]'
-                    }`}
+                    className={`w-full pl-12 pr-12 py-4 bg-[#F8F8FA] border rounded-2xl focus:outline-none focus:ring-2 transition-all duration-300 ${touched.password && errors.password
+                      ? 'border-red-400 focus:ring-red-300 focus:border-red-400'
+                      : 'border-gray-200 focus:ring-[#080616]/10 focus:border-[#080616]'
+                      }`}
                     required
                   />
                   <button
@@ -376,7 +344,6 @@ export default function Signup() {
                 )}
               </div>
 
-              {/* Confirm Password Field */}
               <div>
                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
                 <div className="relative">
@@ -390,13 +357,12 @@ export default function Signup() {
                     onBlur={handleBlur}
                     placeholder="Confirm password"
                     autoComplete="new-password"
-                    className={`w-full pl-12 pr-12 py-4 bg-[#F8F8FA] border rounded-2xl focus:outline-none focus:ring-2 transition-all duration-300 ${
-                      touched.confirmPassword && errors.confirmPassword
-                        ? 'border-red-400 focus:ring-red-300 focus:border-red-400'
-                        : formData.confirmPassword && passwordsMatch
-                          ? 'border-green-400 focus:ring-green-300 focus:border-green-400'
-                          : 'border-gray-200 focus:ring-[#080616]/10 focus:border-[#080616]'
-                    }`}
+                    className={`w-full pl-12 pr-12 py-4 bg-[#F8F8FA] border rounded-2xl focus:outline-none focus:ring-2 transition-all duration-300 ${touched.confirmPassword && errors.confirmPassword
+                      ? 'border-red-400 focus:ring-red-300 focus:border-red-400'
+                      : formData.confirmPassword && passwordsMatch
+                        ? 'border-green-400 focus:ring-green-300 focus:border-green-400'
+                        : 'border-gray-200 focus:ring-[#080616]/10 focus:border-[#080616]'
+                      }`}
                     required
                   />
                   <button
@@ -419,7 +385,6 @@ export default function Signup() {
                 )}
               </div>
 
-              {/* Terms & Conditions */}
               <label htmlFor="agree" className="flex items-start gap-3 text-sm text-gray-600 cursor-pointer group">
                 <input
                   id="agree"
@@ -443,7 +408,6 @@ export default function Signup() {
                 </p>
               )}
 
-              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={isLoading || isSubmitting}
@@ -462,7 +426,6 @@ export default function Signup() {
                 )}
               </button>
 
-              {/* Divider */}
               <div className="relative py-2">
                 <div className="absolute inset-0 flex items-center">
                   <div className="w-full border-t border-gray-200" />
@@ -472,7 +435,6 @@ export default function Signup() {
                 </div>
               </div>
 
-              
               <button
                 type="button"
                 onClick={() => googleLoginTrigger()}
@@ -484,7 +446,6 @@ export default function Signup() {
               </button>
             </form>
 
-            {/* Login Link */}
             <div className="mt-10 text-center">
               <p className="text-gray-500">
                 Already have an account?{' '}

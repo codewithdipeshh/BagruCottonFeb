@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  ArrowRight, 
-  Sparkles, 
+  ArrowRight,  
   Leaf, 
   Users, 
   Hand, 
@@ -11,30 +10,34 @@ import {
   Coins 
 } from 'lucide-react';
 
+import blockImage from '../assets/images/block.png'; 
+import Maheshwari from '../assets/images/Maheshwari.png';
+import handblock from '../assets/images/handblock.png';
+
 const heroSlides = [
   {
     id: 1,
     collection: "Atelier Sanchayan",
     title: "Crafted by Skilled Artisans",
     subtitle: "Jaipur ke dil se buna hua, paramparik summer drapes ka sacha aur suhavna anubhav.",
-    image: 'https://images.unsplash.com/photo-1583391733956-6c78276477e2?q=80&w=1600&auto=format&fit=crop',
-    link: '/sarees',
+    image: blockImage, 
+    link: '/sarees/mulmul-cotton',
   },
   {
     id: 2,
-    collection: "Sanskriti Block Prints",
-    title: "Authentic Bagru Karigari",
+    collection: "Heritage Weaves",
+    title: "Woven with Tradition",
     subtitle: "Lakdi ke blocks aur prakritik rango se bani dabu chitrakari ka behad sundar drapes.",
-    image: 'https://images.unsplash.com/photo-1618244972963-dbad68f7d884?q=80&w=1600&auto=format&fit=crop',
-    link: '/sarees',
+    image: Maheshwari,
+    link: '/sarees/maheshwari-silk',
   },
   {
     id: 3,
-    collection: "Rajshahi Silk Mishran",
-    title: "Chanderi Ke Shahkar",
+    collection: "Handblock collections",
+    title: "Handcrafted Heritage",
     subtitle: "Sone ki zari border aur shandar designs se saji drapes, har bade utsav ke liye.",
-    image: 'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?q=80&w=1600&auto=format&fit=crop',
-    link: '/sarees',
+    image: handblock,
+    link: '/sarees/cotton-handblock',
   },
 ];
 
@@ -48,7 +51,7 @@ export default function Hero() {
       setTimeout(() => {
         setCurrentSlide((prev) => (prev === heroSlides.length - 1 ? 0 : prev + 1));
         setAnimate(true);
-      }, 500); // Slide change duration
+      }, 500); 
     }, 6000);
 
     return () => clearInterval(interval);
@@ -57,13 +60,10 @@ export default function Hero() {
   return (
     <section className="relative w-full bg-neutral-950 text-white overflow-hidden flex flex-col select-none">
       
-      {/* 1. PANORAMIC ARTISAN WORKSHOP BANNER (Fits under Navbar) */}
       <div className="relative w-full h-[45vh] sm:h-[50vh] lg:h-[58vh] overflow-hidden bg-neutral-900 flex items-center justify-center">
         
-        {/* Soft elegant shadow overlays for text safety */}
         <div className="absolute inset-0 bg-black/30 z-10 pointer-events-none" />
         
-        {/* Artisan Background Image with slow dynamic scale */}
         <img
           src={heroSlides[currentSlide].image}
           alt={heroSlides[currentSlide].title}
@@ -72,25 +72,21 @@ export default function Hero() {
           }`}
         />
 
-        {/* TRANSLUCENT CRIMSON ACCENT BAR (Exactly like Crafted by Skilled Artisans) */}
         <div className="absolute left-0 right-0 z-20 flex flex-col items-center justify-center pointer-events-auto">
           <div className="bg-[#8B2635]/85 w-full py-5 sm:py-7 px-4 border-y border-[#F7DA96]/30 text-center shadow-lg backdrop-blur-[1px]">
             
-            {/* Dynamic Collection Badge above the Main title */}
             <p className={`text-[10px] uppercase tracking-[0.25em] text-[#F7DA96] font-bold font-sans mb-1.5 transition-all duration-700 ${
               animate ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1'
             }`}>
               {heroSlides[currentSlide].collection}
             </p>
 
-            {/* Main Crafted Serif Heading */}
             <h1 className={`text-2xl sm:text-4xl lg:text-5xl font-serif font-medium tracking-wide text-white leading-tight uppercase transition-all duration-700 delay-75 ${
               animate ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
             }`}>
               {heroSlides[currentSlide].title}
             </h1>
 
-            {/* Subtitle link to shop */}
             <Link 
               to={heroSlides[currentSlide].link}
               className={`inline-flex items-center gap-1.5 text-[10px] sm:text-xs text-[#F7DA96] hover:text-white uppercase tracking-wider font-bold mt-2 transition-colors ${
@@ -103,7 +99,6 @@ export default function Hero() {
           </div>
         </div>
 
-        {/* Minimal Bottom Indicator dots inside banner */}
         <div className="absolute bottom-4 z-20 flex gap-2">
           {heroSlides.map((_, index) => (
             <button
@@ -128,13 +123,11 @@ export default function Hero() {
 
       </div>
 
-      {/* 2. PREMIUM WHITE BRAND VALUE BADGES ROW (Clean look below banner) */}
       <div className="relative z-20 bg-white border-b border-stone-100 py-8 px-6">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 sm:gap-8 items-start justify-center">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 sm:gap-8 items-start justify-center text-center">
             
-            {/* Badge 1 */}
-            <div className="flex flex-col items-center text-center group">
+            <div className="flex flex-col items-center group">
               <div className="w-10 h-10 rounded-full bg-stone-50 border border-stone-100 flex items-center justify-center text-neutral-900 group-hover:bg-[#F7DA96]/20 transition-all duration-300 mb-2.5">
                 <Leaf className="w-4.5 h-4.5 text-stone-700" />
               </div>
@@ -146,8 +139,7 @@ export default function Hero() {
               </p>
             </div>
 
-            {/* Badge 2 */}
-            <div className="flex flex-col items-center text-center group">
+            <div className="flex flex-col items-center group">
               <div className="w-10 h-10 rounded-full bg-stone-50 border border-stone-100 flex items-center justify-center text-neutral-900 group-hover:bg-[#F7DA96]/20 transition-all duration-300 mb-2.5">
                 <Users className="w-4.5 h-4.5 text-stone-700" />
               </div>
@@ -159,8 +151,7 @@ export default function Hero() {
               </p>
             </div>
 
-            {/* Badge 3 */}
-            <div className="flex flex-col items-center text-center group">
+            <div className="flex flex-col items-center group">
               <div className="w-10 h-10 rounded-full bg-stone-50 border border-stone-100 flex items-center justify-center text-neutral-900 group-hover:bg-[#F7DA96]/20 transition-all duration-300 mb-2.5">
                 <Hand className="w-4.5 h-4.5 text-stone-700" />
               </div>
@@ -172,8 +163,7 @@ export default function Hero() {
               </p>
             </div>
 
-            {/* Badge 4 */}
-            <div className="flex flex-col items-center text-center group">
+            <div className="flex flex-col items-center group">
               <div className="w-10 h-10 rounded-full bg-stone-50 border border-stone-100 flex items-center justify-center text-neutral-900 group-hover:bg-[#F7DA96]/20 transition-all duration-300 mb-2.5">
                 <Scissors className="w-4.5 h-4.5 text-stone-700" />
               </div>
@@ -185,8 +175,7 @@ export default function Hero() {
               </p>
             </div>
 
-            {/* Badge 5 */}
-            <div className="flex flex-col items-center text-center group">
+            <div className="flex flex-col items-center group">
               <div className="w-10 h-10 rounded-full bg-stone-50 border border-stone-100 flex items-center justify-center text-neutral-900 group-hover:bg-[#F7DA96]/20 transition-all duration-300 mb-2.5">
                 <Heart className="w-4.5 h-4.5 text-stone-700" />
               </div>
@@ -198,8 +187,7 @@ export default function Hero() {
               </p>
             </div>
 
-            {/* Badge 6 */}
-            <div className="flex flex-col items-center text-center group">
+            <div className="flex flex-col items-center group">
               <div className="w-10 h-10 rounded-full bg-stone-50 border border-stone-100 flex items-center justify-center text-neutral-900 group-hover:bg-[#F7DA96]/20 transition-all duration-300 mb-2.5">
                 <Coins className="w-4.5 h-4.5 text-stone-700" />
               </div>

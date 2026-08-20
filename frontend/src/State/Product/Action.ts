@@ -26,7 +26,7 @@ export const findProducts = (reqData: any) => async (dispatch: Dispatch) => {
 
   try {
     const { data } = await api.get(
-      `/products?category=${category || ''}&color=${colors || ''}&minPrice=${minPrice || 0}&maxPrice=${maxPrice || 100000}&minDiscount=${minDiscount || 0}&sort=${sort || 'price_low'}&stock=${stock || ''}&pageNumber=${pageNumber || 0}&pageSize=${pageSize || 10}`
+      `/products?category=${category || ''}&color=${colors || ''}&minPrice=${minPrice || 0}&maxPrice=${maxPrice || 100000}&minDiscount=${minDiscount || 0}&sort=${sort || 'price_low'}&stock=${stock || ''}&pageNumber=${pageNumber || 0}&pageSize=${pageSize || 100}`
     );
 
     console.log("Products Fetched Successfully:", data);
@@ -44,14 +44,13 @@ export const findProducts = (reqData: any) => async (dispatch: Dispatch) => {
   }
 };
 
-
 export const findProductById = (reqData: { productId: string | number }) => async (dispatch: Dispatch) => {
   dispatch({ type: FIND_PRODUCT_BY_ID_REQUEST });
 
   try {
     const { data } = await api.get(`/products/id/${reqData.productId}`);
 
-    console.log("🔍 Single Product Detail Fetched:", data);
+    console.log("Single Product Detail Fetched:", data);
 
     dispatch({
       type: FIND_PRODUCT_BY_ID_SUCCESS,

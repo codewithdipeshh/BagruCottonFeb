@@ -47,12 +47,21 @@ async function findProductById(productId) {
 }
 
 
-async function findAllProducts() {
+async function findAllProducts(query) {
   try {
-    const products = await Product.find()
+    const { category, colors, sizes, minPrice, maxPrice, minDiscount, sort, stock, pageNumber, pageSize } = query;
+
+    let filter = {};
+
+    if (category) {
+      filter.category = category;
+    }
+
+    const products = await Product.find(filter)
       .populate("category")
       .populate("reviews")
-      .populate("ratings"); 
+      .populate("ratings")
+      .exec();
 
     return products;
   } catch (error) {

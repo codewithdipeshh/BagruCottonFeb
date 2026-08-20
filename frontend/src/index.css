@@ -9,7 +9,7 @@
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background-color: #FAF9F6; /* Luxury Off-white/Ivory backdrop */
+    background-color: #FAF9F6;
     color: #1A1A1A;
   }
 
@@ -17,12 +17,15 @@
     font-family: 'Montserrat', sans-serif;
   }
 
-  h1, h2, h3, h4, h5, h6, .font-serif-luxury {
+  h1, h2, h3, h4, h5, h6 {
     font-family: 'Cormorant Garamond', serif;
   }
 }
 
-/* Premium smooth marquee animation */
+.font-serif-luxury {
+  font-family: 'Cormorant Garamond', serif;
+}
+
 @keyframes marquee {
   0% { transform: translate3d(0, 0, 0); }
   100% { transform: translate3d(-50%, 0, 0); }
@@ -34,7 +37,6 @@
   animation: marquee 25s linear infinite;
 }
 
-/* Clean luxury scrollbar layout */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

@@ -1,6 +1,5 @@
-import axios from "axios";
 import { Dispatch } from "redux";
-import { API_BASE_URL } from "../../config/apiConfig"; 
+import { api } from "../../config/apiConfig";
 import { 
   GET_USER_FAILURE, GET_USER_REQUEST, GET_USER_SUCCESS, 
   LOGIN_FAILURE, LOGIN_REQUEST, LOGIN_SUCCESS, 
@@ -8,108 +7,107 @@ import {
   REGISTER_FAILURE, REGISTER_REQUEST, REGISTER_SUCCESS 
 } from "./ActionType";
 
-// Types Definitions
-interface AuthResponse {
-  jwt?: string;
-  [key: string]: any;
-}
+const getAuthConfig = () => {
+  const token = localStorage.getItem("jwt");
+  return token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+};
 
-// Register Actions
-const registerRequest = () => ({ type: REGISTER_REQUEST });
-const registerSuccess = (jwt: string) => ({ type: REGISTER_SUCCESS, payload: jwt });
-const registerFailure = (error: string) => ({ type: REGISTER_FAILURE, payload: error });
-
+// ================= REGISTER ACTION HANDLING =================
 export const register = (userData: any): any => async (dispatch: Dispatch) => {
-  dispatch(registerRequest());
+  dispatch({ type: REGISTER_REQUEST });
   try {
-    const response = await axios.post<AuthResponse>(`${API_BASE_URL}/auth/signup`, userData);
+    const response = await api.post(`/auth/signup`, userData);
     const data = response.data;
     
     if (data.jwt) {
       localStorage.setItem("jwt", data.jwt);
-      dispatch(registerSuccess(data.jwt));
+      localStorage.setItem("user_role", data.user?.role || "USER");
+      dispatch({ type: REGISTER_SUCCESS, payload: data.jwt });
     } else {
-      dispatch(registerFailure("Token not received"));
+      dispatch({ type: REGISTER_SUCCESS, payload: "COOKIE_STORED" });
     }
+    
+    if (data.user) {
+      dispatch({ type: GET_USER_SUCCESS, payload: data.user });
+    }
+    return { success: true };
   } catch (error: any) {
-    dispatch(registerFailure(error.response?.data?.message || error.message));
+    dispatch({ type: REGISTER_FAILURE, payload: error.response?.data?.error || error.message });
   }
 };
 
-// Login Actions
-const loginRequest = () => ({ type: LOGIN_REQUEST });
-const loginSuccess = (jwt: string) => ({ type: LOGIN_SUCCESS, payload: jwt });
-const loginFailure = (error: string) => ({ type: LOGIN_FAILURE, payload: error });
-
+// ================= STANDARD EMAIL LOGIN ACTION HANDLING =================
 export const login = (userData: any): any => async (dispatch: Dispatch) => {
-  dispatch(loginRequest());
+  dispatch({ type: LOGIN_REQUEST });
   try {
-    const response = await axios.post<AuthResponse>(`${API_BASE_URL}/auth/signin`, userData);
+    const response = await api.post(`/auth/signin`, userData);
     const data = response.data;
-    
+
     if (data.jwt) {
       localStorage.setItem("jwt", data.jwt);
-      dispatch(loginSuccess(data.jwt));
+      localStorage.setItem("user_role", data.user?.role || "USER");
+      dispatch({ type: LOGIN_SUCCESS, payload: data.jwt });
     } else {
-      dispatch(loginFailure("Token not received"));
+      dispatch({ type: LOGIN_SUCCESS, payload: "COOKIE_STORED" });
     }
+
+    if (data.user) {
+      dispatch({ type: GET_USER_SUCCESS, payload: data.user });
+    }
+    return { success: true };
   } catch (error: any) {
-    dispatch(loginFailure(error.response?.data?.message || error.message));
+    dispatch({ type: LOGIN_FAILURE, payload: error.response?.data?.error || error.message });
+    throw error;
   }
 };
 
-
-
+// ================= GOOGLE CUSTOM AUTH ACTION HANDLING =================
 export const loginWithGoogle = (googleToken: string): any => async (dispatch: Dispatch) => {
-  dispatch(loginRequest()); 
+  dispatch({ type: LOGIN_REQUEST }); 
   try {
-    console.log("Redux pipeline firing Google ID Token to backend...");
-    const response = await axios.post<AuthResponse>(`${API_BASE_URL}/auth/google`, { 
-      token: googleToken 
-    });
+    const response = await api.post(`/auth/google`, { token: googleToken });
     const data = response.data;
-    
+
     if (data.jwt) {
       localStorage.setItem("jwt", data.jwt);
-      dispatch(loginSuccess(data.jwt)); 
-      return data.jwt;
+      localStorage.setItem("user_role", data.user?.role || "USER");
+      dispatch({ type: LOGIN_SUCCESS, payload: data.jwt });
     } else {
-      dispatch(loginFailure("Google validation token missing from backend response"));
+      dispatch({ type: LOGIN_SUCCESS, payload: "COOKIE_STORED" }); 
     }
+    
+    if (data.user) {
+      dispatch({ type: GET_USER_SUCCESS, payload: data.user });
+    }
+    return { success: true };
   } catch (error: any) {
-    dispatch(loginFailure(error.response?.data?.message || error.message));
+    dispatch({ type: LOGIN_FAILURE, payload: error.response?.data?.error || error.message });
+    throw error;
   }
 };
 
-// Get User Profile Actions
-const getUserRequest = () => ({ type: GET_USER_REQUEST });
-const getUserSuccess = (user: any) => ({ type: GET_USER_SUCCESS, payload: user });
-const getUserFailure = (error: string) => ({ type: GET_USER_FAILURE, payload: error });
 
-export const getUser = (jwt: string): any => async (dispatch: Dispatch) => {
-  dispatch(getUserRequest());
+export const getUser = () => async (dispatch: Dispatch) => {
+  dispatch({ type: GET_USER_REQUEST });
   try {
-    const response = await axios.get(`${API_BASE_URL}/users/profile`, {
-      headers: {
-        "Authorization": `Bearer ${jwt}`
-      }
-    });
-    const user = response.data;
-    console.log('user', user);
-    
-    dispatch(getUserSuccess(user));
+    const response = await api.get(`/users/profile`, getAuthConfig());
+    if (response.data) {
+      localStorage.setItem("user_role", response.data.role || "USER");
+    }
+    dispatch({ type: GET_USER_SUCCESS, payload: response.data });
   } catch (error: any) {
-   
     if (error.response?.status === 401) {
       localStorage.removeItem("jwt");
+      localStorage.removeItem("user_role");
       dispatch({ type: LOGOUT, payload: null });
     }
-    dispatch(getUserFailure(error.response?.data?.message || error.message));
+    dispatch({ type: GET_USER_FAILURE, payload: error.response?.data?.error || error.message });
   }
 };
 
-// Logout Action
-export const logout = (): any => (dispatch: Dispatch) => {
+// ================= SYSTEM DE-AUTHENTICATE LOGOUT =================
+export const logout = (): any => async (dispatch: Dispatch) => {
   localStorage.removeItem("jwt");
+  localStorage.removeItem("user_role");
   dispatch({ type: LOGOUT, payload: null });
 };

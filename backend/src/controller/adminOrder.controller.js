@@ -1,5 +1,24 @@
 const orderService = require("../services/order.service");
 
+
+const getOrderAnalytics = async (req, res) => {
+    try {
+        const timeframe = req.query.timeframe || 'month'; 
+        
+        
+        const analytics = await orderService.getOrderAnalyticsMetrics(timeframe);
+        
+        return res.status(200).send({
+            success: true,
+            timeframe,
+            data: analytics
+        });
+    } catch (error) {
+        return res.status(500).send({ success: false, error: error.message });
+    }
+};
+
+
 const getAllOrders = async (req, res) => {
     try {
         const orders = await orderService.getAllOrders();
@@ -11,7 +30,6 @@ const getAllOrders = async (req, res) => {
 
 const confirmedOrders = async (req, res) => {
     const orderId = req.params.orderId;
-
     try {
         const order = await orderService.confirmedOrder(orderId);
         return res.status(200).send(order);
@@ -22,7 +40,6 @@ const confirmedOrders = async (req, res) => {
 
 const shipOrders = async (req, res) => {
     const orderId = req.params.orderId;
-
     try {
         const order = await orderService.shipOrder(orderId);
         return res.status(200).send(order);
@@ -33,7 +50,6 @@ const shipOrders = async (req, res) => {
 
 const deliverOrders = async (req, res) => {
     const orderId = req.params.orderId;
-
     try {
         const order = await orderService.deliverOrder(orderId);
         return res.status(200).send(order);
@@ -44,7 +60,6 @@ const deliverOrders = async (req, res) => {
 
 const cancelledOrders = async (req, res) => {
     const orderId = req.params.orderId;
-
     try {
         const order = await orderService.cancelledOrder(orderId);
         return res.status(200).send(order);
@@ -55,7 +70,6 @@ const cancelledOrders = async (req, res) => {
 
 const deleteOrders = async (req, res) => {
     const orderId = req.params.orderId;
-
     try {
         const order = await orderService.deleteOrder(orderId);
         return res.status(200).send(order);
@@ -65,6 +79,7 @@ const deleteOrders = async (req, res) => {
 };
 
 module.exports = {
+    getOrderAnalytics,
     getAllOrders,
     confirmedOrders,
     shipOrders,

@@ -218,7 +218,7 @@ export default function Footer() {
               <li className="flex items-center gap-3">
                 <Mail className="w-4 h-4 flex-shrink-0 text-[#F7DA96]" />
                 <span className="text-stone-300 text-xs font-light hover:text-white transition-colors animate-pulse">
-                  info@bagrucottonfeb.com
+                  bagrucottonfeb23@gmail.com
                 </span>
               </li>
             </ul>

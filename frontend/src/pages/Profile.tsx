@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useSelector, useDispatch } from 'react-redux'; // Redux state connectivity
+import { useSelector } from 'react-redux'; // Redux selectors lock
 import {
   User,
   Mail,
@@ -12,13 +12,13 @@ import {
   Save,
   LogOut,
   Sparkles,
-  Clock,
   Compass,
   CheckCircle,
   ShieldCheck,
   ChevronRight,
   X,
-  PlusCircle
+  PlusCircle,
+  Clock
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -41,13 +41,11 @@ interface Order {
 
 export default function Profile() {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
   const { logout } = useApp();
 
-  
-  // Aapke auth architecture ke hisab se logged-in user aur unka profile state pull kar rahe hain
+  // ✅ REDUX AUTH STATE CONNECTIONS
   const authUser = useSelector((state: any) => state.auth?.user);
-  const authLoading = useSelector((state: any) => state.auth?.loading);
+  const authLoading = useSelector((state: any) => state.auth?.loading); // 👈 Extracted safely
   const isLoggedIn = !!localStorage.getItem("jwt") || !!authUser;
 
   // Tab control state
@@ -78,14 +76,13 @@ export default function Profile() {
   }, [authUser]);
 
   // 📍 ADDRESS MANAGEMENT STATE (Null array check mechanism injected)
-  // Agar user ke profile object me addresses array database se aata hai toh wo render hoga, warna empty sequence [] trigger hogi.
   const [addresses, setAddresses] = useState<Address[]>([]);
 
   useEffect(() => {
     if (authUser?.addresses && Array.isArray(authUser.addresses)) {
       setAddresses(authUser.addresses);
     } else {
-      setAddresses([]); // Base verification level fallback
+      setAddresses([]); 
     }
   }, [authUser]);
 
@@ -96,7 +93,6 @@ export default function Profile() {
     if (authUser?.orders && Array.isArray(authUser.orders)) {
       setOrders(authUser.orders);
     } else {
-      // Fallback fallback arrays testing simulation (if required)
       setOrders([]);
     }
   }, [authUser]);
@@ -106,8 +102,6 @@ export default function Profile() {
   const handleProfileSave = (e: React.FormEvent) => {
     e.preventDefault();
     setIsEditing(false);
-    
-    // In production workflow: dispatch(updateUserProfile(personalInfo))
     setNotification('Patron docket records updated into local cache securely.');
     setTimeout(() => setNotification(''), 4000);
   };
@@ -117,6 +111,15 @@ export default function Profile() {
     logout();
     navigate('/');
   };
+
+  // ✅ FIX 2: Added elegant loading guard block to cleanly process authLoading state
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center">
+        <div className="w-7 h-7 border-2 border-stone-900 border-t-transparent rounded-full animate-spin mb-3"></div>
+      </div>
+    );
+  }
 
   if (!isLoggedIn) {
     return (
@@ -196,6 +199,7 @@ export default function Profile() {
             {/* Selector Buttons List */}
             <div className="bg-white border border-stone-200/80 rounded-[28px] p-3 shadow-[0_12px_32px_-18px_rgba(26,26,26,0.04)] flex flex-col gap-1 text-left">
               <button
+                type="button"
                 onClick={() => { setActiveTab('docket'); setIsEditing(false); }}
                 className={`w-full flex items-center justify-between px-5 py-3.5 rounded-2xl text-xs uppercase tracking-wider font-semibold transition-all ${
                   activeTab === 'docket'
@@ -210,6 +214,7 @@ export default function Profile() {
               </button>
 
               <button
+                type="button"
                 onClick={() => { setActiveTab('orders'); setIsEditing(false); }}
                 className={`w-full flex items-center justify-between px-5 py-3.5 rounded-2xl text-xs uppercase tracking-wider font-semibold transition-all ${
                   activeTab === 'orders'
@@ -226,6 +231,7 @@ export default function Profile() {
               </button>
 
               <button
+                type="button"
                 onClick={() => { setActiveTab('addresses'); setIsEditing(false); }}
                 className={`w-full flex items-center justify-between px-5 py-3.5 rounded-2xl text-xs uppercase tracking-wider font-semibold transition-all ${
                   activeTab === 'addresses'
@@ -242,6 +248,7 @@ export default function Profile() {
               </button>
 
               <button
+                type="button"
                 onClick={() => { setActiveTab('vip'); setIsEditing(false); }}
                 className={`w-full flex items-center justify-between px-5 py-3.5 rounded-2xl text-xs uppercase tracking-wider font-semibold transition-all ${
                   activeTab === 'vip'
@@ -257,6 +264,7 @@ export default function Profile() {
 
               <div className="border-t border-stone-100 mt-2 pt-2">
                 <button
+                  type="button"
                   onClick={handleLogoutClick}
                   className="w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl text-xs uppercase tracking-wider font-bold text-red-600 hover:bg-red-50/60 transition-all"
                 >
@@ -275,7 +283,7 @@ export default function Profile() {
                   <CheckCircle className="w-4.5 h-4.5 text-emerald-600 flex-shrink-0" />
                   <span>{notification}</span>
                 </div>
-                <button onClick={() => setNotification('')} className="text-emerald-600 hover:text-emerald-800"><X className="w-4 h-4" /></button>
+                <button type="button" onClick={() => setNotification('')} className="text-emerald-600 hover:text-emerald-800"><X className="w-4 h-4" /></button>
               </div>
             )}
 
@@ -289,6 +297,7 @@ export default function Profile() {
                   </div>
                   {!isEditing && (
                     <button
+                      type="button"
                       onClick={() => setIsEditing(true)}
                       className="inline-flex items-center gap-2 px-4 py-2 border border-stone-200 rounded-xl text-xs uppercase tracking-wider font-bold text-stone-600 hover:border-stone-950 hover:text-black transition-all bg-stone-50/50"
                     >
@@ -321,7 +330,7 @@ export default function Profile() {
                         <input
                           type="email"
                           required
-                          disabled // Email usually non-editable to prevent credential mismatches
+                          disabled 
                           value={personalInfo.email}
                           className="w-full bg-stone-100/80 border border-stone-200 rounded-xl pl-11 pr-4 py-2.5 text-xs focus:outline-none opacity-80 cursor-not-allowed text-stone-500 font-medium"
                         />
@@ -333,7 +342,7 @@ export default function Profile() {
                       <div className="relative">
                         <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
                         <input
-                          type="tel"
+                          type="text"
                           required
                           disabled={!isEditing}
                           value={personalInfo.phone}
@@ -377,7 +386,6 @@ export default function Profile() {
                   )}
                 </form>
 
-                {/* Secure Seal Verification Trust Info */}
                 <div className="bg-[#FAF9F6] border border-stone-200/60 p-5 rounded-2xl mt-8 flex items-start gap-4">
                   <ShieldCheck className="w-6 h-6 text-[#9A7B56] flex-shrink-0 mt-0.5" />
                   <div>
@@ -453,7 +461,7 @@ export default function Profile() {
               </div>
             )}
 
-            {/* TAB 3: SAVED ADDRESS RECORDS (DYNAMICS FIXED) */}
+            {/* TAB 3: SAVED ADDRESS RECORDS */}
             {activeTab === 'addresses' && (
               <div className="text-left space-y-6">
                 <div className="flex justify-between items-center border-b border-stone-100 pb-4">
@@ -461,7 +469,7 @@ export default function Profile() {
                     <h2 className="text-xl font-serif text-stone-950 tracking-wide">Saved Address Book</h2>
                     <p className="text-[10px] text-stone-400 uppercase tracking-widest mt-1">Addresses saved for insured express shipping logistics</p>
                   </div>
-                  <button className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-stone-950 text-white text-[10px] uppercase tracking-wider font-bold rounded-lg shadow-sm hover:bg-stone-800 transition-colors">
+                  <button type="button" className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-stone-950 text-white text-[10px] uppercase tracking-wider font-bold rounded-lg shadow-sm hover:bg-stone-800 transition-colors">
                     <PlusCircle className="w-3.5 h-3.5" /> Add New
                   </button>
                 </div>
@@ -492,8 +500,8 @@ export default function Profile() {
                         </div>
 
                         <div className="flex gap-4 border-t border-stone-100 pt-4 mt-5 text-[10px] font-bold uppercase tracking-wider">
-                          <button className="text-[#9A7B56] hover:text-stone-950 transition-colors">Edit Address</button>
-                          <button className="text-stone-400 hover:text-red-600 transition-colors">Remove</button>
+                          <button type="button" className="text-[#9A7B56] hover:text-stone-950 transition-colors">Edit Address</button>
+                          <button type="button" className="text-stone-400 hover:text-red-600 transition-colors">Remove</button>
                         </div>
                       </div>
                     ))}
@@ -526,7 +534,6 @@ export default function Profile() {
                   ))}
                 </div>
 
-                {/* VIP Sandbox Credit Invitation Banner */}
                 <div className="bg-[#FAF9F6] border border-stone-200 p-6 rounded-3xl mt-8 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-[#E4C590]/5 blur-3xl rounded-full" />
                   <span className="text-[8px] uppercase tracking-widest font-bold text-amber-800 bg-[#E4C590]/20 px-2 py-0.5 rounded">Active Promo Code</span>
