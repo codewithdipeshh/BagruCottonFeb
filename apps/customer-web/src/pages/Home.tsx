@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, useEffect, useMemo, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -7,6 +7,8 @@ import {
   Shield,
   RefreshCw,
   MapPin,
+  Clock,
+  Phone,
   Calendar,
   X,
   Check
@@ -14,14 +16,153 @@ import {
 
 import Hero from '../components/Hero';
 import Reviews from '../components/Reviews';
-import FeaturedProductCard from '../components/FeaturedProductCard';
+import ProductCard from '../components/ProductCard';
 import QuickViewModal from '../components/QuickViewModal';
-import { sareeCategories } from '../data/sareeCategories';
 import { findProducts } from '../State/Product/Action';
+import springBanner from '../assets/images/arrivals.png'
+
+const sareeCategoriesList = [
+  { slug: 'cotton-mulmul', name: 'Mulmul Cotton' },
+  { slug: 'handblock', name: 'Cotton HandBlock' },
+  { slug: 'linen-cotton', name: 'Cotton Linen' },
+  { slug: 'kota-doria', name: 'Kota Doria Silk' },
+  { slug: 'chanderi-bagru', name: 'Chanderi Silk' },
+  { slug: 'maheshwari-silk', name: 'Maheshwari Silk' },
+];
+
+const categoryStaticMeta: Record<string, { defaultImage: string; origin: string; databaseName: string }> = {
+  'cotton-mulmul': {
+    defaultImage: 'https://res.cloudinary.com/zjr85bqp/image/upload/v1785147979/IMG-20260720-WA0137_rso60e.jpg',
+    origin: 'MULMUL SAREES',
+    databaseName: 'Mulmul Cotton Sarees'
+  },
+  'handblock': {
+    defaultImage: 'https://res.cloudinary.com/zjr85bqp/image/upload/v1785148231/IMG-20260521-WA0111_zn0g3r.jpg',
+    origin: 'Bagru & Dabu',
+    databaseName: 'Cotton HandBlock Sarees'
+  },
+  'linen-cotton': {
+    defaultImage: 'https://res.cloudinary.com/zjr85bqp/image/upload/v1785148465/IMG-20260709-WA0084_mxbpnz.jpg',
+    origin: 'LINEN COLLECTION',
+    databaseName: 'Cotton Linen Saree'
+  },
+  'kota-doria': {
+    defaultImage: 'https://res.cloudinary.com/zjr85bqp/image/upload/v1785148777/IMG-20260618-WA0005_-_Copy_ix2xvd.jpg',
+    origin: 'KOTA DORIA',
+    databaseName: 'Kota Doria Silk'
+  },
+  'chanderi-bagru': {
+    defaultImage: 'https://res.cloudinary.com/zjr85bqp/image/upload/v1785149175/IMG-20250514-WA0117_efhqvm.jpg',
+    origin: 'Chanderi Silk',
+    databaseName: 'Chanderi Silk Saree'
+  },
+  'maheshwari-silk': {
+    defaultImage: 'https://res.cloudinary.com/zjr85bqp/image/upload/v1785147553/IMG-20260727-WA0042_ifckuv.jpg',
+    origin: 'Maheshwar SilK',
+    databaseName: 'Maheshwari Silk Saree'
+  },
+  // BUG FIX: these two were referenced by getCategoryProducts() further down
+  // but were missing from this config object, so getCategoryProducts()
+  // always returned [] for them — the "Temple Border" and "Khadi Cotton"
+  // sections rendered zero products no matter what was in the database.
+  // TODO: replace defaultImage with a real Cloudinary asset URL for each —
+  // these are placeholders only, swap them before shipping.
+  'temple-border': {
+    defaultImage: '',
+    origin: 'Temple Weave',
+    databaseName: 'Temple Border Saree'
+  },
+  'khadi-cotton': {
+    defaultImage: '',
+    origin: 'Khadi Handloom',
+    databaseName: 'Khadi Cotton Saree'
+  },
+};
+
+// Data-driven config for the repeated "category showcase" sections further
+// down the page. Previously each of these was ~60 lines of duplicated JSX;
+// consolidating them here means adding a new category is now a one-line
+// change instead of copy-pasting a whole section (and risking the kind of
+// missing-config bug fixed above).
+const categoryShowcases: {
+  key: string;
+  eyebrow: string;
+  heading: string;
+  ctaText: string;
+  href: string;
+  bgClass: string;
+}[] = [
+  {
+    key: 'maheshwari-silk',
+    eyebrow: 'Traditional Gold Zari Edges',
+    heading: 'Maheshwari Silk Saree',
+    ctaText: 'Explore Imperial Silks',
+    href: '/sarees/maheshwari-silk',
+    bgClass: 'bg-[#F2EDE7]',
+  },
+  {
+    key: 'kota-doria',
+    eyebrow: "Kaithoon's Translucent Checks",
+    heading: 'Kota Doria Silk',
+    ctaText: 'Browse Kota Weaves',
+    href: '/sarees/kota-doria',
+    bgClass: 'bg-[#F7F4F0]',
+  },
+  {
+    key: 'chanderi-bagru',
+    eyebrow: 'Chanderi Luxe Weave',
+    heading: 'Chanderi Silk Saree',
+    ctaText: 'Explore Chanderi Collections',
+    href: '/sarees/chanderi-bagru',
+    bgClass: 'bg-white border-b border-neutral-100',
+  },
+  {
+    key: 'cotton-mulmul',
+    eyebrow: 'The Pure Cotton Whisper',
+    heading: 'Mulmul Cotton Sarees',
+    ctaText: 'View Mulmul Cloud',
+    href: '/sarees/cotton-mulmul',
+    bgClass: 'bg-[#F7F4F0]',
+  },
+  {
+    key: 'handblock',
+    eyebrow: 'Authentic Wooden Handblock Art',
+    heading: 'Cotton HandBlock Sarees',
+    ctaText: 'Browse Handblock Prints',
+    href: '/sarees/handblock',
+    bgClass: 'bg-white',
+  },
+  {
+    key: 'linen-cotton',
+    eyebrow: 'Linen Classic Weave',
+    heading: 'Cotton Linen Saree',
+    ctaText: 'Discover Flax Knots',
+    href: '/sarees/linen-cotton',
+    bgClass: 'bg-[#F2EDE7] border-b border-neutral-100',
+  },
+  {
+    key: 'temple-border',
+    eyebrow: 'The Temple Weave',
+    heading: 'Temple Border Saree',
+    ctaText: 'Discover Temple Motifs',
+    href: '/sarees/temple-border',
+    bgClass: 'bg-white',
+  },
+  {
+    key: 'khadi-cotton',
+    eyebrow: 'Khadi Handloom Grace',
+    heading: 'Khadi Cotton Saree',
+    ctaText: 'Explore Khadi Weaves',
+    href: '/sarees/khadi-cotton',
+    bgClass: 'bg-[#F2EDE7] border-b border-neutral-100',
+  },
+];
 
 export default function Home() {
   const dispatch = useDispatch<any>();
   const [quickViewProduct, setQuickViewProduct] = useState<any | null>(null);
+
+  const { products } = useSelector((state: any) => state.product);
 
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [bookingSubmitted, setBookingSubmitted] = useState(false);
@@ -32,69 +173,58 @@ export default function Home() {
     time: '11:00 AM'
   });
 
-  const { products } = useSelector((state: any) => state.product);
-
   useEffect(() => {
     const reqData = {
       category: '',
-      colors: '',
       minPrice: 0,
       maxPrice: 100000,
       minDiscount: 0,
       sort: 'price_low',
       stock: '',
-      pageNumber: 0,
-      pageSize: 100
+      pageNumber: 1,
+      pageSize: 200
     };
     dispatch(findProducts(reqData));
   }, [dispatch]);
 
-  const finalProductsList = Array.isArray(products) 
-    ? products 
-    : products?.content || [];
+  const liveProductsList = useMemo(() => {
+    if (!products) return [];
+    return Array.isArray(products) ? products : products.content || products.products || [];
+  }, [products]);
 
-  const sortedProducts = [...finalProductsList].sort((a: any, b: any) => {
-    const idA = a._id || a.id || '';
-    const idB = b._id || b.id || '';
-    return idB.localeCompare(idA);
-  });
+  const newArrivals = useMemo(() => {
+    return [...liveProductsList].reverse().slice(0, 4);
+  }, [liveProductsList]);
 
-  const newArrivals = sortedProducts.slice(0, 4);
+  const getCategoryProducts = (categoryKey: string) => {
+    const config = categoryStaticMeta[categoryKey];
+    if (!config) return [];
 
-  const handblockProducts = sortedProducts
-    .filter((p: any) => p.category === 'cotton_handblock_sarees')
-    .slice(0, 4);
+    return liveProductsList.filter((item: any) => {
+      const categoryData = item?.category;
+      const itemCatName = (typeof categoryData === 'object' ? categoryData?.name : categoryData) || '';
+      const itemCatSlug = (typeof categoryData === 'object' ? categoryData?.slug : '') || '';
 
-  const linenProducts = sortedProducts
-    .filter((p: any) => p.category === 'cotton_linen_saree')
-    .slice(0, 4);
+      return itemCatName.toLowerCase().trim() === config.databaseName.toLowerCase().trim() ||
+             itemCatSlug.toLowerCase().trim() === categoryKey.toLowerCase().trim();
+    });
+  };
 
-  const maheshwariProducts = sortedProducts
-    .filter((p: any) => p.category === 'maheshwari_silk_saree')
-    .slice(0, 4);
+  const getCategoryBlockMeta = (categoryKey: string) => {
+    const staticMeta = categoryStaticMeta[categoryKey];
+    const categoryProducts = getCategoryProducts(categoryKey);
 
-  const mulmulProducts = sortedProducts
-    .filter((p: any) => p.category === 'mulmul_cotton_sarees')
-    .slice(0, 4);
-
-  const getCategoryCover = (categoryFilterId: string) => {
-    const matched = sortedProducts.find((p: any) => p.category === categoryFilterId);
-    if (matched && matched.images && matched.images.length > 0) {
-      return matched.images[0];
+    let dynamicImage = staticMeta?.defaultImage;
+    if (categoryProducts.length > 0) {
+      const latestProduct = categoryProducts[categoryProducts.length - 1];
+      dynamicImage = latestProduct?.imageUrls?.[0] || latestProduct?.images?.[0] || latestProduct?.imageUrl || latestProduct?.image || staticMeta?.defaultImage;
     }
-    return 'https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=800&q=80';
-  };
 
-  const getCategoryCount = (categoryFilterId: string) => {
-    return finalProductsList.filter((p: any) => p.category === categoryFilterId).length;
-  };
-
-  const getCategoryOrigin = (categoryFilterId: string) => {
-    if (categoryFilterId.includes('mulmul') || categoryFilterId.includes('handblock')) return 'Rajasthan';
-    if (categoryFilterId.includes('maheshwari')) return 'Maheshwar';
-    if (categoryFilterId.includes('linen')) return 'Bhagalpur';
-    if (categoryFilterId.includes('kota')) return 'Kaithoon';
-    return 'Handloom';
+    return {
+      image: dynamicImage,
+      count: categoryProducts.length,
+      origin: staticMeta?.origin || 'Handloom'
+    };
   };
 
   const handleBookingSubmit = (e: FormEvent) => {
@@ -113,12 +243,17 @@ export default function Home() {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isBookingOpen]);
 
+  // Reusable responsive product wrapper style:
+  const responsiveProductWrapperClass = "flex sm:grid sm:grid-cols-2 lg:grid-cols-4 overflow-x-auto sm:overflow-x-visible gap-4 md:gap-6 lg:gap-8 pb-4 sm:pb-0 snap-x snap-mandatory scrollbar-none";
+  const responsiveCardItemClass = "flex-none w-[240px] xs:w-[260px] sm:w-auto snap-align-start";
+
   return (
-    <div className="bg-[#FAF9F6] text-[#1A1A1A] antialiased selection:bg-[#9A7B56] selection:text-white min-h-screen">
+    <div className="bg-gradient-to-b from-[#FAF9F6] to-[#F5F3EF] text-[#1A1A1A] antialiased selection:bg-[#9A7B56] selection:text-white min-h-screen text-left">
       <Hero />
 
-      <section className="py-16 md:py-24 max-w-7xl mx-auto px-4 md:px-8 overflow-hidden">
-        <div className="text-center mb-12">
+      {/* 1. HERITAGE CATEGORIES SECTION */}
+      <section className="py-20 md:py-24 max-w-7xl mx-auto px-4 md:px-8">
+        <div className="text-center mb-12 md:mb-16">
           <span className="text-[11px] tracking-[0.3em] uppercase text-[#9A7B56] font-medium block mb-3">
             Atelier Curations
           </span>
@@ -126,44 +261,41 @@ export default function Home() {
             Shop by Heritage Category
           </h2>
           <div className="w-12 h-[1px] bg-[#9A7B56] mx-auto mb-6" />
-          <p className="text-gray-500 max-w-2xl mx-auto text-xs sm:text-sm font-sans font-light leading-relaxed">
-            Discover historic regional weaving styles, slow-indigo resist ferments, and organic vegetable pigment blocks.
+          <p className="text-gray-500 max-w-2xl mx-auto text-sm font-sans font-light leading-relaxed">
+            Discover historic regional weaving styles, slow-indigo resist ferments, and organic vegetable pigment blocks curated meticulously by native craft preservationists.
           </p>
         </div>
 
-        <div className="flex flex-nowrap overflow-x-auto md:grid md:grid-cols-3 lg:grid-cols-6 gap-4 pb-4 px-2 snap-x scrollbar-hide no-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
-          {sareeCategories.map((category) => {
-            const liveImage = getCategoryCover(category.filterId);
-            const liveCount = getCategoryCount(category.filterId);
-            const liveOrigin = getCategoryOrigin(category.filterId);
-
+        <div className="flex lg:grid lg:grid-cols-6 overflow-x-auto lg:overflow-x-visible gap-4 md:gap-5 pb-4 lg:pb-0 scrollbar-none snap-x snap-mandatory">
+          {sareeCategoriesList.map((category) => {
+            const dynamicMeta = getCategoryBlockMeta(category.slug);
             return (
               <Link
                 key={category.slug}
                 to={`/sarees/${category.slug}`}
-                className="group relative flex flex-col justify-end overflow-hidden aspect-[3/4] bg-[#FAF9F6] border border-gray-100 shadow-sm rounded-xl md:rounded-none flex-shrink-0 w-[42vw] sm:w-[28vw] md:w-auto snap-start"
+                className="group relative flex flex-col justify-end overflow-hidden aspect-[3/4] bg-stone-100 border border-gray-100 shadow-sm no-underline flex-none w-[180px] sm:w-[220px] lg:w-auto snap-align-start"
               >
                 <img
-                  src={liveImage}
+                  src={dynamicMeta.image}
                   alt={category.name}
                   loading="lazy"
                   className="w-full h-full object-cover transition-transform duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-105"
                 />
-                
-                <div className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-white/90 backdrop-blur-sm px-2 py-0.5 text-[8px] sm:text-[9px] uppercase tracking-wider font-light text-gray-600 border border-gray-100">
-                  {liveOrigin}
+
+                <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2 py-0.5 text-[9px] uppercase tracking-wider font-light text-gray-600 border border-gray-100 z-20">
+                  {dynamicMeta.origin}
                 </div>
 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent transition-opacity duration-500 group-hover:via-black/35" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent transition-opacity duration-500 group-hover:via-black/45 z-10" />
 
-                <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 z-10 transition-transform duration-500 group-hover:-translate-y-1">
-                  <h3 className="text-white font-serif text-xs sm:text-sm md:text-base tracking-wide leading-tight uppercase">
-                    {category.name.replace(' Sarees', '')}
+                <div className="absolute bottom-4 left-4 right-4 z-20 transition-transform duration-500 group-hover:-translate-y-1">
+                  <h3 className="text-white font-serif text-xs md:text-sm lg:text-base tracking-wide leading-tight uppercase m-0">
+                    {category.name}
                   </h3>
-                  <div className="flex items-center gap-1 mt-1">
-                    <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 rounded-full bg-[#9A7B56] animate-pulse"></span>
-                    <p className="text-[#C5A880] text-[8px] sm:text-[10px] font-sans tracking-widest uppercase">
-                      {liveCount} Drapes
+                  <div className="flex items-center gap-1.5 mt-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#9A7B56]"></span>
+                    <p className="text-[#C5A880] text-[10px] font-sans tracking-widest uppercase m-0">
+                      {dynamicMeta.count} {dynamicMeta.count === 1 ? 'Drape' : 'Drapes'}
                     </p>
                   </div>
                 </div>
@@ -173,154 +305,105 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-16 md:py-24 bg-white border-y border-neutral-100 overflow-hidden">
+      {/* 2. SEASONAL BANNER */}
+      <section className="w-full bg-white pt-8 pb-4">
+        <div className="max-w-[96rem] mx-auto px-4 md:px-8">
+          <div className="w-full h-[25vh] sm:h-[40vh] lg:h-[55vh] overflow-hidden rounded-sm relative group cursor-pointer border border-stone-100 shadow-sm">
+           <img 
+              src={springBanner} 
+              alt="Spring Collection Banner" 
+              className="w-full h-full object-cover object-center transition-transform duration-[1500ms] group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-black/10 pointer-events-none transition-opacity duration-700 group-hover:bg-black/0" />
+          </div>
+        </div>
+      </section>
+
+      {/* 3. NEW ARRIVALS SECTION */}
+      <section className="py-24 bg-white border-y border-neutral-100">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="flex flex-row items-center justify-between mb-12">
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between mb-16">
             <div>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#9A7B56] block mb-1">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#9A7B56] block mb-2.5">
                 The Spring Showcase
               </span>
-              <h2 className="text-xl md:text-[2.5rem] font-serif font-light text-[#1A1A1A] tracking-wide leading-tight">
+              <h2 className="text-3xl md:text-[2.5rem] font-serif font-light text-[#1A1A1A] tracking-wide leading-tight">
                 New Arrivals
               </h2>
             </div>
+
             <Link
               to="/sarees"
-              className="group inline-flex items-center gap-1.5 border-b border-black pb-0.5 text-[10px] sm:text-[11px] uppercase tracking-[0.18em] font-medium text-black transition-all hover:text-[#9A7B56] hover:border-[#9A7B56]"
+              className="group inline-flex items-center gap-2.5 border-b border-black pb-1.5 text-[11px] uppercase tracking-[0.18em] font-medium text-black transition-all hover:text-[#9A7B56] hover:border-[#9A7B56] no-underline"
             >
-              All <ArrowRight className="w-3 h-3 transition-transform duration-300 group-hover:translate-x-1" />
+              Explore Full Collection
+              <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
             </Link>
           </div>
 
-          <div className="flex flex-nowrap overflow-x-auto lg:grid lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8 pb-4 snap-x no-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div className={responsiveProductWrapperClass}>
             {newArrivals.map((product: any) => (
-              <div key={`arrival-${product._id || product.id}`} className="flex-shrink-0 w-[44vw] sm:w-[32vw] lg:w-auto snap-start">
-                <FeaturedProductCard product={product} onQuickView={setQuickViewProduct} />
+              <div key={product._id || product.id} className={responsiveCardItemClass}>
+                <ProductCard
+                  product={product}
+                  onQuickView={setQuickViewProduct}
+                />
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      <section className="py-16 md:py-24 bg-[#F7F4F0] overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="flex flex-row items-center justify-between mb-12">
-            <div>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#9A7B56] block mb-1">
-                Authentic Indigo & Dabu Resist
-              </span>
-              <h2 className="text-xl md:text-[2.5rem] font-serif font-light text-[#1A1A1A] tracking-wide leading-tight">
-                Handblock Masterpieces
-              </h2>
+      {/* 4. CATEGORY SHOWCASES (data-driven — see categoryShowcases above) */}
+      {categoryShowcases.map((section) => {
+        const sectionProducts = getCategoryProducts(section.key).slice(0, 4);
+        return (
+          <section key={section.key} className={`py-24 ${section.bgClass}`}>
+            <div className="max-w-7xl mx-auto px-4 md:px-8">
+              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between mb-16">
+                <div>
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#9A7B56] block mb-2.5">
+                    {section.eyebrow}
+                  </span>
+                  <h2 className="text-3xl md:text-[2.5rem] font-serif font-light text-[#1A1A1A] tracking-wide leading-tight">
+                    {section.heading}
+                  </h2>
+                </div>
+
+                <Link
+                  to={section.href}
+                  className="group inline-flex items-center gap-2.5 border-b border-black pb-1.5 text-[11px] uppercase tracking-[0.18em] font-medium text-black transition-all hover:text-[#9A7B56] hover:border-[#9A7B56] no-underline"
+                >
+                  {section.ctaText}
+                  <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+                </Link>
+              </div>
+
+              {sectionProducts.length > 0 ? (
+                <div className={responsiveProductWrapperClass}>
+                  {sectionProducts.map((product: any) => (
+                    <div key={`${section.key}-${product._id || product.id}`} className={responsiveCardItemClass}>
+                      <ProductCard
+                        product={product}
+                        onQuickView={setQuickViewProduct}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-gray-400 font-light tracking-wide">
+                  New pieces from this collection are being added — check back soon.
+                </p>
+              )}
             </div>
-            <Link
-              to="/sarees/cotton-handblock"
-              className="group inline-flex items-center gap-1.5 border-b border-black pb-0.5 text-[10px] sm:text-[11px] uppercase tracking-[0.18em] font-medium text-black transition-all hover:text-[#9A7B56] hover:border-[#9A7B56]"
-            >
-              All <ArrowRight className="w-3 h-3 transition-transform duration-300 group-hover:translate-x-1" />
-            </Link>
-          </div>
+          </section>
+        );
+      })}
 
-          <div className="flex flex-nowrap overflow-x-auto lg:grid lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8 pb-4 snap-x no-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
-            {handblockProducts.map((product: any) => (
-              <div key={`handblock-${product._id || product.id}`} className="flex-shrink-0 w-[44vw] sm:w-[32vw] lg:w-auto snap-start">
-                <FeaturedProductCard product={product} onQuickView={setQuickViewProduct} />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="py-16 md:py-24 bg-white border-b border-neutral-100 overflow-hidden">
+      {/* 5. PROMISE / EXPERIENCE CARDS */}
+      <section className="py-24 bg-[#FAF9F6] border-t border-gray-100">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="flex flex-row items-center justify-between mb-12">
-            <div>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#9A7B56] block mb-1">
-                Bhagalpur Flax Heritage
-              </span>
-              <h2 className="text-xl md:text-[2.5rem] font-serif font-light text-[#1A1A1A] tracking-wide leading-tight">
-                Linen Sarees
-              </h2>
-            </div>
-            <Link
-              to="/sarees/cotton-linen"
-              className="group inline-flex items-center gap-1.5 border-b border-black pb-0.5 text-[10px] sm:text-[11px] uppercase tracking-[0.18em] font-medium text-black transition-all hover:text-[#9A7B56] hover:border-[#9A7B56]"
-            >
-              All <ArrowRight className="w-3 h-3 transition-transform duration-300 group-hover:translate-x-1" />
-            </Link>
-          </div>
-
-          <div className="flex flex-nowrap overflow-x-auto lg:grid lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8 pb-4 snap-x no-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
-            {linenProducts.map((product: any) => (
-              <div key={`linen-${product._id || product.id}`} className="flex-shrink-0 w-[44vw] sm:w-[32vw] lg:w-auto snap-start">
-                <FeaturedProductCard product={product} onQuickView={setQuickViewProduct} />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="py-16 md:py-24 bg-[#F2EDE7] overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="flex flex-row items-center justify-between mb-12">
-            <div>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#9A7B56] block mb-1">
-                Traditional Gold Zari Edges
-              </span>
-              <h2 className="text-xl md:text-[2.5rem] font-serif font-light text-[#1A1A1A] tracking-wide leading-tight">
-                Maheshwari Silk
-              </h2>
-            </div>
-            <Link
-              to="/sarees/maheshwari-silk"
-              className="group inline-flex items-center gap-1.5 border-b border-black pb-0.5 text-[10px] sm:text-[11px] uppercase tracking-[0.18em] font-medium text-black transition-all hover:text-[#9A7B56] hover:border-[#9A7B56]"
-            >
-              All <ArrowRight className="w-3 h-3 transition-transform duration-300 group-hover:translate-x-1" />
-            </Link>
-          </div>
-
-          <div className="flex flex-nowrap overflow-x-auto lg:grid lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8 pb-4 snap-x no-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
-            {maheshwariProducts.map((product: any) => (
-              <div key={`maheshwari-${product._id || product.id}`} className="flex-shrink-0 w-[44vw] sm:w-[32vw] lg:w-auto snap-start">
-                <FeaturedProductCard product={product} onQuickView={setQuickViewProduct} />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="py-16 md:py-24 bg-white overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="flex flex-row items-center justify-between mb-12">
-            <div>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.25em] text-[#9A7B56] block mb-1">
-                The Pure Cotton Whisper
-              </span>
-              <h2 className="text-xl md:text-[2.5rem] font-serif font-light text-[#1A1A1A] tracking-wide leading-tight">
-                Cotton Mulmul
-              </h2>
-            </div>
-            <Link
-              to="/sarees/mulmul-cotton"
-              className="group inline-flex items-center gap-1.5 border-b border-black pb-0.5 text-[10px] sm:text-[11px] uppercase tracking-[0.18em] font-medium text-black transition-all hover:text-[#9A7B56] hover:border-[#9A7B56]"
-            >
-              All <ArrowRight className="w-3 h-3 transition-transform duration-300 group-hover:translate-x-1" />
-            </Link>
-          </div>
-
-          <div className="flex flex-nowrap overflow-x-auto lg:grid lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8 pb-4 snap-x no-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
-            {mulmulProducts.map((product: any) => (
-              <div key={`mulmul-${product._id || product.id}`} className="flex-shrink-0 w-[44vw] sm:w-[32vw] lg:w-auto snap-start">
-                <FeaturedProductCard product={product} onQuickView={setQuickViewProduct} />
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="py-16 md:py-24 bg-[#FAF9F6] border-t border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="text-center mb-12">
+          <div className="text-center mb-16">
             <span className="text-[11px] tracking-[0.3em] uppercase text-[#9A7B56] font-medium block mb-2.5">
               Honest Handloom Seal
             </span>
@@ -329,35 +412,40 @@ export default function Home() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               {
                 icon: <Truck className="w-5 h-5 text-[#9A7B56]" />,
                 title: 'Complimentary Insured Shipping',
-                desc: 'Every saree is wrapped carefully in moisture-proof tissue lining, placed inside rigid keepsake gift boxes.',
+                desc: 'Every saree is wrapped carefully in moisture-proof tissue lining, placed inside hand-pressed rigid keepsake gift boxes, and dispatched with fully insured courier tracking.',
               },
               {
                 icon: <Shield className="w-5 h-5 text-[#9A7B56]" />,
                 title: 'Certified Artisanal Trails',
-                desc: 'We strictly back authentic weaving families in Jaipur, Madhya Pradesh, and West Bengal.',
+                desc: 'We strictly back authentic weaving families in Jaipur, Madhya Pradesh, and West Bengal. Every dye lot is completely trace-inspected for organic skin safety.',
               },
               {
                 icon: <RefreshCw className="w-5 h-5 text-[#9A7B56]" />,
                 title: 'Bespoke Concierge Returns',
-                desc: 'If the weave texture feels slightly out of alignment, schedule a pickup within 7 days flawlessly.',
+                desc: 'If the weave texture, light-drape fall, or color tone feels slightly out of alignment with your high styling standards, schedule a pickup within 7 days for a flawless experience.',
               },
             ].map((item, index) => (
               <div
                 key={index}
-                className="bg-white border border-gray-100 p-6 sm:p-8 hover:shadow-md transition-all duration-300 flex flex-col items-center text-center rounded-xl md:rounded-none"
+                className="group bg-white border border-gray-100 p-8 hover:border-[#9A7B56]/40 hover:shadow-lg transition-all duration-300 flex flex-col items-center text-center"
               >
-                <div className="w-12 h-12 mb-4 sm:mb-6 rounded-full bg-[#FAF9F6] border border-[#FAF9F6] flex items-center justify-center">
+                {/* BUG FIX: border color previously matched the background
+                    color exactly (border-[#FAF9F6] on bg-[#FAF9F6]), so it
+                    was invisible. Now uses a visible accent-tinted border. */}
+                <div className="w-12 h-12 mb-6 rounded-full bg-[#FAF9F6] border border-[#9A7B56]/20 flex items-center justify-center transition-colors duration-300 group-hover:border-[#9A7B56]/50">
                   {item.icon}
                 </div>
-                <h3 className="text-base sm:text-lg font-serif font-normal text-[#1A1A1A] mb-3 tracking-wide uppercase text-[12px] sm:text-[13px]">
+
+                <h3 className="text-lg font-serif font-normal text-[#1A1A1A] mb-3 tracking-wide uppercase text-[13px]">
                   {item.title}
                 </h3>
-                <p className="text-gray-500 text-xs sm:text-sm font-sans font-light leading-relaxed max-w-xs">
+
+                <p className="text-gray-500 text-xs md:text-sm font-sans font-light leading-relaxed max-w-xs">
                   {item.desc}
                 </p>
               </div>
@@ -366,43 +454,69 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-16 md:py-24 bg-white border-t border-neutral-100">
+      {/* 6. FLAGSHIP BOUTIQUE VIEWING */}
+      <section className="py-24 bg-white border-t border-neutral-100">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-            <div className="lg:col-span-5 space-y-6 sm:space-y-8 font-sans">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+            <div className="lg:col-span-5 space-y-8 font-sans">
               <div>
                 <span className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[#9A7B56] block mb-3">
                   Experience the Drape in Person
                 </span>
-                <h2 className="text-2xl md:text-4xl font-serif font-light text-[#1A1A1A] tracking-wide leading-tight mb-4">
+                <h2 className="text-3xl md:text-4xl font-serif font-light text-[#1A1A1A] tracking-wide leading-tight mb-4">
                   Visit Our Flagship Atelier
                 </h2>
-                <p className="text-gray-500 text-xs sm:text-sm font-light leading-relaxed">
-                  Feel the signature lightweight weave of authentic Kota Doria and trace the detail of organic mud-resist Dabu prints.
+                <p className="text-gray-500 text-sm font-light leading-relaxed">
+                  Feel the signature lightweight weave of authentic Kota Doria, trace the detail of organic mud-resist Dabu prints, and consult privately with our design curators to select your absolute heritage drape.
                 </p>
               </div>
 
-              <div className="space-y-4 sm:space-y-6 border-y border-neutral-100 py-6 sm:py-8">
-                <div className="flex gap-3 sm:gap-4 items-start">
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#FAF9F6] flex items-center justify-center flex-shrink-0 text-[#9A7B56]">
-                    <MapPin className="w-4 sm:w-5 h-4 sm:h-5" />
+              <div className="space-y-6 border-y border-neutral-100 py-8">
+                <div className="flex gap-4 items-start">
+                  <div className="w-10 h-10 rounded-full bg-[#FAF9F6] flex items-center justify-center flex-shrink-0 text-[#9A7B56]">
+                    <MapPin className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-[11px] sm:text-xs uppercase tracking-wider font-semibold text-gray-800 mb-1">Our Location</h4>
+                    <h4 className="text-xs uppercase tracking-wider font-semibold text-gray-800 mb-1">Our Location</h4>
                     <p className="text-gray-600 text-xs sm:text-sm font-light leading-relaxed">
                       Bus Stop, Ramdev Mandir, Main Gaushala Rd, Bagru, Jaipur, Rajasthan 303007
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4 items-start">
+                  <div className="w-10 h-10 rounded-full bg-[#FAF9F6] flex items-center justify-center flex-shrink-0 text-[#9A7B56]">
+                    <Clock className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs uppercase tracking-wider font-semibold text-gray-800 mb-1">Boutique Hours</h4>
+                    <p className="text-gray-600 text-xs sm:text-sm font-light">
+                      Monday to Sunday: 11:00 AM – 8:00 PM
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-4 items-start">
+                  <div className="w-10 h-10 rounded-full bg-[#FAF9F6] flex items-center justify-center flex-shrink-0 text-[#9A7B56]">
+                    <Phone className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs uppercase tracking-wider font-semibold text-gray-800 mb-1">Concierge Line</h4>
+                    <p className="text-gray-600 text-xs sm:text-sm font-light">
+                      +91 89630 85628  / info@bagrucottonfeb.com
                     </p>
                   </div>
                 </div>
               </div>
 
               <div className="pt-2">
-                <button 
+                <button
+                  type="button"
                   onClick={() => {
                     setBookingSubmitted(false);
                     setIsBookingOpen(true);
                   }}
-                  className="group flex w-full sm:w-auto items-center justify-center gap-2.5 rounded-full border border-[#1A1A1A] px-6 py-3.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1A1A1A] transition-all duration-300 hover:bg-[#1A1A1A] hover:text-white"
+                  className="group inline-flex items-center gap-2.5 rounded-full border border-[#1A1A1A] px-6 py-3.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-[#1A1A1A] transition-all duration-300 hover:bg-[#1A1A1A] hover:text-white border-none bg-transparent cursor-pointer"
                 >
                   <Calendar className="w-3.5 h-3.5" />
                   Book a Private Viewing
@@ -410,7 +524,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="lg:col-span-7 h-[320px] sm:h-[450px] w-full rounded-xl md:rounded-sm overflow-hidden border border-neutral-100 shadow-[0_15px_40px_-20px_rgba(0,0,0,0.08)] relative group">
+            <div className="lg:col-span-7 h-[400px] sm:h-[480px] w-full rounded-sm overflow-hidden border border-neutral-100 shadow-[0_15px_40px_-20px_rgba(0,0,0,0.08)] relative group">
               <iframe
                 src="https://maps.google.com/maps?q=Bagru%20Cotton%20Feb%20Bagru%20Jaipur%20Rajasthan&t=&z=15&ie=UTF8&iwloc=&output=embed"
                 className="w-full h-full grayscale-[25%] contrast-[105%] group-hover:grayscale-0 transition-all duration-700"
@@ -425,29 +539,31 @@ export default function Home() {
 
       <Reviews />
 
+      {/* APPOINTMENT MODAL */}
       {isBookingOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div 
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
             onClick={() => setIsBookingOpen(false)}
           />
-          
-          <div className="relative bg-white max-w-md w-full border border-neutral-100 shadow-2xl p-5 sm:p-8 z-10 transform transition-all rounded-2xl md:rounded-none animate-in fade-in duration-300">
-            <button 
+
+          <div className="relative bg-white max-w-md w-full border border-neutral-100 shadow-2xl p-6 sm:p-8 z-10 transform transition-all animate-in fade-in duration-300 text-left">
+            <button
+              type="button"
               onClick={() => setIsBookingOpen(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-black p-1.5 hover:bg-gray-50 rounded-full transition-colors"
+              className="absolute top-4 right-4 text-gray-400 hover:text-black p-1.5 hover:bg-gray-50 rounded-full transition-colors border-none bg-transparent cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
 
             {bookingSubmitted ? (
-              <div className="text-center py-8 space-y-4">
-                <div className="w-14 h-14 bg-[#F4EFEA] rounded-full flex items-center justify-center mx-auto text-[#9A7B56]">
-                  <Check className="w-6 h-6" />
+              <div className="text-center py-10 space-y-4">
+                <div className="w-16 h-16 bg-[#F4EFEA] rounded-full flex items-center justify-center mx-auto text-[#9A7B56]">
+                  <Check className="w-8 h-8" />
                 </div>
-                <h3 className="font-serif text-lg tracking-wide text-gray-900">Appointment Scheduled</h3>
+                <h3 className="font-serif text-xl tracking-wide text-gray-900">Appointment Scheduled</h3>
                 <p className="text-xs text-gray-500 max-w-xs mx-auto leading-relaxed">
-                  Thank you, {bookingDetails.name}. Our team will connect with you shortly on {bookingDetails.phone}.
+                  Thank you, {bookingDetails.name}. Our private styling concierge will connect with you shortly on {bookingDetails.phone} to confirm your session.
                 </p>
               </div>
             ) : (
@@ -455,52 +571,52 @@ export default function Home() {
                 <span className="text-[9px] tracking-widest uppercase text-[#9A7B56] font-medium block mb-1">
                   Atelier Concierge
                 </span>
-                <h3 className="font-serif text-lg sm:text-xl tracking-wide text-gray-900 mb-4 sm:mb-6">
+                <h3 className="font-serif text-xl tracking-wide text-gray-900 mb-6">
                   Schedule Your Private Drape Experience
                 </h3>
 
                 <form onSubmit={handleBookingSubmit} className="space-y-4 font-sans text-xs">
                   <div>
                     <label className="block text-gray-600 mb-1 font-medium">Your Name</label>
-                    <input 
-                      type="text" 
-                      required 
+                    <input
+                      type="text"
+                      required
                       value={bookingDetails.name}
-                      onChange={(e) => setBookingDetails({...bookingDetails, name: e.target.value})}
-                      placeholder="Enter full name" 
-                      className="w-full border border-gray-200 rounded-lg md:rounded-none px-3 py-2.5 outline-none focus:border-[#9A7B56] transition-colors"
+                      onChange={(e) => setBookingDetails({ ...bookingDetails, name: e.target.value })}
+                      placeholder="Enter full name"
+                      className="w-full border border-gray-200 px-3 py-2.5 outline-none focus:border-[#9A7B56] transition-colors"
                     />
                   </div>
 
                   <div>
                     <label className="block text-gray-600 mb-1 font-medium">Contact Number</label>
-                    <input 
-                      type="tel" 
-                      required 
+                    <input
+                      type="tel"
+                      required
                       value={bookingDetails.phone}
-                      onChange={(e) => setBookingDetails({...bookingDetails, phone: e.target.value})}
-                      placeholder="Enter mobile number" 
-                      className="w-full border border-gray-200 rounded-lg md:rounded-none px-3 py-2.5 outline-none focus:border-[#9A7B56] transition-colors"
+                      onChange={(e) => setBookingDetails({ ...bookingDetails, phone: e.target.value })}
+                      placeholder="Enter mobile number"
+                      className="w-full border border-gray-200 px-3 py-2.5 outline-none focus:border-[#9A7B56] transition-colors"
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-gray-600 mb-1 font-medium">Preferred Date</label>
-                      <input 
-                        type="date" 
-                        required 
+                      <input
+                        type="date"
+                        required
                         value={bookingDetails.date}
-                        onChange={(e) => setBookingDetails({...bookingDetails, date: e.target.value})}
-                        className="w-full border border-gray-200 rounded-lg md:rounded-none px-3 py-2.5 outline-none focus:border-[#9A7B56] transition-colors"
+                        onChange={(e) => setBookingDetails({ ...bookingDetails, date: e.target.value })}
+                        className="w-full border border-gray-200 px-3 py-2.5 outline-none focus:border-[#9A7B56] transition-colors"
                       />
                     </div>
                     <div>
                       <label className="block text-gray-600 mb-1 font-medium">Preferred Time</label>
-                      <select 
+                      <select
                         value={bookingDetails.time}
-                        onChange={(e) => setBookingDetails({...bookingDetails, time: e.target.value})}
-                        className="w-full border border-gray-200 rounded-lg md:rounded-none px-3 py-2.5 bg-white outline-none focus:border-[#9A7B56] transition-colors"
+                        onChange={(e) => setBookingDetails({ ...bookingDetails, time: e.target.value })}
+                        className="w-full border border-gray-200 px-3 py-2.5 bg-white outline-none focus:border-[#9A7B56] transition-colors cursor-pointer"
                       >
                         <option>11:00 AM</option>
                         <option>1:00 PM</option>
@@ -511,9 +627,9 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <button 
-                    type="submit" 
-                    className="w-full bg-[#1A1A1A] hover:bg-[#9A7B56] text-white text-[10px] tracking-widest uppercase font-semibold py-3.5 transition-colors duration-300 rounded-lg md:rounded-none mt-2"
+                  <button
+                    type="submit"
+                    className="w-full bg-[#1A1A1A] hover:bg-[#9A7B56] text-white text-[10px] tracking-widest uppercase font-semibold py-3.5 transition-colors duration-300 mt-2 border-none cursor-pointer"
                   >
                     Confirm Concierge Booking
                   </button>

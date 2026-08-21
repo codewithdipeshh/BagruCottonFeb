@@ -1,214 +1,437 @@
-import { useState, ChangeEvent, FormEvent } from 'react';
-import { UploadCloud, X, Sparkles, Loader2, Layers } from 'lucide-react';
-import axios from 'axios';
+import React, { useState } from "react";
+import axios from "axios";
+import { 
+  PlusCircle, 
+  Image as ImageIcon, 
+  Trash2, 
+  Loader2, 
+  CheckCircle, 
+  AlertCircle,
+  Images,
+  Layers
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-interface ProductState {
-  name: string;
-  category: string;
-  price: string;
-  discountedPrice: string;
-  discountPercent: string;
-  philosophy: string;
-  specifications: string;
-  washCare: string;
-  stock: string;
-  tag: string;
+interface ProductFormData {
+  title: string;
+  philosophy: string;      
+  specifications: string;  
+  washCare: string;        
+  price: number;
+  discountedPrice: number;
+  discountPercent: number;
+  quantity: number;
+  brand: string;
+  imageUrls: string[];     
+  category: {
+    name: string;
+    level: number;
+    parentId: string | null;
+  };       
 }
 
-export default function AddProductForm() {
+export default function AddProduct() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [productData, setProductData] = useState<ProductState>({
-    name: 'COTTON MULMUL',
-    category: 'bagru_print',
-    price: '3899',
-    discountedPrice: '2899',
-    discountPercent: '26',
-    philosophy: 'Traditional hand-blocked Bagru print premium organic cotton drape.',
-    specifications: 'Material: Pure Malmal Cotton | Weave: Traditional Handblock Print',
-    washCare: 'Gentle hand wash separately in cold water with liquid detergents.',
-    stock: '15',
-    tag: 'Certified Handloom',
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const categoriesList = [
+    "Kota Doria Silk",
+    "Maheshwari Silk Saree",
+    "Mulmul Cotton Sarees",
+    "Cotton HandBlock Sarees",
+    "Cotton Linen Saree",
+    "Chanderi Silk Saree",
+    "Khadi Cotton Saree",
+    "Temple Border Saree"
+  ];
+
+  const [formData, setFormData] = useState<ProductFormData>({
+    title: "",
+    philosophy: "",
+    specifications: "",
+    washCare: "",
+    price: 0,
+    discountedPrice: 0,
+    discountPercent: 0,
+    quantity: 1,
+    brand: "Jaipur Print Trails", 
+    imageUrls: [],          
+    category: {
+      name: "Kota Doria Silk", 
+      level: 3,                    
+      parentId: null
+    }, 
   });
 
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-
-  const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setProductData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleMultipleFiles = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const filesArray = Array.from(e.target.files);
-      setSelectedFiles((prev) => [...prev, ...filesArray]);
-
-      filesArray.forEach((file) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-          setImagePreviews((prev) => [...prev, reader.result as string]);
+    
+    setFormData((prev) => {
+      if (name === "categoryName") {
+        return {
+          ...prev,
+          category: {
+            ...prev.category,
+            name: value
+          }
         };
-        reader.readAsDataURL(file);
-      });
-    }
+      }
+
+      const updated = { ...prev, [name]: value };
+      
+      if (name === "price" || name === "discountedPrice") {
+        const price = Number(name === "price" ? value : updated.price);
+        const discPrice = Number(name === "discountedPrice" ? value : updated.discountedPrice);
+        
+        if (price > 0 && discPrice > 0) {
+          updated.discountPercent = Math.round(((price - discPrice) / price) * 100);
+        } else {
+          updated.discountPercent = 0;
+        }
+      }
+      return updated;
+    });
   };
 
-  const removeImageFromDeck = (index: number) => {
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
-    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
-  };
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (selectedFiles.length === 0) {
-      alert("Kam se kam ek image upload karna zaroori hai bhai!");
-      return;
-    }
+    setUploadingImage(true);
+    setErrorMessage(null);
 
-    setLoading(true);
+    const CLOUD_NAME = "zjr85bqp"; 
+    const UPLOAD_PRESET = "bagru_cotton_preset"; 
 
     try {
-      const formData = new FormData();
+      const uploadedUrls: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const fileToUpload = files[i];
+        const data = new FormData();
+        data.append("file", fileToUpload);
+        data.append("upload_preset", UPLOAD_PRESET); 
+        data.append("cloud_name", CLOUD_NAME); 
 
-      Object.entries(productData).forEach(([key, value]) => {
-        formData.append(key, value);
-      });
-
-      selectedFiles.forEach((file) => {
-        formData.append('images', file);
-      });
-
-      const dynamicJwt = localStorage.getItem("jwt");
-
-      if (!dynamicJwt) {
-        alert("Session Error: Token nahi mila storage me! Ek baar logout karke fresh login kijiye bhai.");
-        setLoading(false);
-        return;
+        const response = await axios.post(
+          `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+          data
+        );
+        
+        if (response.data && response.data.secure_url) {
+          uploadedUrls.push(response.data.secure_url);
+        }
       }
 
-      const response = await axios.post('http://localhost:5454/api/admin/products/create', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${dynamicJwt}`
-        },
-      });
+      setFormData((prev) => ({
+        ...prev,
+        imageUrls: [...prev.imageUrls, ...uploadedUrls]
+      }));
 
-      if (response.status === 201 || response.status === 200 || response.data.success) {
-        alert('Masterpiece successfully uploaded to cloud repository inventory vault! 🎉');
-        setSelectedFiles([]);
-        setImagePreviews([]);
-      }
-    } catch (error: any) {
-      console.error('API Pipeline Fault Crash Dump:', error);
-      alert(error.response?.data?.message || error.response?.data?.error || 'Database connection runtime fault.');
+    } catch (err: any) {
+      console.error("Cloudinary multi-upload handshake cycle broken:", err);
+      setErrorMessage("Multi-image cloud upload failed.");
     } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleRemoveImage = (indexToRemove: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      imageUrls: prev.imageUrls.filter((_, idx) => idx !== indexToRemove)
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setSuccessMessage(null);
+    setErrorMessage(null);
+
+    const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5454";
+    const adminToken = localStorage.getItem("admin_jwt") || localStorage.getItem("jwt");
+
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${adminToken}`,
+      },
+    };
+
+    const finalPayload = {
+      title: formData.title,
+      description: formData.philosophy, 
+      philosophy: formData.philosophy,
+      specifications: formData.specifications,
+      washCare: formData.washCare,
+      price: Number(formData.price),                
+      discountedPrice: Number(formData.discountedPrice), 
+      discountPercent: Number(formData.discountPercent),
+      quantity: Number(formData.quantity),
+      brand: formData.brand,
+      category: formData.category, 
+      imageUrl: formData.imageUrls[0] || "", 
+      imageUrls: formData.imageUrls     
+    };
+
+    try {
+      const response = await axios.post(`${BASE_URL}/admin/products/create`, finalPayload, config);
+      
+      if (response.status === 201 || response.status === 200) {
+        setSuccessMessage("Product mapped into live system catalog successfully! Redirecting...");
+        setTimeout(() => navigate("/admin/products"), 1500);
+      }
+    } catch (err: any) {
+      console.error("Master catalog logging error detail:", err.response?.data || err);
+      const serverErrorMessage = err.response?.data?.message || err.response?.data?.error || "Database entry validation check failed.";
+      setErrorMessage(`Backend Reject: ${serverErrorMessage}`);
+    } finally {
+      setFormData((prev) => ({
+        ...prev,
+        title: "",
+        philosophy: "",
+        specifications: "",
+        washCare: "",
+        price: 0,
+        discountedPrice: 0,
+        discountPercent: 0,
+        quantity: 1,
+        imageUrls: []
+      }));
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-5xl mx-auto font-sans text-sm text-left space-y-6">
+    <div className="space-y-8 text-left font-sans text-sm text-stone-800 animate-fade-in">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-serif font-light text-stone-900 tracking-wide flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-[#9A7B56]" /> Publish Heritage Masterpiece
+        <h1 className="text-2xl font-serif text-stone-900 tracking-wide font-light">
+          Catalog Premium Textile
         </h1>
         <p className="text-xs text-stone-400 mt-1">
-          Catalog fresh handloom clusters, map dynamic price nodes, and control responsive display configurations.
+          Deploy premium masterpieces into dynamic client interface gallery grids.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-5 bg-white p-6 rounded-xl border border-stone-200 shadow-xs">
+      {successMessage && (
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-800 font-medium flex items-center gap-2.5 shadow-2xs">
+          <CheckCircle className="w-4 h-4 text-emerald-500" />
+          <span>{successMessage}</span>
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="p-4 rounded-xl bg-rose-50 border border-rose-100 text-rose-800 font-medium flex items-center gap-2.5 shadow-2xs">
+          <AlertCircle className="w-4 h-4 text-rose-500" />
+          <span>{errorMessage}</span>
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 bg-white border border-stone-200/80 p-6 sm:p-8 rounded-[24px] shadow-3xs space-y-6">
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold text-stone-600 uppercase tracking-wider">Product Name / Title</label>
+            <input
+              type="text"
+              name="title"
+              required
+              value={formData.title}
+              onChange={handleChange}
+              placeholder="e.g., ROYAL MULMUL SAREE"
+              className="w-full px-4 py-3 bg-stone-50/50 border border-stone-200 rounded-xl focus:outline-none focus:border-stone-900 font-medium text-stone-900"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold text-stone-600 uppercase tracking-wider">Product Philosophy</label>
+            <textarea
+              name="philosophy"
+              required
+              rows={3}
+              value={formData.philosophy}
+              onChange={handleChange}
+              placeholder="A flagship mulmul masterpiece — whisper-soft, naturally dyed..."
+              className="w-full px-4 py-3 bg-stone-50/50 border border-stone-200 rounded-xl focus:outline-none focus:border-stone-900 text-stone-800 font-medium resize-none"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold text-stone-600 uppercase tracking-wider">Specifications Mapping</label>
+            <textarea
+              name="specifications"
+              required
+              rows={3}
+              value={formData.specifications}
+              onChange={handleChange}
+              placeholder="Fabric: Pure Mulmul Cotton, Length: 5.5 mtrs..."
+              className="w-full px-4 py-3 bg-stone-50/50 border border-stone-200 rounded-xl focus:outline-none focus:border-stone-900 text-stone-800 font-medium resize-none"
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="block text-xs font-semibold text-stone-600 uppercase tracking-wider">Wash & Care Instructions</label>
+            <textarea
+              name="washCare"
+              required
+              rows={2}
+              value={formData.washCare}
+              onChange={handleChange}
+              placeholder="Dry clean only / Gentle hand wash separately..."
+              className="w-full px-4 py-3 bg-stone-50/50 border border-stone-200 rounded-xl focus:outline-none focus:border-stone-900 text-stone-800 font-medium resize-none"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-stone-600 uppercase tracking-wider">Original Price (₹)</label>
+              <input
+                type="number"
+                name="price"
+                required
+                min={0}
+                value={formData.price || ""}
+                onChange={handleChange}
+                className="w-full px-4 py-3 bg-stone-50/50 border border-stone-200 rounded-xl focus:outline-none focus:border-stone-900 text-stone-800 font-medium"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-stone-600 uppercase tracking-wider">Deal Price (₹)</label>
+              <input
+                type="number"
+                name="discountedPrice"
+                required
+                min={0}
+                value={formData.discountedPrice || ""}
+                onChange={handleChange}
+                className="w-full px-4 py-3 bg-stone-50/50 border border-stone-200 rounded-xl focus:outline-none focus:border-stone-900 text-stone-800 font-medium"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-stone-400 uppercase tracking-wider">Auto Markdown (%)</label>
+              <input
+                type="text"
+                name="discountPercent"
+                disabled
+                value={`SAVE ${formData.discountPercent}%`}
+                className="w-full px-4 py-3 bg-stone-100 border border-stone-200 rounded-xl text-rose-600 font-bold font-mono cursor-not-allowed text-center uppercase text-xs"
+              />
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-stone-700 font-semibold mb-1.5">Saree Master Title</label>
-              <input type="text" name="name" required value={productData.name} onChange={handleInputChange} className="w-full border border-stone-200 px-3.5 py-2.5 rounded-lg outline-none focus:border-[#9A7B56] font-serif uppercase tracking-wider" />
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-stone-600 uppercase tracking-wider">Stock Quantity</label>
+              <input
+                type="number"
+                name="quantity"
+                required
+                min={1}
+                value={formData.quantity}
+                onChange={handleChange}
+                className="w-full px-4 py-3 bg-stone-50/50 border border-stone-200 rounded-xl focus:outline-none focus:border-stone-900 text-stone-800 font-medium"
+              />
             </div>
-            <div>
-              <label className="block text-stone-700 font-semibold mb-1.5">Luxury Artisan Badge / Tag</label>
-              <input type="text" name="tag" required value={productData.tag} onChange={handleInputChange} className="w-full border border-stone-200 px-3.5 py-2.5 rounded-lg outline-none focus:border-[#9A7B56] text-amber-800 font-medium" />
-            </div>
-          </div>
 
-          <div className="space-y-4 pt-3 border-t border-stone-100">
-            <div>
-              <label className="block text-stone-700 font-semibold mb-1.5">Philosophy Core Narrative</label>
-              <textarea name="philosophy" required rows={3} value={productData.philosophy} onChange={handleInputChange} className="w-full border border-stone-200 px-3.5 py-2.5 rounded-lg outline-none focus:border-[#9A7B56] resize-none text-stone-600 leading-relaxed" />
-            </div>
-            <div>
-              <label className="block text-stone-700 font-semibold mb-1.5">Specifications Sheet Content</label>
-              <input type="text" name="specifications" required value={productData.specifications} onChange={handleInputChange} className="w-full border border-stone-200 px-3.5 py-2.5 rounded-lg outline-none focus:border-[#9A7B56] text-stone-600" />
-            </div>
-            <div>
-              <label className="block text-stone-700 font-semibold mb-1.5">Wash & Care Directives</label>
-              <input type="text" name="washCare" required value={productData.washCare} onChange={handleInputChange} className="w-full border border-stone-200 px-3.5 py-2.5 rounded-lg outline-none focus:border-[#9A7B56] text-stone-600" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-stone-100">
-            <div>
-              <label className="block text-stone-700 font-semibold mb-1.5">Original Price (₹)</label>
-              <input type="number" name="price" required value={productData.price} onChange={handleInputChange} className="w-full border border-stone-200 px-3.5 py-2.5 rounded-lg outline-none focus:border-[#9A7B56] font-semibold" />
-            </div>
-            <div>
-              <label className="block text-stone-700 font-semibold mb-1.5">Live Retail Display (₹)</label>
-              <input type="number" name="discountedPrice" required value={productData.discountedPrice} onChange={handleInputChange} className="w-full border border-stone-200 px-3.5 py-2.5 rounded-lg outline-none focus:border-[#9A7B56] font-bold text-stone-900" />
-            </div>
-            <div>
-              <label className="block text-stone-700 font-semibold mb-1.5">Save Markdown (%)</label>
-              <input type="number" name="discountPercent" required value={productData.discountPercent} onChange={handleInputChange} className="w-full border border-stone-200 px-3.5 py-2.5 rounded-lg outline-none focus:border-[#9A7B56] text-rose-600 font-bold" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-stone-700 font-semibold mb-1.5">Loom Identity Category</label>
-              <select name="category" required value={productData.category} onChange={handleInputChange} className="w-full border border-stone-200 px-3.5 py-2.5 rounded-lg bg-white outline-none focus:border-[#9A7B56] font-medium text-stone-800">
-                <option value="maheshwari_silk_saree">Maheshwari Silk Saree</option>
-                <option value="kota_doria_silk">Kota Doria Silk</option>
-                <option value="chanderi_silk_saree">Chanderi Silk Saree</option>
-                <option value="mulmul_cotton_sarees">Mulmul Cotton Sarees</option>
-                <option value="cotton_handblock_sarees">Cotton HandBlock Sarees</option>
-                <option value="cotton_linen_saree">Cotton Linen Saree</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-stone-700 font-semibold mb-1.5">Stock Volume Allocation</label>
-              <input type="number" name="stock" required value={productData.stock} onChange={handleInputChange} className="w-full border border-stone-200 px-3.5 py-2.5 rounded-lg outline-none focus:border-[#9A7B56]" />
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold text-stone-600 uppercase tracking-wider">Atelier Brand</label>
+              <input
+                type="text"
+                name="brand"
+                required
+                value={formData.brand}
+                onChange={handleChange}
+                className="w-full px-4 py-3 bg-stone-50/50 border border-stone-200 rounded-xl focus:outline-none focus:border-stone-900 text-stone-800 font-medium"
+              />
             </div>
           </div>
         </div>
 
-        <div className="space-y-4">
-          <div className="bg-white p-5 rounded-xl border border-stone-200 shadow-xs space-y-4">
-            <label className="block text-stone-700 font-semibold">Media Portfolio Asset Rig</label>
-            <label className="border-2 border-dashed border-stone-200 hover:border-[#9A7B56] transition-colors rounded-xl flex flex-col items-center justify-center py-8 px-4 text-center cursor-pointer bg-stone-50/50 group">
-              <UploadCloud className="w-8 h-8 text-stone-400 group-hover:text-[#9A7B56] transition-colors mb-2" />
-              <span className="text-xs font-semibold text-stone-700">Attach Multiple Angle Frames</span>
-              <span className="text-[10px] text-stone-400 mt-0.5">Pick up to 3-5 images combo</span>
-              <input type="file" multiple accept="image/*" onChange={handleMultipleFiles} className="hidden" />
+        <div className="space-y-6">
+          <div className="bg-white border border-stone-200/80 p-6 rounded-[24px] shadow-3xs space-y-4">
+            <label className="black text-xs font-semibold text-stone-600 uppercase tracking-wider flex items-center gap-1.5">
+              <Images className="w-4 h-4 text-[#d9b77e]" /> Media Gallery ({formData.imageUrls.length})
             </label>
-
-            {imagePreviews.length > 0 && (
-              <div className="space-y-2 pt-2 border-t border-stone-100">
-                <span className="text-[10px] font-bold tracking-wider text-stone-400 uppercase block">Active Asset Deck Queue ({imagePreviews.length})</span>
-                <div className="grid grid-cols-3 gap-2">
-                  {imagePreviews.map((preview, idx) => (
-                    <div key={idx} className="relative aspect-[3/4] border border-stone-200 rounded-lg overflow-hidden group bg-stone-100 shadow-2xs">
-                      <img src={preview} alt="Preview element" className="w-full h-full object-cover" />
-                      <button type="button" onClick={() => removeImageFromDeck(idx)} className="absolute top-1 right-1 bg-stone-900/80 p-1 rounded-full text-white hover:bg-stone-950 transition-colors shadow-sm">
-                        <X className="w-3 h-3" />
+            
+            {formData.imageUrls.length > 0 && (
+              <div className="grid grid-cols-2 gap-3 max-h-[260px] overflow-y-auto p-1 bg-stone-50/40 border border-stone-100 rounded-xl">
+                {formData.imageUrls.map((url, idx) => (
+                  <div key={idx} className="relative group rounded-xl overflow-hidden border border-stone-200/70 aspect-square bg-white">
+                    <img src={url} alt="Saree Gallery Asset" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(idx)}
+                        className="p-2 bg-white text-rose-600 rounded-lg shadow-md cursor-pointer border-none outline-none"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </button>
-                      {idx === 0 && <span className="absolute bottom-0 left-0 right-0 bg-stone-900 text-white text-[8px] font-semibold text-center py-0.5 tracking-widest uppercase">Cover</span>}
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
             )}
+
+            <div className="border-2 border-dashed border-stone-200 hover:border-stone-400 transition-colors rounded-2xl p-6 flex flex-col items-center justify-center gap-2.5 bg-stone-50/50 relative min-h-[140px]">
+              {uploadingImage ? (
+                <>
+                  <Loader2 className="w-6 h-6 animate-spin text-[#d9b77e]" />
+                  <span className="text-[11px] text-stone-400 font-medium">Uploading items to Cloudinary node...</span>
+                </>
+              ) : (
+                <>
+                  <ImageIcon className="w-5 h-5 text-stone-400" />
+                  <div className="text-center">
+                    <span className="text-xs font-bold text-[#d9b77e] hover:underline cursor-pointer block">Select Product Assets</span>
+                    <span className="text-[10px] text-stone-400 block mt-0.5">Upload multi-angle photos</span>
+                  </div>
+                  <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="absolute inset-0 opacity-0 cursor-pointer w-full h-full" />
+                </>
+              )}
+            </div>
           </div>
 
-          <button type="submit" disabled={loading} className="w-full bg-stone-950 hover:bg-stone-900 disabled:bg-stone-400 text-white text-xs tracking-widest uppercase py-3.5 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2">
-            {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Vaulting Assets...</> : <><Layers className="w-4 h-4" /> Publish Premium Product</>}
+          <div className="bg-white border border-stone-200/80 p-6 rounded-[24px] shadow-3xs space-y-4">
+            <label className="black text-xs font-semibold text-stone-600 uppercase tracking-wider flex items-center gap-1">
+              <Layers className="w-3.5 h-3.5 text-[#d9b77e]" /> Heritage Category Type
+            </label>
+            
+            <div className="space-y-1">
+              <select 
+                name="categoryName" 
+                value={formData.category.name} 
+                onChange={handleChange} 
+                className="w-full px-3 py-3 bg-stone-50 border border-stone-200 rounded-xl focus:outline-none focus:border-stone-900 text-xs font-semibold text-stone-700 cursor-pointer"
+              >
+                {categoriesList.map((cat, idx) => (
+                  <option key={idx} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading || uploadingImage || formData.imageUrls.length === 0}
+            className="w-full bg-stone-950 hover:bg-stone-900 disabled:bg-stone-300 text-stone-100 text-xs tracking-widest uppercase py-4 rounded-xl font-bold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer border-none outline-none"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin text-[#d9b77e]" />
+                Committing Data Packet...
+              </>
+            ) : (
+              <>
+                <PlusCircle className="w-4 h-4 text-[#d9b77e]" />
+                <span>Publish To Live Pipeline</span>
+              </>
+            )}
           </button>
         </div>
       </form>

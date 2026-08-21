@@ -4,17 +4,19 @@ import {
   useRef,
   useState,
   type FormEvent,
+  type KeyboardEvent,
 } from 'react';
 
 import {
   Link,
   useLocation,
   useNavigate,
-  useSearchParams,
 } from 'react-router-dom';
 
-import { useDispatch, useSelector } from 'react-redux';
-import { logout as reduxLogout } from '../State/Auth/Action';
+import {
+  useDispatch,
+  useSelector,
+} from 'react-redux';
 
 import {
   Search,
@@ -26,9 +28,13 @@ import {
   LogOut,
   Heart,
   Sparkles,
+  ShieldCheck,
+  Loader2,
 } from 'lucide-react';
 
-import { useApp } from '../context/AppContext';
+import axios from 'axios';
+import { API_BASE_URL } from '../config/apiConfig';
+import { getCart } from '../State/Cart/Action';
 
 const navItems = [
   { name: 'Home', path: '/' },
@@ -52,151 +58,380 @@ interface SareeCategory {
 }
 
 const sareeCategories: SareeCategory[] = [
-  { slug: 'mulmul-cotton', name: 'Mulmul Cotton Sarees', filterId: 'mulmul_cotton' },
-  { slug: 'cotton-handblock', name: 'Cotton Block Sarees', filterId: 'cotton_handblock' },
-  { slug: 'cotton-linen', name: 'Cotton Linen Saree', filterId: 'cotton_linen' },
+  { slug: 'cotton-mulmul', name: 'Mulmul Cotton Sarees', filterId: 'mulmul_cotton' },
+  { slug: 'handblock', name: 'Cotton HandBlock Sarees', filterId: 'cotton_handblock' },
+  { slug: 'linen-cotton', name: 'Cotton Linen Saree', filterId: 'cotton_linen' },
   { slug: 'maheshwari-silk', name: 'Maheshwari Silk Saree', filterId: 'maheshwari_silk' },
-  { slug: 'kota-doria-silk', name: 'Kota Doria Silk', filterId: 'kota_doria' },
-  { slug: 'chanderi-silk', name: 'Chanderi Silk Saree', filterId: 'chanderi_silk' },
+  { slug: 'kota-doria', name: 'Kota Doria Silk', filterId: 'kota_doria' },
+  { slug: 'chanderi-bagru', name: 'Chanderi Silk Saree', filterId: 'chanderi_silk' },
 ];
+
+function computeLevenshteinDistance(s1: string, s2: string): number {
+  const m = s1.length;
+  const n = s2.length;
+  const dp = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
+
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      if (s1[i - 1] === s2[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1];
+      } else {
+        dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + 1);
+      }
+    }
+  }
+  return dp[m][n];
+}
+
+function performFuzzyMatch(products: any[], query: string): any[] {
+  const cleanQuery = query.toLowerCase().trim();
+  const queryWords = cleanQuery.split(/\s+/).filter(Boolean);
+
+  const matches = products.map((product) => {
+    const title = (product.title || '').toLowerCase();
+    const description = (product.description || '').toLowerCase();
+    const titleWords = title.split(/\s+/).filter(Boolean);
+
+    let score = 0;
+    let containsAnyWord = false;
+
+    for (const qWord of queryWords) {
+      let bestWordScore = 999;
+      let exactMatchFound = false;
+
+      if (title.includes(qWord) || description.includes(qWord)) {
+        containsAnyWord = true;
+        exactMatchFound = true;
+        score += 50;
+      }
+
+      if (!exactMatchFound) {
+        for (const tWord of titleWords) {
+          if (Math.abs(tWord.length - qWord.length) <= 2) {
+            const distance = computeLevenshteinDistance(qWord, tWord);
+            if (distance < bestWordScore) {
+              bestWordScore = distance;
+            }
+          }
+        }
+
+        if (bestWordScore <= 2) {
+          containsAnyWord = true;
+          score += (3 - bestWordScore) * 10;
+        }
+      }
+    }
+
+    return { product, score, isValid: containsAnyWord };
+  });
+
+  return matches
+    .filter((item) => item.isValid && item.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map((item) => item.product);
+}
+
+function performCategoryFuzzyMatch(categories: SareeCategory[], query: string): SareeCategory[] {
+  const cleanQuery = query.toLowerCase().trim();
+  const queryWords = cleanQuery.split(/\s+/).filter(Boolean);
+
+  const matches = categories.map((category) => {
+    const name = category.name.toLowerCase();
+    const nameWords = name.split(/\s+/).filter(Boolean);
+
+    let score = 0;
+    let containsAnyWord = false;
+
+    for (const qWord of queryWords) {
+      let bestWordScore = 999;
+      let exactMatchFound = false;
+
+      if (name.includes(qWord)) {
+        containsAnyWord = true;
+        exactMatchFound = true;
+        score += 50;
+      }
+
+      if (!exactMatchFound) {
+        for (const nWord of nameWords) {
+          if (Math.abs(nWord.length - qWord.length) <= 2) {
+            const distance = computeLevenshteinDistance(qWord, nWord);
+            if (distance < bestWordScore) {
+              bestWordScore = distance;
+            }
+          }
+        }
+
+        if (bestWordScore <= 2) {
+          containsAnyWord = true;
+          score += (3 - bestWordScore) * 10;
+        }
+      }
+    }
+
+    return { category, score, isValid: containsAnyWord };
+  });
+
+  return matches
+    .filter((item) => item.isValid && item.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map((item) => item.category);
+}
+
+type SearchSuggestion =
+  | { type: 'category'; data: SareeCategory }
+  | { type: 'product'; data: any };
+
+function getSuggestionKey(suggestion: SearchSuggestion): string {
+  return suggestion.type === 'category'
+    ? `category-${suggestion.data.slug}`
+    : `product-${suggestion.data._id || suggestion.data.id}`;
+}
+
+function getSuggestionLink(suggestion: SearchSuggestion): string {
+  return suggestion.type === 'category'
+    ? `/sarees/${suggestion.data.slug}`
+    : `/product/${suggestion.data._id || suggestion.data.id}`;
+}
 
 export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const dispatch = useDispatch() as any;
+  const dispatch = useDispatch<any>();
 
-  const { user } = useSelector((state: any) => state.auth || { user: null });
-  const { cartCount } = useApp();
+  const { jwt, user } = useSelector((state: any) => state.auth);
+  const { cartItems } = useSelector((state: any) => state.cart);
 
-  const currentRole = localStorage.getItem("user_role") || user?.role || "";
-  const isAdmin = currentRole.toUpperCase() === "ADMIN";
+  const isLoggedIn = !!(localStorage.getItem('jwt') || jwt);
+  const userName = user?.firstName || user?.name || '';
+  const cartCount = cartItems?.reduce((acc: number, item: any) => acc + (item.quantity || 0), 0) || 0;
 
-  const isLoggedIn = !!user && !isAdmin; 
-  const userName = user && !isAdmin ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email : '';
-
-  const [isMenuOpen, SlateToggle] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSareesOpen, setIsSareesOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileSareesOpen, setIsMobileSareesOpen] = useState(false);
-  
-  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSearchLoading, setIsSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState(false);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
+
+  // Cache of all products fetched once, reused across every keystroke.
+  const productsCacheRef = useRef<any[] | null>(null);
+  const productsFetchPromiseRef = useRef<Promise<any[]> | null>(null);
 
   const profileRef = useRef<HTMLDivElement | null>(null);
   const sareeRef = useRef<HTMLDivElement | null>(null);
+  const searchContainerRef = useRef<HTMLDivElement | null>(null);
   const lastScrollYRef = useRef(0);
-  const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  
   const [showNavbar, setShowNavbar] = useState(true);
-  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
-    setSearchQuery(searchParams.get('q') || '');
-  }, [location.search, searchParams]);
-
-  const closeDropdowns = () => {
-    setIsSareesOpen(false);
-    setIsProfileOpen(false);
-  };
-
-  const resetTimer = useCallback(() => {
-    if (inactivityTimerRef.current) {
-      clearTimeout(inactivityTimerRef.current);
+    if (isLoggedIn) {
+      dispatch(getCart());
     }
-    if (isMenuOpen || isHovered) return;
-    inactivityTimerRef.current = setTimeout(() => {
+  }, [isLoggedIn, dispatch, cartItems?.length]);
+
+  // Fetch the product list once and cache it. Subsequent searches reuse the
+  // cache instead of hitting the API again, which also removes the race
+  // condition where an older request could resolve after a newer one.
+  const ensureProductsLoaded = useCallback(async (): Promise<any[]> => {
+    if (productsCacheRef.current) {
+      return productsCacheRef.current;
+    }
+    if (productsFetchPromiseRef.current) {
+      return productsFetchPromiseRef.current;
+    }
+
+    const fetchPromise = (async () => {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/api/products?pageSize=100`);
+        const products = res.data?.content || res.data || [];
+        productsCacheRef.current = products;
+        setSearchError(false);
+        return products;
+      } catch (err) {
+        productsFetchPromiseRef.current = null;
+        setSearchError(true);
+        return [];
+      }
+    })();
+
+    productsFetchPromiseRef.current = fetchPromise;
+    return fetchPromise;
+  }, []);
+
+  useEffect(() => {
+    const trimmedQuery = searchQuery.trim();
+
+    if (trimmedQuery.length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      setIsSearchLoading(false);
+      setActiveSuggestionIndex(-1);
+      return;
+    }
+
+    let isCancelled = false;
+    setIsSearchLoading(true);
+
+    const delayDebounce = setTimeout(async () => {
+      const products = await ensureProductsLoaded();
+      if (isCancelled) return;
+
+      const categoryMatches = performCategoryFuzzyMatch(sareeCategories, trimmedQuery);
+      const productMatches = performFuzzyMatch(products, trimmedQuery);
+
+      const combined: SearchSuggestion[] = [
+        ...categoryMatches.slice(0, 3).map((category) => ({ type: 'category' as const, data: category })),
+        ...productMatches.slice(0, 6).map((product) => ({ type: 'product' as const, data: product })),
+      ].slice(0, 6);
+
+      setSuggestions(combined);
+      setShowSuggestions(true);
+      setActiveSuggestionIndex(-1);
+      setIsSearchLoading(false);
+    }, 250);
+
+    return () => {
+      isCancelled = true;
+      clearTimeout(delayDebounce);
+    };
+  }, [searchQuery, ensureProductsLoaded]);
+
+  useEffect(() => {
+    let inactivityTimer: ReturnType<typeof setTimeout>;
+
+    const closeDropdowns = () => {
+      setIsSareesOpen(false);
+      setIsProfileOpen(false);
+      setShowSuggestions(false);
+    };
+
+    const hideNavbar = () => {
       setShowNavbar(false);
       closeDropdowns();
-    }, 2500);
-  }, [isMenuOpen, isHovered]);
+    };
 
-  useEffect(() => {
+    const showNavbarFn = () => {
+      setShowNavbar(true);
+    };
+
+    const resetTimer = () => {
+      clearTimeout(inactivityTimer);
+
+      inactivityTimer = setTimeout(() => {
+        if (window.scrollY > 150) {
+          hideNavbar();
+        }
+      }, 4000);
+    };
+
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       const previousScrollY = lastScrollYRef.current;
 
-      if (currentScrollY < 50) {
-        setShowNavbar(true);
-      } else if (currentScrollY > previousScrollY + 10) {
-        if (!isMenuOpen && !isHovered) {
-          setShowNavbar(false);
-          closeDropdowns();
-        }
-      } else if (currentScrollY < previousScrollY - 10) {
-        setShowNavbar(true);
+      if (currentScrollY < 80) {
+        showNavbarFn();
+      } else if (currentScrollY > previousScrollY + 5) {
+        hideNavbar();
+      } else if (currentScrollY < previousScrollY - 5) {
+        showNavbarFn();
       }
 
       lastScrollYRef.current = currentScrollY;
       resetTimer();
     };
 
-    const handleMouseMoveGlobal = (e: MouseEvent) => {
-      if (e.clientY <= 60) {
-        setShowNavbar(true);
-        if (inactivityTimerRef.current) {
-          clearTimeout(inactivityTimerRef.current);
-        }
-      } else {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (e.clientY <= 80) {
+        showNavbarFn();
         resetTimer();
       }
     };
 
-    const handleTouchStartGlobal = () => {
-      setShowNavbar(true);
+    const handleActivity = () => {
+      showNavbarFn();
       resetTimer();
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('mousemove', handleMouseMoveGlobal);
-    window.addEventListener('touchstart', handleTouchStartGlobal, { passive: true });
-    window.addEventListener('click', handleTouchStartGlobal, { passive: true });
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('touchstart', handleActivity, { passive: true });
+    window.addEventListener('keydown', handleActivity);
 
-    if (isHovered) {
-      setShowNavbar(true);
-      if (inactivityTimerRef.current) {
-        clearTimeout(inactivityTimerRef.current);
-      }
-    } else {
-      resetTimer();
-    }
+    resetTimer();
 
     return () => {
-      if (inactivityTimerRef.current) {
-        clearTimeout(inactivityTimerRef.current);
-      }
+      clearTimeout(inactivityTimer);
       window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('mousemove', handleMouseMoveGlobal);
-      window.removeEventListener('touchstart', handleTouchStartGlobal);
-      window.removeEventListener('click', handleTouchStartGlobal);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('touchstart', handleActivity);
+      window.removeEventListener('keydown', handleActivity);
     };
-  }, [isMenuOpen, isHovered, resetTimer]);
+  }, []);
 
   const closeAllMenus = useCallback(() => {
-    SlateToggle(false);
+    setIsMenuOpen(false);
     setIsSareesOpen(false);
     setIsProfileOpen(false);
     setIsMobileSareesOpen(false);
+    setShowSuggestions(false);
+    setActiveSuggestionIndex(-1);
   }, []);
 
   const handleSearch = (e: FormEvent) => {
     e.preventDefault();
+
+    // If a suggestion is highlighted via keyboard, go straight to it.
+    if (activeSuggestionIndex >= 0 && suggestions[activeSuggestionIndex]) {
+      navigate(getSuggestionLink(suggestions[activeSuggestionIndex]));
+      closeAllMenus();
+      return;
+    }
+
     const q = searchQuery.trim();
-    navigate(q ? `/sarees?q=${encodeURIComponent(q)}` : '/sarees');
+    navigate(q ? `/sarees?search=${encodeURIComponent(q)}` : '/sarees');
     closeAllMenus();
   };
 
+  const handleSearchKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (!showSuggestions || suggestions.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActiveSuggestionIndex((prev) => (prev + 1) % suggestions.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActiveSuggestionIndex((prev) => (prev <= 0 ? suggestions.length - 1 : prev - 1));
+    } else if (e.key === 'Escape') {
+      setShowSuggestions(false);
+      setActiveSuggestionIndex(-1);
+    }
+    // Enter is handled by the form's onSubmit (handleSearch above).
+  };
+
   const handleLogout = () => {
-    dispatch(reduxLogout());
-    closeAllMenus();
+    localStorage.removeItem('jwt');
+    dispatch({ type: 'LOGOUT' });
     navigate('/login');
+    closeAllMenus();
   };
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Node;
+
       if (profileRef.current && !profileRef.current.contains(target)) setIsProfileOpen(false);
       if (sareeRef.current && !sareeRef.current.contains(target)) setIsSareesOpen(false);
+      if (searchContainerRef.current && !searchContainerRef.current.contains(target)) setShowSuggestions(false);
     };
+
     document.addEventListener('mousedown', handleClickOutside, { passive: true });
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
@@ -210,22 +445,116 @@ export default function Navbar() {
     return () => { document.body.style.overflow = ''; };
   }, [isMenuOpen]);
 
+  const renderSuggestionsPanel = (variant: 'desktop' | 'mobile') => {
+    const wrapperClass =
+      variant === 'desktop'
+        ? 'absolute top-[calc(100%+6px)] right-0 w-72 rounded-2xl bg-white shadow-2xl border border-stone-200 p-2 z-[9999] flex flex-col gap-1 text-left'
+        : 'absolute top-[calc(100%+6px)] left-0 w-full rounded-2xl bg-white shadow-2xl border border-stone-200 p-2 z-[9999] flex flex-col gap-1 text-left';
+
+    if (isSearchLoading) {
+      return (
+        <div className={wrapperClass}>
+          <div className="flex items-center gap-2 px-3 py-3 text-xs text-stone-500">
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            Searching...
+          </div>
+        </div>
+      );
+    }
+
+    if (searchError) {
+      return (
+        <div className={wrapperClass}>
+          <div className="px-3 py-3 text-xs text-red-600">
+            Couldn't load products. Please try again.
+          </div>
+        </div>
+      );
+    }
+
+    if (suggestions.length === 0) {
+      return (
+        <div className={wrapperClass}>
+          <div className="px-3 py-3 text-xs text-stone-500">
+            No products found for "{searchQuery.trim()}"
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className={wrapperClass}>
+        {variant === 'desktop' && (
+          <div className="px-3 py-1.5 border-b border-stone-100">
+            <p className="text-[9px] uppercase tracking-wider text-stone-400 font-bold">Results</p>
+          </div>
+        )}
+        <div className="max-h-64 overflow-y-auto space-y-0.5">
+          {suggestions.map((suggestion, index) => {
+            const isActive = activeSuggestionIndex === index;
+
+            if (suggestion.type === 'category') {
+              const category = suggestion.data;
+              return (
+                <Link
+                  key={getSuggestionKey(suggestion)}
+                  to={getSuggestionLink(suggestion)}
+                  onClick={() => (variant === 'desktop' ? setShowSuggestions(false) : closeAllMenus())}
+                  onMouseEnter={() => setActiveSuggestionIndex(index)}
+                  className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-colors no-underline group ${
+                    isActive ? 'bg-stone-100' : 'hover:bg-stone-50'
+                  }`}
+                >
+                  <div className="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="w-4 h-4 text-amber-700" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h5 className="text-xs font-semibold text-neutral-900 truncate group-hover:text-amber-800 transition-colors">
+                      {category.name}
+                    </h5>
+                    <p className="text-[10px] text-stone-500 mt-0.5">Collection</p>
+                  </div>
+                </Link>
+              );
+            }
+
+            const product = suggestion.data;
+            return (
+              <Link
+                key={getSuggestionKey(suggestion)}
+                to={getSuggestionLink(suggestion)}
+                onClick={() => (variant === 'desktop' ? setShowSuggestions(false) : closeAllMenus())}
+                onMouseEnter={() => setActiveSuggestionIndex(index)}
+                className={`flex items-center gap-3 px-3 py-2 rounded-xl transition-colors no-underline group ${
+                  isActive ? 'bg-stone-100' : 'hover:bg-stone-50'
+                }`}
+              >
+                <img
+                  src={product.imageUrl || product.imageUrls?.[0] || 'https://via.placeholder.com/40'}
+                  alt={product.title}
+                  className="w-9 h-9 object-cover rounded-lg bg-stone-100 flex-shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <h5 className="text-xs font-semibold text-neutral-900 truncate group-hover:text-amber-800 transition-colors">
+                    {product.title}
+                  </h5>
+                  <p className="text-[10px] text-stone-500 mt-0.5">
+                    ₹{product.discountedPrice || product.price}
+                  </p>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
-      <div 
-        className="fixed top-0 left-0 w-full h-16 z-[998]"
-        onMouseEnter={() => {
-          setShowNavbar(true);
-          setIsHovered(true);
-        }}
-        onMouseLeave={() => setIsHovered(false)}
-      />
-
       <nav
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
         className={`fixed left-1/2 -translate-x-1/2 z-[999] w-[95%] sm:w-[92%] lg:w-[90%] max-w-7xl select-none transition-all duration-500 ease-in-out ${
-          showNavbar ? 'top-6 sm:top-12 opacity-100 pointer-events-auto' : '-top-48 opacity-0 pointer-events-none'
+          showNavbar ? 'top-12 opacity-100 pointer-events-auto' : '-top-48 opacity-0 pointer-events-none'
         }`}
       >
         <div className="rounded-3xl border border-stone-200 bg-white shadow-md">
@@ -239,7 +568,7 @@ export default function Navbar() {
 
           <div className="px-6 py-4 flex items-center justify-between">
 
-            <Link to="/" className="flex items-center gap-3 flex-shrink-0 group">
+            <Link to="/" className="flex items-center gap-3 flex-shrink-0 group no-underline">
               <div className="w-11 h-11 rounded-xl bg-neutral-900 flex items-center justify-center transition-colors group-hover:bg-amber-800">
                 <span className="text-white text-lg font-serif font-light tracking-widest">B</span>
               </div>
@@ -267,9 +596,9 @@ export default function Navbar() {
                         type="button"
                         aria-haspopup="menu"
                         aria-expanded={isSareesOpen}
-                        className={`px-5 py-2 rounded-full text-xs font-medium tracking-wider uppercase transition-all flex items-center gap-1 ${isNavActive(location.pathname, item.path) || isSareesOpen
+                        className={`px-5 py-2 rounded-full text-xs font-medium tracking-wider uppercase transition-all flex items-center gap-1 border-none outline-none cursor-pointer ${isNavActive(location.pathname, item.path) || isSareesOpen
                           ? "bg-neutral-900 text-white shadow-sm"
-                          : "text-neutral-700 hover:bg-stone-100"
+                          : "text-neutral-700 bg-transparent hover:bg-stone-100"
                           }`}
                       >
                         {item.name}
@@ -282,18 +611,18 @@ export default function Navbar() {
                         <div className="absolute top-full left-0 lg:left-1/2 lg:-translate-x-1/2 pt-2 z-50">
                           <div className="w-[520px] max-w-[90vw] rounded-2xl bg-white shadow-2xl border border-stone-200 p-6">
                             <div className="grid grid-cols-2 gap-6 text-left">
-                              
+
                               <div className="space-y-2">
                                 <h4 className="text-[10px] uppercase tracking-widest text-amber-700 font-bold border-b border-stone-100 pb-1 mb-2">
                                   Silk Masterpieces
                                 </h4>
                                 {sareeCategories
-                                  .filter((c: SareeCategory) => c.slug.includes('silk') || c.slug.includes('doria'))
+                                  .filter((c: SareeCategory) => c.slug.includes('silk') || c.slug.includes('doria') || c.slug.includes('bagru'))
                                   .map((cat: SareeCategory) => (
-                                    <Link 
-                                      key={cat.slug} 
-                                      to={`/sarees/${cat.slug}`} 
-                                      className="block text-xs font-medium text-neutral-700 hover:text-amber-800 py-0.5 transition-colors"
+                                    <Link
+                                      key={cat.slug}
+                                      to={`/sarees/${cat.slug}`}
+                                      className="block text-xs font-medium text-neutral-700 hover:text-amber-800 py-0.5 transition-colors no-underline"
                                     >
                                       {cat.name}
                                     </Link>
@@ -306,9 +635,13 @@ export default function Navbar() {
                                   Cotton Legacies
                                 </h4>
                                 {sareeCategories
-                                  .filter((c: SareeCategory) => c.slug.includes('cotton') || c.slug.includes('mulmul') || c.slug.includes('handblock'))
+                                  .filter((c: SareeCategory) => c.slug.includes('cotton') || c.slug.includes('mulmul') || c.slug.includes('handblock') || c.slug.includes('linen'))
                                   .map((cat: SareeCategory) => (
-                                    <Link key={cat.slug} to={`/sarees/${cat.slug}`} className="block text-xs text-neutral-700 hover:text-black py-0.5 transition-colors">
+                                    <Link
+                                      key={cat.slug}
+                                      to={`/sarees/${cat.slug}`}
+                                      className="block text-xs text-neutral-700 hover:text-black py-0.5 transition-colors no-underline"
+                                    >
                                       {cat.name}
                                     </Link>
                                   ))
@@ -323,7 +656,7 @@ export default function Navbar() {
                   ) : (
                     <Link
                       to={item.path}
-                      className={`px-5 py-2 rounded-full text-xs font-medium tracking-wider uppercase transition-colors ${isNavActive(location.pathname, item.path)
+                      className={`px-5 py-2 rounded-full text-xs font-medium tracking-wider uppercase transition-colors no-underline inline-block ${isNavActive(location.pathname, item.path)
                         ? 'bg-neutral-900 text-white shadow-sm'
                         : 'text-neutral-700 hover:bg-stone-100'
                         }`}
@@ -336,24 +669,30 @@ export default function Navbar() {
             </div>
 
             <div className="hidden lg:flex items-center gap-3">
-              <form onSubmit={handleSearch} className="relative">
-                <input
-                  type="text"
-                  placeholder="Search masterpieces..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-44 h-9 pl-4 pr-9 rounded-full border border-stone-300 bg-stone-50 text-xs tracking-wide focus:outline-none focus:border-neutral-900 focus:bg-white transition-all text-stone-800"
-                />
-                <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-black transition-colors" aria-label="Search">
-                  <Search className="w-3.5 h-3.5" />
-                </button>
-              </form>
+              <div className="relative" ref={searchContainerRef}>
+                <form onSubmit={handleSearch} className="relative">
+                  <input
+                    type="search"
+                    placeholder="Search masterpieces..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => searchQuery.trim().length > 1 && setShowSuggestions(true)}
+                    onKeyDown={handleSearchKeyDown}
+                    className="w-40 h-9 pl-4 pr-9 rounded-full border border-stone-300 bg-stone-50 text-xs tracking-wide focus:outline-none focus:border-neutral-900 focus:bg-white transition-all focus:w-60"
+                  />
+                  <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-black transition-colors border-none bg-transparent cursor-pointer" aria-label="Search">
+                    {isSearchLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
+                  </button>
+                </form>
 
-              <Link to="/wishlist" className="w-9 h-9 rounded-full border border-stone-300 flex items-center justify-center text-neutral-700 hover:text-red-500 hover:bg-stone-50 transition-colors" aria-label="Wishlist">
+                {showSuggestions && renderSuggestionsPanel('desktop')}
+              </div>
+
+              <Link to="/wishlist" className="w-9 h-9 rounded-full border border-stone-300 flex items-center justify-center text-neutral-700 hover:text-red-500 hover:bg-stone-50 transition-colors no-underline" aria-label="Wishlist">
                 <Heart className="w-4 h-4" />
               </Link>
 
-              <Link to="/cart" className="relative w-9 h-9 rounded-full bg-neutral-900 text-white flex items-center justify-center hover:bg-neutral-800 transition-colors shadow-sm" aria-label="Cart">
+              <Link to="/cart" className="relative w-9 h-9 rounded-full bg-neutral-900 text-white flex items-center justify-center hover:bg-neutral-800 transition-colors shadow-sm no-underline" aria-label="Cart">
                 <ShoppingBag className="w-4 h-4" />
                 {cartCount > 0 && (
                   <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-700 text-[9px] font-bold flex items-center justify-center text-white ring-1 ring-white">
@@ -364,12 +703,11 @@ export default function Navbar() {
 
               <div className="relative" ref={profileRef}>
                 <button
-                  type="button"
                   onClick={() => setIsProfileOpen((prev) => !prev)}
-                  className="h-9 px-3.5 rounded-full border border-stone-300 bg-white flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-neutral-900 hover:bg-stone-50 transition-colors"
+                  className="h-9 px-3.5 rounded-full border border-stone-300 bg-white flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-neutral-900 hover:bg-stone-50 transition-colors border-none outline-none cursor-pointer"
                 >
                   <User className="w-3.5 h-3.5 opacity-70" />
-                  <span>{isLoggedIn ? userName : 'Account'}</span>
+                  <span>{isLoggedIn ? userName || 'Patron' : 'Account'}</span>
                 </button>
 
                 {isProfileOpen && (
@@ -378,18 +716,21 @@ export default function Navbar() {
                       <>
                         <div className="px-2 py-1 mb-1 border-b border-stone-100">
                           <p className="text-[9px] uppercase tracking-wider text-stone-400 font-bold">Portal</p>
-                          <p className="text-xs text-black font-semibold truncate">{userName}</p>
+                          <p className="text-xs text-black font-semibold truncate">{userName || 'Patron'}</p>
                         </div>
-                        <Link to="/profile" className="block px-2 py-1.5 text-xs text-neutral-700 hover:bg-stone-100 rounded-lg transition-colors">Profile</Link>
-                        <Link to="/orders" className="block px-2 py-1.5 text-xs text-neutral-700 hover:bg-stone-100 rounded-lg transition-colors">Orders</Link>
-                        <button type="button" onClick={handleLogout} className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs text-red-600 hover:bg-red-50 rounded-lg text-left font-semibold transition-colors">
+                        <Link to="/profile" className="block px-2 py-1.5 text-xs text-neutral-700 hover:bg-stone-100 rounded-lg transition-colors no-underline">Profile</Link>
+                        <Link to="/orders" className="block px-2 py-1.5 text-xs text-neutral-700 hover:bg-stone-100 rounded-lg transition-colors no-underline">Orders</Link>
+                        <Link to="/account/security" className="black px-2 py-1.5 text-xs text-neutral-700 hover:bg-stone-100 rounded-lg transition-colors no-underline flex items-center gap-1.5 font-medium">
+                          <ShieldCheck className="w-3.5 h-3.5 text-neutral-900" /> Security & 2FA
+                        </Link>
+                        <button onClick={handleLogout} className="w-full flex items-center gap-1.5 px-2 py-1.5 text-xs text-red-600 hover:bg-red-50 rounded-lg text-left font-semibold transition-colors border-none bg-transparent cursor-pointer outline-none">
                           <LogOut className="w-3.5 h-3.5" /> Logout
                         </button>
                       </>
                     ) : (
                       <>
-                        <Link to="/login" className="block px-2 py-1.5 text-xs text-neutral-700 hover:bg-stone-100 rounded-lg transition-colors">Log In</Link>
-                        <Link to="/signup" className="block w-full text-center py-2 text-xs font-bold bg-neutral-900 text-white hover:bg-neutral-800 rounded-lg transition-all">Sign Up</Link>
+                        <Link to="/login" className="block w-full text-center py-2 text-xs font-medium text-neutral-900 hover:bg-stone-100 rounded-lg transition-colors no-underline">Log In</Link>
+                        <Link to="/signup" className="block w-full text-center py-2 text-xs font-bold bg-neutral-900 text-white hover:bg-neutral-800 rounded-lg transition-all no-underline">Sign Up</Link>
                       </>
                     )}
                   </div>
@@ -398,10 +739,10 @@ export default function Navbar() {
             </div>
 
             <div className="lg:hidden flex items-center gap-2">
-              <Link to="/wishlist" className="w-9 h-9 rounded-full border border-stone-300 flex items-center justify-center text-neutral-700 hover:text-red-500 transition-colors" aria-label="Wishlist">
+              <Link to="/wishlist" className="w-9 h-9 rounded-full border border-stone-300 flex items-center justify-center text-neutral-700 hover:text-red-500 transition-colors no-underline" aria-label="Wishlist">
                 <Heart className="w-4 h-4" />
               </Link>
-              <Link to="/cart" className="relative w-9 h-9 rounded-full bg-neutral-900 text-white flex items-center justify-center hover:bg-neutral-800 transition-colors" aria-label="Cart">
+              <Link to="/cart" className="relative w-9 h-9 rounded-full bg-neutral-900 text-white flex items-center justify-center hover:bg-neutral-800 transition-colors no-underline" aria-label="Cart">
                 <ShoppingBag className="w-4 h-4" />
                 {cartCount > 0 && (
                   <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-700 text-[9px] font-bold flex items-center justify-center text-white ring-1 ring-white">
@@ -410,9 +751,8 @@ export default function Navbar() {
                 )}
               </Link>
               <button
-                type="button"
-                onClick={() => SlateToggle((prev) => !prev)}
-                className="w-9 h-9 rounded-lg bg-neutral-900 text-white flex items-center justify-center active:scale-95 transition-transform"
+                onClick={() => setIsMenuOpen((prev) => !prev)}
+                className="w-9 h-9 rounded-lg bg-neutral-900 text-white flex items-center justify-center active:scale-95 transition-transform border-none cursor-pointer outline-none"
                 aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
               >
                 {isMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
@@ -422,19 +762,24 @@ export default function Navbar() {
 
           {isMenuOpen && (
             <div className="lg:hidden border-t border-stone-100 py-4 px-4 bg-white rounded-b-3xl space-y-4 text-left">
-              
-              <form onSubmit={handleSearch} className="relative w-full">
-                <input
-                  type="text"
-                  placeholder="Search sarees, collections..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full h-10 pl-4 pr-10 rounded-xl border border-stone-200 bg-stone-50 text-xs tracking-wide focus:outline-none focus:border-neutral-900 focus:bg-white transition-all text-stone-800"
-                />
-                <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500" aria-label="Search Submit">
-                  <Search className="w-4 h-4" />
-                </button>
-              </form>
+              <div className="relative w-full mb-2" ref={searchContainerRef}>
+                <form onSubmit={handleSearch} className="relative w-full">
+                  <input
+                    type="search"
+                    placeholder="Search masterpieces..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onFocus={() => searchQuery.trim().length > 1 && setShowSuggestions(true)}
+                    onKeyDown={handleSearchKeyDown}
+                    className="w-full h-10 pl-4 pr-10 rounded-xl border border-stone-300 bg-stone-50 text-xs tracking-wide focus:outline-none focus:border-neutral-900 focus:bg-white transition-all"
+                  />
+                  <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-500 hover:text-black transition-colors border-none bg-transparent cursor-pointer" aria-label="Search">
+                    {isSearchLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+                  </button>
+                </form>
+
+                {showSuggestions && renderSuggestionsPanel('mobile')}
+              </div>
 
               <div className="space-y-1">
                 {navItems.map((item) => (
@@ -442,18 +787,17 @@ export default function Navbar() {
                     {item.hasDropdown ? (
                       <div>
                         <button
-                          type="button"
                           onClick={() => setIsMobileSareesOpen((prev) => !prev)}
-                          className="w-full flex justify-between items-center py-1.5 text-xs uppercase font-semibold text-neutral-900"
+                          className="w-full flex justify-between items-center py-1.5 text-xs uppercase font-semibold text-neutral-900 border-none bg-transparent cursor-pointer outline-none"
                         >
                           <span>{item.name}</span>
                           <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isMobileSareesOpen ? 'rotate-180' : ''}`} />
                         </button>
                         {isMobileSareesOpen && (
                           <div className="pl-3 py-1 space-y-1 mt-1 bg-stone-50 rounded-lg">
-                            <Link to="/sarees" onClick={closeAllMenus} className="block py-1.5 text-xs font-semibold text-black">View All Collections</Link>
+                            <Link to="/sarees" onClick={closeAllMenus} className="block py-1.5 text-xs font-semibold text-black no-underline">View All Collections</Link>
                             {sareeCategories.map((cat: SareeCategory) => (
-                              <Link key={cat.slug} to={`/sarees/${cat.slug}`} onClick={closeAllMenus} className="block py-1.5 text-xs text-neutral-600">
+                              <Link key={cat.slug} to={`/sarees/${cat.slug}`} onClick={closeAllMenus} className="block py-1.5 text-xs text-neutral-600 no-underline">
                                 {cat.name}
                               </Link>
                             ))}
@@ -461,7 +805,7 @@ export default function Navbar() {
                         )}
                       </div>
                     ) : (
-                      <Link to={item.path} onClick={closeAllMenus} className="block py-1.5 text-xs uppercase font-semibold text-neutral-900">
+                      <Link to={item.path} onClick={closeAllMenus} className="block py-1.5 text-xs uppercase font-semibold text-neutral-900 no-underline">
                         {item.name}
                       </Link>
                     )}
@@ -471,13 +815,18 @@ export default function Navbar() {
 
               <div className="pt-2">
                 {isLoggedIn ? (
-                  <button type="button" onClick={handleLogout} className="w-full py-2 rounded-xl border border-red-200 text-xs font-medium text-red-600 text-center">
-                    Logout ({userName})
-                  </button>
+                  <div className="space-y-2">
+                    <Link to="/account/security" onClick={closeAllMenus} className="w-full py-2.5 rounded-xl border border-stone-200 text-xs font-medium text-neutral-900 text-center flex items-center justify-center gap-1.5 bg-stone-50 no-underline">
+                      <ShieldCheck className="w-4 h-4 text-neutral-900" /> Security & 2FA
+                    </Link>
+                    <button onClick={handleLogout} className="w-full py-2 rounded-xl border border-red-200 text-xs font-medium text-red-600 text-center border-none bg-transparent cursor-pointer outline-none">
+                      Logout ({userName})
+                    </button>
+                  </div>
                 ) : (
                   <div className="grid grid-cols-2 gap-2">
-                    <Link to="/login" onClick={closeAllMenus} className="py-2 border border-stone-200 rounded-xl text-center text-xs text-neutral-900 bg-stone-50">Log In</Link>
-                    <Link to="/signup" onClick={closeAllMenus} className="py-2 rounded-xl text-center text-xs font-bold bg-neutral-900 text-white">Sign Up</Link>
+                    <Link to="/login" onClick={closeAllMenus} className="py-2 border border-stone-200 rounded-xl text-center text-xs text-neutral-900 bg-stone-50 no-underline">Log In</Link>
+                    <Link to="/signup" onClick={closeAllMenus} className="py-2 rounded-xl text-center text-xs font-bold bg-neutral-900 text-white no-underline">Sign Up</Link>
                   </div>
                 )}
               </div>

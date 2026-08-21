@@ -14,7 +14,7 @@ import {
 import AddProductForm from './AddProductForm';
 import AllProducts from './AllProducts';
 import CustomersList from './CustomersList';
-import Dashboard from './dashboard';
+import Dashboard from './AdminDashboard';
 import OrdersList from './OrdersList';
 
 export default function Admin() {

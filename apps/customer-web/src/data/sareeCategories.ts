@@ -6,34 +6,44 @@ export type SareeCategory = {
 
 export const sareeCategories: SareeCategory[] = [
   { 
-    slug: 'mulmul-cotton', 
+    slug: 'cotton-mulmul', 
     name: 'Mulmul Cotton Sarees', 
-    filterId: 'mulmul_cotton_sarees' 
+    filterId: 'mulmul_cotton' 
   },
   {
-    slug: 'cotton-handblock',
+    slug: 'handblock',
     name: 'Cotton HandBlock Sarees',
-    filterId: 'cotton_handblock_sarees',
+    filterId: 'cotton_handblock',
   },
   { 
-    slug: 'cotton-linen', 
+    slug: 'linen-cotton', 
     name: 'Cotton Linen Saree', 
-    filterId: 'cotton_linen_saree' 
+    filterId: 'cotton_linen' 
   },
   { 
     slug: 'maheshwari-silk', 
     name: 'Maheshwari Silk Saree', 
-    filterId: 'maheshwari_silk_saree' 
+    filterId: 'maheshwari_silk' 
   },
   { 
-    slug: 'kota-doria-silk', 
+    slug: 'kota-doria', 
     name: 'Kota Doria Silk', 
-    filterId: 'kota_doria_silk' 
+    filterId: 'kota_doria' 
   },
   { 
-    slug: 'chanderi-silk', 
+    slug: 'chanderi-bagru', 
     name: 'Chanderi Silk Saree', 
-    filterId: 'chanderi_silk_saree' 
+    filterId: 'chanderi_silk' 
+  },
+  {
+    slug: 'khadi-cotton',
+    name: 'Khadi Cotton Saree',
+    filterId: 'khadi_cotton'
+  },
+  {
+    slug: 'temple-border',
+    name: 'Temple Border Saree',
+    filterId: 'temple_border'
   },
 ];
 
