@@ -3,21 +3,13 @@
   "private": true,
   "description": "Monorepo root — run scripts via frontend/ or backend/ workspaces",
   "scripts": {
-    "dev": "npm run dev --prefix frontend",
-    "build": "npm run build --prefix frontend",
-    "lint": "npm run lint --prefix frontend",
-    "preview": "npm run preview --prefix frontend",
-    "typecheck": "npm run typecheck --prefix frontend",
-    "dev:frontend": "npm run dev --prefix frontend",
-    "dev:backend": "node backend/server.js",
-    "install:frontend": "npm install --prefix frontend",
-    "install:backend": "npm install --prefix backend"
+    "dev": "concurrently \"pnpm dev:customer\" \"pnpm dev:admin\"",
+    "dev:customer": "pnpm --filter customer-web dev",
+    "dev:admin": "pnpm --filter admin-web dev",
+    "build": "pnpm --filter customer-web build && pnpm --filter admin-web build"
   },
-  "dependencies": {
-    "@react-oauth/google": "^0.13.5",
-    "axios": "^1.18.1",
-    "react-redux": "^9.3.0",
-    "redux": "^5.0.1",
-    "redux-thunk": "^3.1.0"
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "@types/node": "^20.0.0"
   }
 }
