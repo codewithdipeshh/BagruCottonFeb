@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { Heart, ShoppingBag } from 'lucide-react';
+import { Heart, ShoppingBag, Check } from 'lucide-react';
 import { addItemToCart } from '../State/Cart/Action';
+import { toggleWishlistItem } from '../State/Wishlist/Action';
 
 type FeaturedProductCardProps = {
   product: any;
@@ -19,13 +20,22 @@ export default function FeaturedProductCard({
 }: FeaturedProductCardProps) {
   const dispatch = useDispatch<any>();
   const navigate = useNavigate();
+  const { wishlistItems = [] } = useSelector((state: any) => state.wishlist || {});
   const [isHovered, setIsHovered] = useState(false);
   const [currentImage, setCurrentImage] = useState(0);
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const displayTitle = product?.title || product?.name || 'Heritage Drape';
   const displayPrice = product?.discountedPrice || product?.price || 0;
   const originalPrice = product?.price || 0;
+  const productId = product?._id || product?.id;
+
+  const isWishlisted = useMemo(() => {
+    return wishlistItems.some((item: any) => {
+      const itemId = item._id || item.id;
+      return itemId === productId;
+    });
+  }, [wishlistItems, productId]);
 
   const images = useMemo<string[]>(() => {
     if (!product) return [''];
@@ -57,6 +67,10 @@ export default function FeaturedProductCard({
       quantity: 1
     };
     dispatch(addItemToCart(itemData));
+    
+    // Show success message
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 2000);
   };
 
   return (
@@ -86,7 +100,7 @@ export default function FeaturedProductCard({
           type="button"
           onClick={(event) => {
             event.stopPropagation();
-            setIsWishlisted((value) => !value);
+            dispatch(toggleWishlistItem(productId));
           }}
           className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white text-neutral-950 shadow-sm transition-colors duration-300 hover:text-red-600 border-none outline-none cursor-pointer"
           aria-label={isWishlisted ? `Remove ${displayTitle} from wishlist` : `Save ${displayTitle}`}
@@ -154,10 +168,24 @@ export default function FeaturedProductCard({
           <button
             type="button"
             onClick={handleAddToCartClick}
-            className="flex w-full items-center justify-center gap-2 bg-neutral-950 px-4 py-3.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-white transition-all duration-300 hover:opacity-90 active:scale-[0.99] border-none outline-none cursor-pointer rounded-lg"
+            disabled={showSuccess}
+            className={`flex w-full items-center justify-center gap-2 px-4 py-3.5 text-[10px] font-semibold uppercase tracking-[0.16em] transition-all duration-300 active:scale-[0.99] border-none outline-none cursor-pointer rounded-lg ${
+              showSuccess 
+                ? 'bg-emerald-600 text-white' 
+                : 'bg-neutral-950 text-white hover:opacity-90'
+            }`}
           >
-            <ShoppingBag className="h-3.5 w-3.5" />
-            Add to Cart
+            {showSuccess ? (
+              <>
+                <Check className="h-3.5 w-3.5" />
+                Added to Cart
+              </>
+            ) : (
+              <>
+                <ShoppingBag className="h-3.5 w-3.5" />
+                Add to Cart
+              </>
+            )}
           </button>
         </div>
       </div>

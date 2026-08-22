@@ -1,76 +1,98 @@
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
-    firstName: {
-        type: String,
-        required: true,
-        trim: true,
+  firstName: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    lowercase: true,
+    trim: true,
+  },
+
+  password: {
+    type: String,
+    required: true,
+  },
+
+  role: {
+    type: String,
+    enum: ["CUSTOMER", "ADMIN"],
+    default: "CUSTOMER",
+  },
+
+  mobile: {
+    type: String,
+  },
+
+  // 🔴 Email Verification Fields
+  isVerified: {
+    type: Boolean,
+    default: false,
+  },
+
+  verificationToken: {
+    type: String,
+    default: null,
+  },
+
+  address: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "addresses",
     },
-    
-    email: {
-        type: String,
-        required: true,
-        unique: true,
-        lowercase: true,
-        trim: true,
+  ],
+
+  paymentInformation: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "payment_information",
     },
+  ],
 
-    password: {
-        type: String,
-        required: true,
-    
+  rating: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "rating",
     },
+  ],
 
-    role: {
-        type: String,
-        enum: ["CUSTOMER", "ADMIN"],
-        default: "CUSTOMER",
+  reviews: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "reviews",
     },
+  ],
 
-    mobile: {
-        type: String,
-    },
+  resetPasswordToken: {
+    type: String,
+    default: null,
+  },
 
-    address: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "addresses",
-        }
-    ],
+  resetPasswordExpires: {
+    type: Date,
+    default: null,
+  },
 
-    paymentInformation: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "payment_information",
-        }
-    ],
+  otp: {
+    type: String,
+    default: null,
+  },
 
-    rating: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "rating",
-        }
-    ],
+  otpExpires: {
+    type: Date,
+    default: null,
+  },
 
-    reviews: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "reviews",
-        }
-    ],
-
-    resetPasswordToken: {
-        type: String,
-    },
-
-    resetPasswordExpires: {
-        type: Date,
-    },
-
-    createdAt: {
-        type: Date,
-        default: Date.now,
-    }
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 const User = mongoose.model("users", userSchema);

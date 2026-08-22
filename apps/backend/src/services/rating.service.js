@@ -2,7 +2,6 @@ const Rating = require("../models/rating.model");
 const productService = require("../services/product.service");
 
 async function createRating(req, user) {
-
     const product = await productService.findProductById(req.productId);
 
     // Check if user already rated
@@ -12,9 +11,7 @@ async function createRating(req, user) {
     });
 
     if (existingRating) {
-        throw new Error(
-            "You have already rated this product"
-        );
+        throw new Error("You have already rated this product");
     }
 
     const rating = new Rating({
@@ -26,6 +23,7 @@ async function createRating(req, user) {
 
     return await rating.save();
 }
+
 async function getProductRating(productId) {
   try {
     return await Rating.find({
@@ -36,7 +34,23 @@ async function getProductRating(productId) {
   }
 }
 
+// Admin ke liye review delete karne ka logic
+async function deleteReview(reviewId) {
+  try {
+    const review = await Review.findByIdAndDelete(reviewId);
+    
+    if (!review) {
+      throw new Error("Review not found");
+    }
+  
+    return review;
+  } catch (error) {
+    throw new Error(error.message);
+  }
+}
+
 module.exports = {
   createRating,
   getProductRating,
+  deleteReview
 };

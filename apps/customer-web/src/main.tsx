@@ -6,6 +6,10 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { store } from './State/store.ts'; 
 import App from './App.tsx';
 import './index.css';
+import { clearInvalidTokens } from './State/Auth/Action';
+
+// Clear invalid tokens on app startup
+clearInvalidTokens();
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 

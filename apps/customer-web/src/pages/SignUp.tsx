@@ -78,7 +78,9 @@ export default function Signup() {
 
   useEffect(() => {
     const existingToken = localStorage.getItem(TOKEN_KEY);
-    if (existingToken) {
+    const user = JSON.parse(localStorage.getItem('user') || 'null');
+    // Only redirect if both token and user data exist
+    if (existingToken && user) {
       navigate(redirectTo, { replace: true });
     }
   }, [TOKEN_KEY, navigate, redirectTo]);
@@ -94,8 +96,7 @@ export default function Signup() {
           
           const freshToken = localStorage.getItem(TOKEN_KEY);
           if (freshToken) {
-            // Error fixed here: Removed freshToken argument
-            await dispatch(getUser()); 
+            await dispatch(getUser(freshToken));
             navigate(redirectTo, { replace: true });
           }
         } catch (err) {

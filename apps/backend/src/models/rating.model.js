@@ -26,12 +26,10 @@ const ratingSchema = new mongoose.Schema(
   }
 );
 
+// 1 User can only give 1 star-rating per product
 ratingSchema.index(
   { user: 1, product: 1 },
   { unique: true }
 );
 
-module.exports = mongoose.model(
-  "ratings",
-  ratingSchema
-);
+module.exports = mongoose.model("ratings", ratingSchema);

@@ -2,22 +2,28 @@ import {
   useEffect,
   useRef,
   useState,
+  useMemo,
   type MouseEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
-import { Minus, Plus, X } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import { Minus, Plus, X, Check } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
+import { addItemToCart, getCart } from '../State/Cart/Action';
 
-// Better TypeScript Interface updated with missing fields
+// Updated TypeScript Interface
 export interface QuickViewProduct {
   _id?: string;
   id?: string;
-  name: string;
+  name?: string;
+  title?: string;
   price?: number;
   discountedPrice: number;
   discountPercent?: number;
   images?: string[];
+  imageUrls?: string[];
+  imageUrl?: string;
+  image?: string;
   tag?: string;
   philosophy?: string;
   fabric?: string;       
@@ -39,12 +45,15 @@ export default function QuickViewModal({
   product,
   onClose,
 }: QuickViewModalProps) {
-  const { addToCart } = useApp();
   const navigate = useNavigate();
+  const dispatch = useDispatch<any>();
+  const { jwt } = useSelector((state: any) => state.auth || {});
+
   const panelRef = useRef<HTMLDivElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   // Reset state when a new product is opened
   useEffect(() => {
@@ -94,13 +103,34 @@ export default function QuickViewModal({
     };
   }, [onClose, product]);
 
+  // Robust image aggregation
+  const images = useMemo<string[]>(() => {
+    if (!product) return ['https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=600&auto=format&fit=crop'];
+    
+    const aggregatedList: any[] = [];
+    if (product.imageUrls && Array.isArray(product.imageUrls)) aggregatedList.push(...product.imageUrls);
+    if (product.images && Array.isArray(product.images)) aggregatedList.push(...product.images);
+    if (product.imageUrl) aggregatedList.push(product.imageUrl);
+    if (product.image) aggregatedList.push(product.image);
+
+    const processedUrls = aggregatedList.map((item: any) => {
+      if (!item) return '';
+      if (typeof item === 'string') return item.trim();
+      if (typeof item === 'object' && item.url) return String(item.url).trim();
+      return String(item).trim();
+    });
+
+    const uniqueImages = Array.from(new Set(processedUrls.filter((url) => typeof url === 'string' && url !== '')));
+    if (uniqueImages.length === 0) return ['https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=600&auto=format&fit=crop'];
+    return uniqueImages;
+  }, [product]);
+
   // Early return if no product
   if (!product) return null;
 
-  // Fallback for images if product doesn't have any
-  const images = product.images && product.images.length > 0 ? product.images : ['/placeholder-image.jpg'];
-  
-  // Safely grab thumbnails
+  const displayName = product.title || product.name || 'Heritage Drape';
+  const productId = product._id || product.id;
+
   const thumbnails = images
     .map((image: string, index: number) => ({ image, index }))
     .filter((item) => item.index !== selectedImage)
@@ -110,19 +140,46 @@ export default function QuickViewModal({
     if (event.target === event.currentTarget) onClose();
   };
 
+//  REDUX WALA ADD TO CART (With Navbar Auto-Sync)
   const handleAddToCart = () => {
-    // Type assertion used to bypass strict Context types
-    addToCart(product as any, quantity);
+    const token = localStorage.getItem('jwt') || jwt;
+    if (!token) {
+      onClose();
+      navigate('/login?redirectTo=/cart');
+      return;
+    }
+
+    if (productId) {
+      dispatch(addItemToCart({ productId, quantity }));
+      setShowSuccess(true);
+      setTimeout(() => {
+        dispatch(getCart());
+      }, 500);
+    }
     onClose();
   };
 
+  // REDUX WALA BUY NOW FIX
   const handleBuyNow = () => {
-    addToCart(product as any, quantity);
+    const token = localStorage.getItem('jwt') || jwt;
+    if (!token) {
+      onClose();
+      navigate('/login?redirectTo=/cart');
+      return;
+    }
+
+    if (productId) {
+      dispatch(addItemToCart({ productId, quantity }));
+      
+      // Auto refresh
+      setTimeout(() => {
+        dispatch(getCart());
+      }, 500);
+    }
     onClose();
     navigate('/cart');
   };
 
-  // Safe discount calculation
   const hasDiscount = product.price && product.discountedPrice < product.price;
   const calculatedDiscount = product.price 
     ? Math.round(((product.price - product.discountedPrice) / product.price) * 100) 
@@ -158,9 +215,9 @@ export default function QuickViewModal({
           <div className="relative aspect-[3/4] overflow-hidden rounded-xl bg-white shadow-sm">
             {images.map((image: string, index: number) => (
               <img
-                key={`${product._id || product.id}-main-${index}`}
+                key={`${productId}-main-${index}`}
                 src={image}
-                alt={`${product.name} view ${index + 1}`}
+                alt={`${displayName} view ${index + 1}`}
                 className={`quick-view-image absolute inset-0 h-full w-full object-cover transition-opacity duration-500 ease-in-out ${
                   index === selectedImage ? 'opacity-100 z-10' : 'opacity-0 z-0'
                 }`}
@@ -172,15 +229,15 @@ export default function QuickViewModal({
             <div className="mt-3 grid grid-cols-3 gap-3">
               {thumbnails.map((thumb) => (
                 <button
-                  key={`${product._id || product.id}-thumb-${thumb.index}`}
+                  key={`${productId}-thumb-${thumb.index}`}
                   type="button"
                   onClick={() => setSelectedImage(thumb.index)}
                   className="aspect-[3/4] overflow-hidden rounded-lg border border-transparent bg-white shadow-sm transition-all duration-300 hover:border-[#9A7B56] hover:shadow-md focus:border-[#080616] focus:outline-none"
-                  aria-label={`Show ${product.name} image ${thumb.index + 1}`}
+                  aria-label={`Show ${displayName} image ${thumb.index + 1}`}
                 >
                   <img
                     src={thumb.image}
-                    alt={`${product.name} thumbnail ${thumb.index + 1}`}
+                    alt={`${displayName} thumbnail ${thumb.index + 1}`}
                     className="h-full w-full object-cover transition-transform duration-500 hover:scale-110"
                   />
                 </button>
@@ -193,14 +250,14 @@ export default function QuickViewModal({
         <div className="flex flex-1 flex-col justify-between p-6 sm:p-8 text-left bg-white md:rounded-r-2xl">
           <div>
             <span className="inline-flex rounded-md bg-[#080616] px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#D3B198]">
-              {product.tag || 'Premium Collection'}
+              {product.tag || product.fabric || 'Premium Collection'}
             </span>
             
             <h2
               id="quick-view-title"
               className="mt-4 font-serif text-3xl font-medium leading-tight tracking-wide text-stone-900 sm:text-4xl"
             >
-              {product.name}
+              {displayName}
             </h2>
             
             <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -221,7 +278,7 @@ export default function QuickViewModal({
             </div>
 
             <p className="mt-5 text-sm font-medium leading-relaxed text-stone-600 border-t border-gray-100 pt-5">
-              {product.philosophy || "Handcrafted with precision, representing the rich cultural heritage and premium quality of our exclusive collection."}
+              {product.philosophy || product.description || "Handcrafted with precision, representing the rich cultural heritage and premium quality of our exclusive collection."}
             </p>
 
             <div className="mt-8">
@@ -232,7 +289,7 @@ export default function QuickViewModal({
                 <button
                   type="button"
                   onClick={() => setQuantity((value) => Math.max(1, value - 1))}
-                  className="flex h-12 w-12 items-center justify-center text-stone-600 transition-colors duration-300 hover:bg-gray-50 hover:text-[#080616]"
+                  className="flex h-12 w-12 items-center justify-center text-stone-600 transition-colors duration-300 hover:bg-gray-50 hover:text-[#080616] cursor-pointer"
                   aria-label="Decrease quantity"
                 >
                   <Minus className="h-4 w-4" />
@@ -243,7 +300,7 @@ export default function QuickViewModal({
                 <button
                   type="button"
                   onClick={() => setQuantity((value) => value + 1)}
-                  className="flex h-12 w-12 items-center justify-center text-stone-600 transition-colors duration-300 hover:bg-gray-50 hover:text-[#080616]"
+                  className="flex h-12 w-12 items-center justify-center text-stone-600 transition-colors duration-300 hover:bg-gray-50 hover:text-[#080616] cursor-pointer"
                   aria-label="Increase quantity"
                 >
                   <Plus className="h-4 w-4" />
@@ -256,22 +313,34 @@ export default function QuickViewModal({
             <button
               type="button"
               onClick={handleAddToCart}
-              className="w-full rounded-xl bg-[#080616] px-5 py-4 text-xs font-bold uppercase tracking-widest text-white transition-all duration-300 hover:bg-[#9A7B56] shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+              disabled={showSuccess}
+              className={`w-full rounded-xl px-5 py-4 text-xs font-bold uppercase tracking-widest transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-0.5 cursor-pointer border-none ${
+                showSuccess 
+                  ? 'bg-emerald-600 text-white' 
+                  : 'bg-[#080616] text-white hover:bg-[#9A7B56]'
+              }`}
             >
-              Add to Cart
+              {showSuccess ? (
+                <>
+                  <Check className="inline h-4 w-4 mr-2" />
+                  Added to Cart
+                </>
+              ) : (
+                'Add to Cart'
+              )}
             </button>
             <button
               type="button"
               onClick={handleBuyNow}
-              className="w-full rounded-xl border-2 border-[#080616] bg-white px-5 py-4 text-xs font-bold uppercase tracking-widest text-[#080616] transition-all duration-300 hover:bg-[#080616] hover:text-white"
+              className="w-full rounded-xl border-2 border-[#080616] bg-white px-5 py-4 text-xs font-bold uppercase tracking-widest text-[#080616] transition-all duration-300 hover:bg-[#080616] hover:text-white cursor-pointer"
             >
               Buy Now
             </button>
             <div className="pt-4 text-center">
               <Link
-                to={`/products/${product._id || product.id}`}
+                to={`/products/${productId}`}
                 onClick={onClose}
-                className="inline-flex text-xs font-bold uppercase tracking-widest text-[#9A7B56] transition-colors duration-300 hover:text-[#080616]"
+                className="inline-flex text-xs font-bold uppercase tracking-widest text-[#9A7B56] transition-colors duration-300 hover:text-[#080616] no-underline"
               >
                 View Full Details &rarr;
               </Link>

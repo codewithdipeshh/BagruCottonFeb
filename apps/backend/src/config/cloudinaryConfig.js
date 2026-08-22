@@ -11,7 +11,7 @@ cloudinary.config({
 });
 
 
-const storage = new CloudinaryStorage({
+const productStorage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
     folder: 'bagru_cotton_products', 
@@ -20,6 +20,16 @@ const storage = new CloudinaryStorage({
   },
 });
 
-const uploadCloud = multer({ storage: storage });
+const reviewStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'bagru_cotton_reviews', 
+    allowed_formats: ['jpg', 'png', 'jpeg', 'webp'], 
+    transformation: [{ width: 600, height: 600, crop: 'limit' }], 
+  },
+});
 
-module.exports = { uploadCloud, cloudinary };
+const uploadCloud = multer({ storage: productStorage });
+const uploadReviewImages = multer({ storage: reviewStorage });
+
+module.exports = { uploadCloud, uploadReviewImages, cloudinary };

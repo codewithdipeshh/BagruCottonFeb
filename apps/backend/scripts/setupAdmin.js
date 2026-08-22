@@ -19,12 +19,13 @@ const setupAdmin = async () => {
     if (existingAdmin) {
       console.log("Admin user already exists with email:", adminEmail);
       
-      // Update password if needed
+      // Update password and role if needed
       const hashedPassword = await bcrypt.hash(adminPassword, 10);
       existingAdmin.password = hashedPassword;
       existingAdmin.role = "ADMIN";
+      existingAdmin.firstName = adminName;
       await existingAdmin.save();
-      console.log("Admin password updated successfully");
+      console.log("Admin updated successfully");
     } else {
       // Create new admin
       const hashedPassword = await bcrypt.hash(adminPassword, 10);

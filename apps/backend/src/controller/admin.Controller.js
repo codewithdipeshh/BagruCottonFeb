@@ -2,42 +2,17 @@ const express = require("express");
 const router = express.Router();
 
 const orderController = require("./adminOrder.controller");
-const { authenticate } = require("../middleware/authenticate");
+const { authenticate, isAdmin } = require("../middleware/authenticate");
 
-router.get(
-  "/",
-  authenticate,
-  orderController.getAllOrders
-);
+// Apply authentication and admin check to all routes
+router.use(authenticate, isAdmin);
 
-router.put(
-  "/:orderId/confirmed",
-  authenticate,
-  orderController.confirmedOrders
-);
-
-router.put(
-  "/:orderId/ship",
-  authenticate,
-  orderController.shipOrders
-);
-
-router.put(
-  "/:orderId/deliver",
-  authenticate,
-  orderController.deliverOrders
-);
-
-router.put(
-  "/:orderId/cancel",
-  authenticate,
-  orderController.cancelledOrders
-);
-
-router.delete(
-  "/:orderId",
-  authenticate,
-  orderController.deleteOrders
-);
+// Admin Order Management Routes
+router.get("/", orderController.getAllOrders);
+router.put("/:orderId/confirmed", orderController.confirmedOrder);
+router.put("/:orderId/ship", orderController.shippedOrder);
+router.put("/:orderId/deliver", orderController.deliveredOrder);
+router.put("/:orderId/cancel", orderController.cancelOrder);
+router.delete("/:orderId", orderController.deleteOrder);
 
 module.exports = router;

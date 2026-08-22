@@ -16,9 +16,37 @@ api.interceptors.request.use(
     if (jwt && jwt !== "undefined" && jwt !== "null" && jwt.trim() !== "") {
       config.headers["Authorization"] = `Bearer ${jwt}`;
     }
+    console.log("API Request:", config.method?.toUpperCase(), config.url, "with token:", !!jwt);
     return config;
   },
   (error) => {
+    console.error("API Request Error:", error);
+    return Promise.reject(error);
+  }
+);
+
+api.interceptors.response.use(
+  (response) => {
+    console.log("API Response:", response.config.url, "Status:", response.status);
+    return response;
+  },
+  (error) => {
+    console.error("API Response Error:", error.config?.url, error.message);
+    
+    // Handle 401 Unauthorized responses (session expiry)
+    if (error.response?.status === 401) {
+      console.log('Session expired due to 401 response, triggering logout');
+      // Clear localStorage
+      localStorage.removeItem("jwt");
+      localStorage.removeItem('loginTimestamp');
+      localStorage.removeItem('user');
+      
+      // Force page reload to clear any cached state
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login?sessionExpired=true';
+      }
+    }
+    
     return Promise.reject(error);
   }
 );

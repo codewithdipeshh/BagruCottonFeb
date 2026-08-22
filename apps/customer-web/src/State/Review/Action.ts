@@ -91,6 +91,9 @@ export const getAllReviews = (productId: string, options: any = {}) => async (di
   }
 };
 
+// Alias for getReviews to match the component usage
+export const getReviews = getAllReviews;
+
 export const getReviewSummary = (productId: string) => async (dispatch: Dispatch) => {
   dispatch({ type: GET_REVIEW_SUMMARY_REQUEST });
 

@@ -6,6 +6,7 @@ import {
   PlusCircle, 
   ListOrdered, 
   Users,   
+  Star,
   Menu, 
   X,
   LogOut 
@@ -16,6 +17,7 @@ import AllProducts from './AllProducts';
 import CustomersList from './CustomersList';
 import Dashboard from './AdminDashboard';
 import OrdersList from './OrdersList';
+import AdminReviewsPage from './AdminReviewsPage';
 
 export default function Admin() {
   const location = useLocation();
@@ -36,16 +38,19 @@ export default function Admin() {
     navigate("/login", { replace: true });
   };
 
+  // ✅ Reverted back to normal paths so the blank screen goes away!
   const menuItems = [
     { path: '/', name: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
     { path: '/products', name: 'All Products', icon: <ShoppingBag className="w-4 h-4" /> },
     { path: '/product/add', name: 'Add Product', icon: <PlusCircle className="w-4 h-4" /> },
     { path: '/orders', name: 'Orders', icon: <ListOrdered className="w-4 h-4" /> },
     { path: '/customers', name: 'Customers', icon: <Users className="w-4 h-4" /> },
+    { path: '/review', name: 'Reviews', icon: <Star className="w-4 h-4" /> },
   ];
 
   return (
     <div className="min-h-screen bg-stone-50 flex text-stone-800 font-sans antialiased">
+      {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-stone-200 flex items-center justify-between px-4 z-40">
         <h1 className="font-serif font-bold tracking-wide text-stone-900">Bagru Atelier Admin</h1>
         <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 text-stone-700 hover:text-black">
@@ -53,6 +58,7 @@ export default function Admin() {
         </button>
       </div>
 
+      {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-stone-950 text-stone-300 transform transition-transform duration-300 lg:translate-x-0 lg:static lg:flex lg:flex-col flex-shrink-0 ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
@@ -64,12 +70,17 @@ export default function Admin() {
         <nav className="flex-1 px-4 py-6 space-y-1.5 mt-16 lg:mt-0 text-left flex flex-col justify-between">
           <div className="space-y-1.5">
             {menuItems.map((item) => {
-              const isActive = location.pathname === item.path;
+              const isActive = location.pathname === item.path || location.pathname === `${item.path}/`;
               return (
                 <Link
                   key={item.path}
                   to={item.path}
-                  onClick={() => setIsSidebarOpen(false)}
+                  // ✅ FIX: Sidebar will ONLY auto-close on mobile screens (<1024px). It stays permanently open on laptops!
+                  onClick={() => {
+                    if (window.innerWidth < 1024) {
+                      setIsSidebarOpen(false);
+                    }
+                  }}
                   className={`flex items-center gap-3.5 px-4 py-3 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all ${
                     isActive ? 'bg-[#9A7B56] text-white shadow-md' : 'hover:bg-stone-900 hover:text-white text-stone-400'
                   }`}
@@ -93,15 +104,19 @@ export default function Admin() {
         </nav>
       </aside>
 
+      {/* Mobile Overlay */}
       {isSidebarOpen && <div onClick={() => setIsSidebarOpen(false)} className="fixed inset-0 bg-black/40 backdrop-blur-xs z-40 lg:hidden" />}
 
+      {/* Main Content Area */}
       <main className="flex-1 p-4 sm:p-8 lg:p-10 pt-24 lg:pt-10 overflow-y-auto">
         <Routes>
+          {/* ✅ Reverted routes so the blank screen is fixed */}
           <Route path="/" element={<Dashboard />} />
           <Route path="/products" element={<AllProducts />} />
           <Route path="/product/add" element={<AddProductForm />} />
           <Route path="/orders" element={<OrdersList />} />
           <Route path="/customers" element={<CustomersList />} />
+          <Route path="/review" element={<AdminReviewsPage />} />
         </Routes>
       </main>
     </div>

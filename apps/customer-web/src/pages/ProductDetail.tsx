@@ -1,22 +1,22 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { 
-  Minus, 
-  Plus, 
-  ShoppingBag, 
-  Sparkles, 
-  Ruler, 
-  Scissors, 
-  ShieldCheck, 
+import {
+  Minus,
+  Plus,
+  ShoppingBag,
+  Sparkles,
+  Ruler,
+  Scissors,
+  ShieldCheck,
   ChevronRight,
   Loader2,
   Heart,
   CheckCircle2
 } from 'lucide-react';
 import { findProductById, findProducts } from '../State/Product/Action';
-import { toggleWishlistItem } from '../State/Wishlist/Action';
-import { addItemToCart } from '../State/Cart/Action'; 
+import { toggleWishlistItem, getWishlist } from '../State/Wishlist/Action';
+import { addItemToCart, getCart } from '../State/Cart/Action';
 import ReviewSection from '../components/ReviewSection';
 
 function formatPrice(price: number) {
@@ -27,26 +27,34 @@ export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useDispatch<any>();
-  
+
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'description' | 'specifications' | 'care'>('description');
-  
+
   const [isBuying, setIsBuying] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
 
-  const { product, products, loading } = useSelector((state: any) => state.product);
-  const { wishlistItems = [] } = useSelector((state: any) => state.wishlist || {});
-  const { jwt } = useSelector((state: any) => state.auth || {});
+  const product = useSelector((state: any) => state.product?.product);
+  const products = useSelector((state: any) => state.product?.products);
+  const loading = useSelector((state: any) => state.product?.loading);
+  
+  const rawWishlistItems = useSelector((state: any) => state.wishlist?.wishlistItems);
+  const wishlistItems = rawWishlistItems || [];
+  
+  const jwt = useSelector((state: any) => state.auth?.jwt);
+  const user = useSelector((state: any) => state.auth?.user);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     if (id) {
       dispatch(findProductById({ productId: id }));
     }
-    // Fetch all products to filter related collection items - increase pageSize for better matching
     dispatch(findProducts({ pageSize: 200 }));
-  }, [id, dispatch]);
+    if (jwt) {
+      dispatch(getWishlist());
+    }
+  }, [id, dispatch, jwt]);
 
   useEffect(() => {
     setSelectedImage(0);
@@ -65,7 +73,6 @@ export default function ProductDetail() {
       if (!item) return '';
       if (typeof item === 'string') return item.trim();
       if (typeof item === 'object' && item.url) return String(item.url).trim();
-      if (typeof item === 'object' && item._id) return String(item).trim();
       return String(item).trim();
     });
 
@@ -76,56 +83,48 @@ export default function ProductDetail() {
 
   const productId = product?._id || product?.id;
 
-  // 🔴 Filter related products from the same collection / category
   const relatedProducts = useMemo(() => {
-    if (!products || !product) return [];
-    
-    // Get current product's category - try multiple fields with normalization
-    const currentCategory = (product?.fabric || 
-                          (typeof product?.category === 'object' ? product?.category?.name : product?.category) ||
-                          product?.category?.name ||
-                          '').toLowerCase().trim();
-    
-    console.log("Current Product Category:", currentCategory);
-    console.log("Current Product Data:", product);
-    
+    let listToFilter: any[] = [];
+    if (Array.isArray(products)) {
+      listToFilter = products;
+    } else if (products && typeof products === 'object') {
+      listToFilter = products.content || products.products || [];
+    }
+
+    if (!listToFilter.length || !product) return [];
+
+    const currentCategory = (product?.fabric ||
+      (typeof product?.category === 'object' ? product?.category?.name : product?.category) ||
+      product?.category?.name ||
+      '').toLowerCase().trim();
+
     if (!currentCategory) {
-      console.log("No category found for current product, showing all products");
-      // If no category, show random products excluding current
-      return products.filter((item: any) => {
+      return listToFilter.filter((item: any) => {
         const itemId = item._id || item.id;
         return itemId !== productId;
       }).slice(0, 8);
     }
-    
-    const filtered = products.filter((item: any) => {
+
+    const filtered = listToFilter.filter((item: any) => {
       const itemId = item._id || item.id;
-      if (itemId === productId) return false; // Exclude current product
-      
-      // Get item's category - try multiple fields with normalization
-      const itemCategory = (item?.fabric || 
-                         (typeof item?.category === 'object' ? item?.category?.name : item?.category) ||
-                         item?.category?.name ||
-                         '').toLowerCase().trim();
-      
-      console.log(`Item ${itemId} category: ${itemCategory} - Match: ${itemCategory === currentCategory}`);
-      
-      // Match by category/fabric (case-insensitive)
+      if (itemId === productId) return false;
+
+      const itemCategory = (item?.fabric ||
+        (typeof item?.category === 'object' ? item?.category?.name : item?.category) ||
+        item?.category?.name ||
+        '').toLowerCase().trim();
+
       return itemCategory === currentCategory;
     });
-    
-    console.log("Filtered related products count:", filtered.length);
-    
-    // If no exact matches, show products from similar categories or random products
+
     if (filtered.length === 0) {
-      console.log("No exact matches found, showing random products");
-      return products.filter((item: any) => {
+      return listToFilter.filter((item: any) => {
         const itemId = item._id || item.id;
         return itemId !== productId;
       }).slice(0, 8);
     }
-    
-    return filtered.slice(0, 8); // Show up to 8 items for better selection
+
+    return filtered.slice(0, 8);
   }, [products, product, productId]);
 
   const isSavedInWishlist = useMemo(() => {
@@ -145,7 +144,6 @@ export default function ProductDetail() {
     }
   };
 
-  // 🔴 Buy Now Logic (Direct Pipeline - No Cart)
   const handleBuyNow = () => {
     const token = localStorage.getItem('jwt') || jwt;
 
@@ -158,16 +156,15 @@ export default function ProductDetail() {
 
     setTimeout(() => {
       setIsBuying(false);
-      navigate('/checkout?type=direct', { 
-        state: { 
-          directItem: product, 
-          directQty: quantity 
-        } 
+      navigate('/checkout?type=direct', {
+        state: {
+          directItem: product,
+          directQty: quantity
+        }
       });
     }, 500);
   };
 
-  // 🔴 Add to Cart Logic (With Premium Notification)
   const handleAddToCart = () => {
     const token = localStorage.getItem('jwt') || jwt;
     if (!token) {
@@ -178,9 +175,13 @@ export default function ProductDetail() {
     try {
       const reqData = { productId: productId, quantity: quantity };
       dispatch(addItemToCart(reqData));
-      
+
+      setTimeout(() => {
+        dispatch(getCart());
+      }, 500);
+
       setShowNotification(true);
-      
+
       setTimeout(() => {
         setShowNotification(false);
       }, 3000);
@@ -272,7 +273,7 @@ export default function ProductDetail() {
                 <button
                   type="button"
                   onClick={handleWishlistToggle}
-                  className="p-3 rounded-full border border-stone-200 bg-white shadow-xs hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer flex-shrink-0"
+                  className="p-3 rounded-full border border-stone-200 bg-white shadow-xs hover:scale-105 active:scale-95 transition-all duration-300 cursor-pointer flex-shrink-0 border-none outline-none"
                   title={isSavedInWishlist ? "Remove from Saved Collection" : "Save to Collection"}
                 >
                   <Heart className={`w-5 h-5 transition-colors duration-300 ${isSavedInWishlist ? 'fill-red-500 stroke-red-500 text-red-500' : 'text-stone-400'}`} />
@@ -348,7 +349,7 @@ export default function ProductDetail() {
               >
                 <ShoppingBag className="h-4 w-4" /> Add to Cart
               </button>
-              
+
               <button
                 type="button"
                 onClick={handleBuyNow}
@@ -357,11 +358,15 @@ export default function ProductDetail() {
               >
                 {isBuying ? <><Loader2 className="w-4 h-4 animate-spin" /> Fetching Ledger...</> : 'Buy Now'}
               </button>
-              
+
               <div className="text-center pt-2">
-                <Link to="/sarees" className="inline-flex text-[10px] font-bold uppercase tracking-widest text-[#9A7B56] hover:text-black transition-colors no-underline">
-                  ← Back to Masterpieces
-                </Link>
+                <button
+                  type="button"
+                  onClick={() => navigate(-1)}
+                  className="inline-flex text-[10px] font-bold uppercase tracking-widest text-[#9A7B56] hover:text-black transition-colors border-none bg-transparent cursor-pointer outline-none"
+                >
+                  &larr; Back to Masterpieces
+                </button>
               </div>
             </div>
 
@@ -369,12 +374,10 @@ export default function ProductDetail() {
         </div>
       </div>
 
-      {/* Review Section */}
       <div className="max-w-7xl mx-auto px-6 lg:px-12 py-12">
-        <ReviewSection productId={id || ''} />
+        <ReviewSection productId={id || ''} user={user} />
       </div>
 
-      {/* 🔴 MORE FROM THIS COLLECTION / RELATED PRODUCTS SECTION (Below Review) */}
       {relatedProducts.length > 0 && (
         <div className="max-w-7xl mx-auto px-6 lg:px-12 pt-8 pb-12 border-t border-stone-200">
           <div className="flex flex-col items-center text-center mb-10">
@@ -393,16 +396,16 @@ export default function ProductDetail() {
               const itemId = item._id || item.id;
 
               return (
-                <div 
+                <div
                   key={itemId}
                   onClick={() => navigate(`/products/${itemId}`)}
                   className="group bg-white rounded-2xl border border-stone-200/80 overflow-hidden shadow-xs hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col"
                 >
                   <div className="relative aspect-[3/4] overflow-hidden bg-stone-100">
-                    <img 
-                      src={itemImg} 
-                      alt={itemName} 
-                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500" 
+                    <img
+                      src={itemImg}
+                      alt={itemName}
+                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
@@ -426,12 +429,22 @@ export default function ProductDetail() {
               );
             })}
           </div>
-          
-          {/* View All Button */}
+
           <div className="text-center mt-10">
             <button
+              type="button"
               onClick={() => {
-                navigate('/sarees');
+                // FIX: Force scroll to top before navigating so the next page isn't blank
+                window.scrollTo(0, 0);
+                
+                //  FIX: Intelligently try to navigate to the exact category collection
+                const categorySlug = product?.category?.slug || (typeof product?.category === 'string' ? product.category : '');
+                
+                if (categorySlug) {
+                  navigate(`/sarees/${categorySlug.toLowerCase()}`);
+                } else {
+                  navigate('/sarees');
+                }
               }}
               className="inline-flex items-center gap-2 rounded-xl border-2 border-stone-900 px-8 py-3 text-xs font-bold uppercase tracking-wider text-stone-900 hover:bg-stone-900 hover:text-white transition-all duration-300 cursor-pointer outline-none"
             >
@@ -442,15 +455,13 @@ export default function ProductDetail() {
         </div>
       )}
 
-      {/* Premium Notification Toast */}
-      <div 
-        className={`fixed bottom-6 right-6 z-50 transition-all duration-500 transform ${
-          showNotification ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0 pointer-events-none'
-        }`}
+      <div
+        className={`fixed bottom-6 right-6 z-50 transition-all duration-500 transform ${showNotification ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0 pointer-events-none'
+          }`}
       >
         <div className="bg-stone-900 text-white px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-3 border border-stone-800">
           <div className="bg-[#9A7B56] rounded-full p-1">
-            <CheckCircle2 className="w-4 h-4 text-white" /> 
+            <CheckCircle2 className="w-4 h-4 text-white" />
           </div>
           <span className="text-xs font-semibold tracking-wide">
             added to cart successfully.

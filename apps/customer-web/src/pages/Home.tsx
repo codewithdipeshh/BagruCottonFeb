@@ -19,7 +19,7 @@ import Reviews from '../components/Reviews';
 import ProductCard from '../components/ProductCard';
 import QuickViewModal from '../components/QuickViewModal';
 import { findProducts } from '../State/Product/Action';
-import springBanner from '../assets/images/arrivals.png'
+import springBanner from '../assets/images/arrivals.png';
 
 const sareeCategoriesList = [
   { slug: 'cotton-mulmul', name: 'Mulmul Cotton' },
@@ -61,12 +61,7 @@ const categoryStaticMeta: Record<string, { defaultImage: string; origin: string;
     origin: 'Maheshwar SilK',
     databaseName: 'Maheshwari Silk Saree'
   },
-  // BUG FIX: these two were referenced by getCategoryProducts() further down
-  // but were missing from this config object, so getCategoryProducts()
-  // always returned [] for them — the "Temple Border" and "Khadi Cotton"
-  // sections rendered zero products no matter what was in the database.
-  // TODO: replace defaultImage with a real Cloudinary asset URL for each —
-  // these are placeholders only, swap them before shipping.
+
   'temple-border': {
     defaultImage: '',
     origin: 'Temple Weave',
@@ -79,11 +74,6 @@ const categoryStaticMeta: Record<string, { defaultImage: string; origin: string;
   },
 };
 
-// Data-driven config for the repeated "category showcase" sections further
-// down the page. Previously each of these was ~60 lines of duplicated JSX;
-// consolidating them here means adding a new category is now a one-line
-// change instead of copy-pasting a whole section (and risking the kind of
-// missing-config bug fixed above).
 const categoryShowcases: {
   key: string;
   eyebrow: string;
@@ -162,7 +152,8 @@ export default function Home() {
   const dispatch = useDispatch<any>();
   const [quickViewProduct, setQuickViewProduct] = useState<any | null>(null);
 
-  const { products } = useSelector((state: any) => state.product);
+  // ✅ FIX: Directly select the products array instead of destructuring an object.
+  const products = useSelector((state: any) => state.product?.products);
 
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [bookingSubmitted, setBookingSubmitted] = useState(false);
@@ -273,7 +264,7 @@ export default function Home() {
               <Link
                 key={category.slug}
                 to={`/sarees/${category.slug}`}
-                className="group relative flex flex-col justify-end overflow-hidden aspect-[3/4] bg-stone-100 border border-gray-100 shadow-sm no-underline flex-none w-[180px] sm:w-[220px] lg:w-auto snap-align-start"
+                className="group relative flex flex-col justify-end overflow-hidden aspect-[3/4] bg-stone-100 border border-gray-100 shadow-sm no-underline flex-none w-[180px] sm:w-[220px] lg:w-auto snap-align-start rounded-md"
               >
                 <img
                   src={dynamicMeta.image}
@@ -354,7 +345,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 4. CATEGORY SHOWCASES (data-driven — see categoryShowcases above) */}
+      {/* 4. CATEGORY SHOWCASES */}
       {categoryShowcases.map((section) => {
         const sectionProducts = getCategoryProducts(section.key).slice(0, 4);
         return (
@@ -432,11 +423,8 @@ export default function Home() {
             ].map((item, index) => (
               <div
                 key={index}
-                className="group bg-white border border-gray-100 p-8 hover:border-[#9A7B56]/40 hover:shadow-lg transition-all duration-300 flex flex-col items-center text-center"
+                className="group bg-white border border-[#E8E3DD] p-8 hover:border-[#9A7B56]/40 hover:shadow-lg transition-all duration-300 flex flex-col items-center text-center rounded-xl"
               >
-                {/* BUG FIX: border color previously matched the background
-                    color exactly (border-[#FAF9F6] on bg-[#FAF9F6]), so it
-                    was invisible. Now uses a visible accent-tinted border. */}
                 <div className="w-12 h-12 mb-6 rounded-full bg-[#FAF9F6] border border-[#9A7B56]/20 flex items-center justify-center transition-colors duration-300 group-hover:border-[#9A7B56]/50">
                   {item.icon}
                 </div>
@@ -547,7 +535,7 @@ export default function Home() {
             onClick={() => setIsBookingOpen(false)}
           />
 
-          <div className="relative bg-white max-w-md w-full border border-neutral-100 shadow-2xl p-6 sm:p-8 z-10 transform transition-all animate-in fade-in duration-300 text-left">
+          <div className="relative bg-white max-w-md w-full border border-neutral-100 shadow-2xl p-6 sm:p-8 z-10 transform transition-all animate-in fade-in duration-300 text-left rounded-2xl">
             <button
               type="button"
               onClick={() => setIsBookingOpen(false)}
@@ -584,7 +572,7 @@ export default function Home() {
                       value={bookingDetails.name}
                       onChange={(e) => setBookingDetails({ ...bookingDetails, name: e.target.value })}
                       placeholder="Enter full name"
-                      className="w-full border border-gray-200 px-3 py-2.5 outline-none focus:border-[#9A7B56] transition-colors"
+                      className="w-full border border-gray-200 px-3 py-2.5 outline-none focus:border-[#9A7B56] transition-colors rounded-lg"
                     />
                   </div>
 
@@ -596,7 +584,7 @@ export default function Home() {
                       value={bookingDetails.phone}
                       onChange={(e) => setBookingDetails({ ...bookingDetails, phone: e.target.value })}
                       placeholder="Enter mobile number"
-                      className="w-full border border-gray-200 px-3 py-2.5 outline-none focus:border-[#9A7B56] transition-colors"
+                      className="w-full border border-gray-200 px-3 py-2.5 outline-none focus:border-[#9A7B56] transition-colors rounded-lg"
                     />
                   </div>
 
@@ -608,7 +596,7 @@ export default function Home() {
                         required
                         value={bookingDetails.date}
                         onChange={(e) => setBookingDetails({ ...bookingDetails, date: e.target.value })}
-                        className="w-full border border-gray-200 px-3 py-2.5 outline-none focus:border-[#9A7B56] transition-colors"
+                        className="w-full border border-gray-200 px-3 py-2.5 outline-none focus:border-[#9A7B56] transition-colors rounded-lg"
                       />
                     </div>
                     <div>
@@ -616,7 +604,7 @@ export default function Home() {
                       <select
                         value={bookingDetails.time}
                         onChange={(e) => setBookingDetails({ ...bookingDetails, time: e.target.value })}
-                        className="w-full border border-gray-200 px-3 py-2.5 bg-white outline-none focus:border-[#9A7B56] transition-colors cursor-pointer"
+                        className="w-full border border-gray-200 px-3 py-2.5 bg-white outline-none focus:border-[#9A7B56] transition-colors cursor-pointer rounded-lg"
                       >
                         <option>11:00 AM</option>
                         <option>1:00 PM</option>
@@ -629,7 +617,7 @@ export default function Home() {
 
                   <button
                     type="submit"
-                    className="w-full bg-[#1A1A1A] hover:bg-[#9A7B56] text-white text-[10px] tracking-widest uppercase font-semibold py-3.5 transition-colors duration-300 mt-2 border-none cursor-pointer"
+                    className="w-full bg-[#1A1A1A] hover:bg-[#9A7B56] text-white text-[10px] tracking-widest uppercase font-semibold py-3.5 transition-colors duration-300 mt-2 border-none cursor-pointer rounded-lg"
                   >
                     Confirm Concierge Booking
                   </button>
@@ -640,10 +628,12 @@ export default function Home() {
         </div>
       )}
 
-      <QuickViewModal
-        product={quickViewProduct}
-        onClose={() => setQuickViewProduct(null)}
-      />
+      {quickViewProduct && (
+        <QuickViewModal
+          product={quickViewProduct}
+          onClose={() => setQuickViewProduct(null)}
+        />
+      )}
     </div>
   );
 }

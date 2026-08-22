@@ -39,6 +39,7 @@ app.use("/api/admin/products", adminProductRoutes);
 
 const adminAuthRoutes = require("./routes/adminAuthRoutes");
 app.use("/api/admin/auth", adminAuthRoutes);
+app.use("/api/admin", adminAuthRoutes);
 
 // Cart Routes
 const cartRouter = require("./routes/cart.route");
@@ -63,5 +64,8 @@ app.use("/reviews", reviewRouter);
 // Rating Routes
 const ratingRouter = require("./routes/rating.route");
 app.use("/ratings", ratingRouter);
+
+const wishlistRoutes = require("./routes/wishlist.routes");
+app.use("/wishlist", wishlistRoutes);
 
 module.exports = app;

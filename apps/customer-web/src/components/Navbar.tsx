@@ -36,6 +36,9 @@ import axios from 'axios';
 import { API_BASE_URL } from '../config/apiConfig';
 import { getCart } from '../State/Cart/Action';
 
+// Default Import
+import favicon from '../assets/images/favicon.ico';
+
 const navItems = [
   { name: 'Home', path: '/' },
   { name: 'Sarees', path: '/sarees', hasDropdown: true },
@@ -55,15 +58,18 @@ interface SareeCategory {
   slug: string;
   name: string;
   filterId: string;
+  group: 'silk' | 'cotton';
 }
 
 const sareeCategories: SareeCategory[] = [
-  { slug: 'cotton-mulmul', name: 'Mulmul Cotton Sarees', filterId: 'mulmul_cotton' },
-  { slug: 'handblock', name: 'Cotton HandBlock Sarees', filterId: 'cotton_handblock' },
-  { slug: 'linen-cotton', name: 'Cotton Linen Saree', filterId: 'cotton_linen' },
-  { slug: 'maheshwari-silk', name: 'Maheshwari Silk Saree', filterId: 'maheshwari_silk' },
-  { slug: 'kota-doria', name: 'Kota Doria Silk', filterId: 'kota_doria' },
-  { slug: 'chanderi-bagru', name: 'Chanderi Silk Saree', filterId: 'chanderi_silk' },
+  { slug: 'cotton-mulmul', name: 'Mulmul Cotton Sarees', filterId: 'mulmul_cotton', group: 'cotton' },
+  { slug: 'handblock', name: 'Cotton HandBlock Sarees', filterId: 'cotton_handblock', group: 'cotton' },
+  { slug: 'linen-cotton', name: 'Cotton Linen Saree', filterId: 'cotton_linen', group: 'cotton' },
+  { slug: 'maheshwari-silk', name: 'Maheshwari Silk Saree', filterId: 'maheshwari_silk', group: 'silk' },
+  { slug: 'kota-doria', name: 'Kota Doria Silk', filterId: 'kota_doria', group: 'silk' },
+  { slug: 'chanderi-bagru', name: 'Chanderi Silk Saree', filterId: 'chanderi_silk', group: 'silk' },
+  { slug: 'temple-border', name: 'Temple Border Saree', filterId: 'temple_border', group: 'silk' },
+  { slug: 'khadi-cotton', name: 'Khadi Cotton Saree', filterId: 'khadi_cotton', group: 'cotton' },
 ];
 
 function computeLevenshteinDistance(s1: string, s2: string): number {
@@ -188,7 +194,7 @@ type SearchSuggestion =
 function getSuggestionKey(suggestion: SearchSuggestion): string {
   return suggestion.type === 'category'
     ? `category-${suggestion.data.slug}`
-    : `product-${suggestion.data._id || suggestion.data.id}`;
+    : `products-${suggestion.data._id || suggestion.data.id}`;
 }
 
 function getSuggestionLink(suggestion: SearchSuggestion): string {
@@ -205,8 +211,12 @@ export default function Navbar() {
   const { jwt, user } = useSelector((state: any) => state.auth);
   const { cartItems } = useSelector((state: any) => state.cart);
 
-  const isLoggedIn = !!(localStorage.getItem('jwt') || jwt);
+  // Fix: Only consider logged in if both jwt exists AND user data is loaded
+  const isLoggedIn = !!(jwt && user);
+  
+  // Real world logic: Use user's real name if logged in and data is available, otherwise default to empty string.
   const userName = user?.firstName || user?.name || '';
+  
   const cartCount = cartItems?.reduce((acc: number, item: any) => acc + (item.quantity || 0), 0) || 0;
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -237,9 +247,6 @@ export default function Navbar() {
     }
   }, [isLoggedIn, dispatch, cartItems?.length]);
 
-  // Fetch the product list once and cache it. Subsequent searches reuse the
-  // cache instead of hitting the API again, which also removes the race
-  // condition where an older request could resolve after a newer one.
   const ensureProductsLoaded = useCallback(async (): Promise<any[]> => {
     if (productsCacheRef.current) {
       return productsCacheRef.current;
@@ -388,7 +395,6 @@ export default function Navbar() {
   const handleSearch = (e: FormEvent) => {
     e.preventDefault();
 
-    // If a suggestion is highlighted via keyboard, go straight to it.
     if (activeSuggestionIndex >= 0 && suggestions[activeSuggestionIndex]) {
       navigate(getSuggestionLink(suggestions[activeSuggestionIndex]));
       closeAllMenus();
@@ -413,7 +419,6 @@ export default function Navbar() {
       setShowSuggestions(false);
       setActiveSuggestionIndex(-1);
     }
-    // Enter is handled by the form's onSubmit (handleSearch above).
   };
 
   const handleLogout = () => {
@@ -569,8 +574,12 @@ export default function Navbar() {
           <div className="px-6 py-4 flex items-center justify-between">
 
             <Link to="/" className="flex items-center gap-3 flex-shrink-0 group no-underline">
-              <div className="w-11 h-11 rounded-xl bg-neutral-900 flex items-center justify-center transition-colors group-hover:bg-amber-800">
-                <span className="text-white text-lg font-serif font-light tracking-widest">B</span>
+              <div className="w-11 h-11 rounded-xl overflow-hidden bg-white border border-stone-200 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+                <img
+                  src={favicon}
+                  alt="Bagru Cotton logo"
+                  className="w-full h-full object-contain p-1"
+                />
               </div>
               <div className="flex flex-col">
                 <h1 className="text-lg lg:text-xl font-serif font-semibold text-neutral-900 leading-none tracking-wider">
@@ -617,7 +626,7 @@ export default function Navbar() {
                                   Silk Masterpieces
                                 </h4>
                                 {sareeCategories
-                                  .filter((c: SareeCategory) => c.slug.includes('silk') || c.slug.includes('doria') || c.slug.includes('bagru'))
+                                  .filter((c: SareeCategory) => c.group === 'silk')
                                   .map((cat: SareeCategory) => (
                                     <Link
                                       key={cat.slug}
@@ -635,7 +644,7 @@ export default function Navbar() {
                                   Cotton Legacies
                                 </h4>
                                 {sareeCategories
-                                  .filter((c: SareeCategory) => c.slug.includes('cotton') || c.slug.includes('mulmul') || c.slug.includes('handblock') || c.slug.includes('linen'))
+                                  .filter((c: SareeCategory) => c.group === 'cotton')
                                   .map((cat: SareeCategory) => (
                                     <Link
                                       key={cat.slug}
@@ -707,7 +716,8 @@ export default function Navbar() {
                   className="h-9 px-3.5 rounded-full border border-stone-300 bg-white flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-neutral-900 hover:bg-stone-50 transition-colors border-none outline-none cursor-pointer"
                 >
                   <User className="w-3.5 h-3.5 opacity-70" />
-                  <span>{isLoggedIn ? userName || 'Patron' : 'Account'}</span>
+                  {/* Clean Fallback Logic */}
+                  <span>{userName ? userName : 'Account'}</span>
                 </button>
 
                 {isProfileOpen && (
@@ -715,8 +725,8 @@ export default function Navbar() {
                     {isLoggedIn ? (
                       <>
                         <div className="px-2 py-1 mb-1 border-b border-stone-100">
-                          <p className="text-[9px] uppercase tracking-wider text-stone-400 font-bold">Portal</p>
-                          <p className="text-xs text-black font-semibold truncate">{userName || 'Patron'}</p>
+                          <p className="text-[9px] uppercase tracking-wider text-stone-400 font-bold">My Account</p>
+                          <p className="text-xs text-black font-semibold truncate">{userName ? userName : 'Patron'}</p>
                         </div>
                         <Link to="/profile" className="block px-2 py-1.5 text-xs text-neutral-700 hover:bg-stone-100 rounded-lg transition-colors no-underline">Profile</Link>
                         <Link to="/orders" className="block px-2 py-1.5 text-xs text-neutral-700 hover:bg-stone-100 rounded-lg transition-colors no-underline">Orders</Link>

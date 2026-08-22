@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { Heart, ShoppingBag, Eye } from 'lucide-react';
-import { addItemToCart } from '../State/Cart/Action';
+import { Heart, ShoppingBag, Eye, Check } from 'lucide-react';
+import { addItemToCart, getCart } from '../State/Cart/Action';
+import { toggleWishlistItem } from '../State/Wishlist/Action';
 
 type ProductCardProps = {
   product: any;
@@ -22,20 +23,43 @@ export default function ProductCard({
   layout = 'grid',
 }: ProductCardProps) {
   const dispatch = useDispatch<any>();
+  
+  // ✅ FIX: Extract properties directly to avoid creating new object references
+  const rawWishlistItems = useSelector((state: any) => state.wishlist?.wishlistItems);
+  const wishlistItems = rawWishlistItems || [];
+  
   const [isHovered, setIsHovered] = useState(false);
   const [currentImage, setCurrentImage] = useState(0);
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  const productId = product._id || product.id;
+  const productId = product?._id || product?.id;
 
+  const isWishlisted = useMemo(() => {
+    return wishlistItems.some((item: any) => {
+      const itemId = item._id || item.id;
+      return itemId === productId;
+    });
+  }, [wishlistItems, productId]);
+
+  // Robust image extraction from all possible database keys to avoid unnecessary fallbacks
   const images = useMemo(() => {
-    if (product.images && product.images.length > 0) {
-      return product.images.map((img: string) => img || FALLBACK_IMAGE);
-    }
-    if (product.imageUrl) {
-      return [product.imageUrl];
-    }
-    return [FALLBACK_IMAGE];
-  }, [product.images, product.imageUrl]);
+    const aggregatedList: any[] = [];
+    if (product.imageUrls && Array.isArray(product.imageUrls)) aggregatedList.push(...product.imageUrls);
+    if (product.images && Array.isArray(product.images)) aggregatedList.push(...product.images);
+    if (product.imageUrl) aggregatedList.push(product.imageUrl);
+    if (product.image) aggregatedList.push(product.image);
+
+    const processedUrls = aggregatedList.map((item: any) => {
+      if (!item) return '';
+      if (typeof item === 'string') return item.trim();
+      if (typeof item === 'object' && item.url) return String(item.url).trim();
+      return String(item).trim();
+    });
+
+    const uniqueImages = Array.from(new Set(processedUrls.filter((url) => typeof url === 'string' && url !== '')));
+    if (uniqueImages.length === 0) return [FALLBACK_IMAGE];
+    return uniqueImages;
+  }, [product]);
 
   useEffect(() => {
     if (!isHovered || images.length <= 1) return undefined;
@@ -54,24 +78,24 @@ export default function ProductCard({
   const handleAddToCartClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const itemData = {
-      productId: productId,
-      quantity: 1
-    };
-    dispatch(addItemToCart(itemData));
+    
+    if (productId) {
+      dispatch(addItemToCart({ productId, quantity: 1 }));
+      
+      // Auto-sync cart with navbar counter
+      setTimeout(() => {
+        dispatch(getCart());
+      }, 500);
+    }
+    
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 2000);
   };
 
   const handleAddToWishlistClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const currentWishlist = JSON.parse(localStorage.getItem('bagru_wishlist') || '[]');
-    const isAlreadyInWishlist = currentWishlist.some((item: any) => item._id === productId);
-    
-    if (!isAlreadyInWishlist) {
-      currentWishlist.push(product);
-      localStorage.setItem('bagru_wishlist', JSON.stringify(currentWishlist));
-      window.dispatchEvent(new Event('storage'));
-    }
+    dispatch(toggleWishlistItem(productId));
   };
 
   const handleQuickViewClick = (e: React.MouseEvent) => {
@@ -84,7 +108,7 @@ export default function ProductCard({
 
   return (
     <Link
-      to={`/product/${productId}`}
+      to={`/products/${productId}`} // 👈 Fixed URL route (added 's' to product -> products)
       className={`group block overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-[0_12px_32px_-18px_rgba(26,26,26,0.12)] hover:shadow-[0_24px_48px_-15px_rgba(247,218,150,0.18)] transition-all duration-500 hover:-translate-y-1 hover:border-[#F7DA96]/40 text-left ${
         isList ? 'sm:flex sm:gap-6 w-full' : 'flex h-full flex-col'
       }`}
@@ -102,7 +126,7 @@ export default function ProductCard({
           <img
             key={`${productId}-${index}`}
             src={image}
-            alt={`${product.title || 'Saree Masterpiece'} view ${index + 1}`}
+            alt={`${product.title || product.name || 'Saree Masterpiece'} view ${index + 1}`}
             loading="lazy"
             onError={(e) => {
               (e.target as HTMLImageElement).src = FALLBACK_IMAGE;
@@ -117,23 +141,23 @@ export default function ProductCard({
 
         <div className="absolute left-4 top-4 z-20">
           <span className="rounded bg-black/80 backdrop-blur-md px-3 py-1 text-[9px] uppercase tracking-[0.2em] font-medium text-[#F7DA96] border border-[#F7DA96]/20">
-            {product.tag || 'Premium weave'}
+            {product.tag || product.fabric || 'Premium weave'}
           </span>
         </div>
 
         <button 
           type="button"
           onClick={handleAddToWishlistClick}
-          aria-label="Add to Wishlist"
-          className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/95 text-stone-700 hover:text-red-500 flex items-center justify-center shadow-md transition-all duration-300 hover:scale-105 active:scale-95 z-20"
+          aria-label={isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
+          className="absolute top-4 right-4 w-9 h-9 rounded-full bg-white/95 text-stone-700 hover:text-red-500 flex items-center justify-center shadow-md transition-all duration-300 hover:scale-105 active:scale-95 z-20 cursor-pointer border-none"
         >
-          <Heart className="h-4 w-4" />
+          <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-red-500 text-red-500' : ''}`} />
         </button>
 
         <button
           type="button"
           onClick={handleQuickViewClick}
-          className="absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/95 backdrop-blur-sm px-6 py-3 text-[10px] font-bold uppercase tracking-wider text-black opacity-100 md:opacity-0 md:group-hover:opacity-100 shadow-[0_12px_24px_rgba(0,0,0,0.18)] transition-all duration-300 hover:bg-[#F7DA96] hover:text-black flex items-center gap-1.5"
+          className="absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/95 backdrop-blur-sm px-6 py-3 text-[10px] font-bold uppercase tracking-wider text-black opacity-100 md:opacity-0 md:group-hover:opacity-100 shadow-[0_12px_24px_rgba(0,0,0,0.18)] transition-all duration-300 hover:bg-[#F7DA96] hover:text-black flex items-center gap-1.5 cursor-pointer border-none"
         >
           <Eye className="w-3.5 h-3.5" />
           Quick View
@@ -159,11 +183,11 @@ export default function ProductCard({
             Atelier Curated
           </p>
           
-          <h3 className="font-serif text-lg sm:text-xl font-normal leading-tight tracking-wide text-stone-900 group-hover:text-[#F7DA96] transition-colors duration-300 uppercase line-clamp-1">
+          <h3 className="font-serif text-lg sm:text-xl font-normal leading-tight tracking-wide text-stone-900 group-hover:text-[#F7DA96] transition-colors duration-300 uppercase line-clamp-1 m-0">
             {product.title || product.name}
           </h3>
           
-          <p className="line-clamp-2 text-xs font-light leading-relaxed text-stone-500 text-left">
+          <p className="line-clamp-2 text-xs font-light leading-relaxed text-stone-500 text-left m-0">
             {product.description || product.philosophy}
           </p>
         </div>
@@ -188,10 +212,24 @@ export default function ProductCard({
           <button
             type="button"
             onClick={handleAddToCartClick}
-            className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-neutral-950 px-4 py-3.5 text-xs font-bold uppercase tracking-wider text-white hover:text-black transition-all duration-300 hover:bg-[#F7DA96] shadow-sm active:scale-98"
+            disabled={showSuccess}
+            className={`flex w-full items-center justify-center gap-2.5 rounded-xl px-4 py-3.5 text-xs font-bold uppercase tracking-wider transition-all duration-300 shadow-sm active:scale-98 cursor-pointer border-none outline-none ${
+              showSuccess 
+                ? 'bg-emerald-600 text-white' 
+                : 'bg-neutral-950 text-white hover:text-black hover:bg-[#F7DA96]'
+            }`}
           >
-            <ShoppingBag className="h-4 w-4" />
-            Add to Cart
+            {showSuccess ? (
+              <>
+                <Check className="h-4 w-4" />
+                Added to Cart
+              </>
+            ) : (
+              <>
+                <ShoppingBag className="h-4 w-4" />
+                Add to Cart
+              </>
+            )}
           </button>
         </div>
       </div>

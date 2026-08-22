@@ -49,6 +49,7 @@ export default function Cart() {
   
   const finalAtelierTotal = rawSubtotal + giftWrappingCost + complimentaryTax;
 
+  // 🔴 FIX: Added auto-refresh after quantity update
   const handleUpdateQuantity = (cartItemId: string, currentQuantity: number, step: number) => {
     const newQuantity = currentQuantity + step;
     if (newQuantity >= 1) {
@@ -56,11 +57,22 @@ export default function Cart() {
         cartItemId,
         data: { quantity: newQuantity }
       }));
+      
+      // Fetch latest cart state after a short delay
+      setTimeout(() => {
+        dispatch(getCart());
+      }, 400);
     }
   };
 
+  // 🔴 FIX: Added auto-refresh after removing item
   const handleRemoveItem = (cartItemId: string) => {
     dispatch(removeCartItem(cartItemId));
+    
+    // UI update sync delay fallback - Forces screen to reflect the deletion
+    setTimeout(() => {
+      dispatch(getCart());
+    }, 400);
   };
 
   const handleCheckoutNavigation = () => {

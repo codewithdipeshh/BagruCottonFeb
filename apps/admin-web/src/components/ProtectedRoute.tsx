@@ -5,10 +5,10 @@ export default function ProtectedRoute() {
   
   // Real-world guard check
   if (!token) {
-    console.warn("🔒 Unauthorized navigation block! Redirecting to secure gate.");
+    console.warn("Unauthorized navigation block! Redirecting to secure gate.");
     return <Navigate to="/login" replace />;
   }
 
-  // Clearance approved! Render child layouts safely
   return <Outlet />;
 }
+

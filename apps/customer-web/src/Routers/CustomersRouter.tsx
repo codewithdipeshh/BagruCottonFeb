@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
+// import { useEffect } from 'react';
+// import { useDispatch } from 'react-redux';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { getUser } from '../State/Auth/Action';
+// import { getUser } from '../State/Auth/Action';
 
 // Saare Pages aur Components ke correct imports
 import TopBar from '../components/TopBar';
@@ -24,16 +24,9 @@ import AccountPlaceholder from '../pages/AccountPlaceholder';
 import Profile from '../pages/Profile';
 import Checkout from '../pages/Checkout';
 import Wishlist from '../pages/Wishlist';
+import SearchPage from '../pages/Search';
 
 export default function CustomersRouter() {
-  const dispatch = useDispatch() as any;
-
-  useEffect(() => {
-    const token = localStorage.getItem("jwt");
-    if (token) {
-      dispatch(getUser());
-    }
-  }, [dispatch]);
 
   return (
     <div className="min-h-screen flex flex-col bg-[#F8F4EE] text-[#3B2F2F] antialiased">
@@ -46,6 +39,7 @@ export default function CustomersRouter() {
           <Route path="/about" element={<About />} />
           <Route path="/sarees/:category" element={<Sarees />} />
           <Route path="/sarees/:category" element={<Sarees />} />
+           <Route path="/search" element={<SearchPage />} />
           <Route path="/new-arrivals" element={<NewArrivals />} />
           <Route path="/products/:id" element={<ProductDetail />} />
           <Route path="/reviews" element={<ReviewsPage />} />

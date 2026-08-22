@@ -4,7 +4,10 @@ import {
   GET_WISHLIST_FAILURE,
   TOGGLE_WISHLIST_ITEM_REQUEST,
   TOGGLE_WISHLIST_ITEM_SUCCESS,
-  TOGGLE_WISHLIST_ITEM_FAILURE
+  TOGGLE_WISHLIST_ITEM_FAILURE,
+  REMOVE_WISHLIST_ITEM_REQUEST,
+  REMOVE_WISHLIST_ITEM_SUCCESS,
+  REMOVE_WISHLIST_ITEM_FAILURE
 } from './Action';
 
 interface WishlistState {
@@ -25,6 +28,7 @@ export const wishlistReducer = (state = initialState, action: any): WishlistStat
   switch (action.type) {
     case GET_WISHLIST_REQUEST:
     case TOGGLE_WISHLIST_ITEM_REQUEST:
+    case REMOVE_WISHLIST_ITEM_REQUEST:
       return { ...state, loading: true, error: null };
 
     case GET_WISHLIST_SUCCESS:
@@ -37,6 +41,7 @@ export const wishlistReducer = (state = initialState, action: any): WishlistStat
       };
 
     case TOGGLE_WISHLIST_ITEM_SUCCESS:
+    case REMOVE_WISHLIST_ITEM_SUCCESS:
       return { 
         ...state, 
         loading: false, 
@@ -47,7 +52,13 @@ export const wishlistReducer = (state = initialState, action: any): WishlistStat
 
     case GET_WISHLIST_FAILURE:
     case TOGGLE_WISHLIST_ITEM_FAILURE:
+    case REMOVE_WISHLIST_ITEM_FAILURE:
       return { ...state, loading: false, error: action.payload };
+
+    default:
+      return state;
+  }
+};
 
     default:
       return state;

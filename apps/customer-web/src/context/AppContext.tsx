@@ -96,6 +96,50 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [user, jwt]);
 
+  // Session expiry check on app load
+  useEffect(() => {
+    const checkSessionExpiry = () => {
+      const loginTimestamp = localStorage.getItem('loginTimestamp');
+      if (loginTimestamp) {
+        try {
+          const now = Date.now();
+          const loginTime = parseInt(loginTimestamp);
+          
+          // Validate timestamp is a valid number
+          if (isNaN(loginTime) || loginTime <= 0) {
+            console.log('Invalid login timestamp, clearing it');
+            localStorage.removeItem('loginTimestamp');
+            return;
+          }
+          
+          const hoursPassed = (now - loginTime) / (1000 * 60 * 60);
+          console.log('Session check:', hoursPassed.toFixed(2), 'hours passed');
+          
+          if (hoursPassed >= 48) {
+            // Auto logout due to session expiry
+            console.log('Session expired after 48 hours, auto-logout triggered');
+            // Clear storage directly to avoid circular dependency
+            localStorage.removeItem("jwt");
+            localStorage.removeItem('loginTimestamp');
+            localStorage.removeItem('user');
+            setIsLoggedIn(false);
+            setUserName('');
+            dispatch(reduxLogoutAction());
+          }
+        } catch (error) {
+          console.error('Error checking session expiry:', error);
+        }
+      }
+    };
+
+    checkSessionExpiry();
+
+    // Set up background timer to check every minute
+    const intervalId = setInterval(checkSessionExpiry, 60 * 1000); // Check every minute
+
+    return () => clearInterval(intervalId); // Cleanup on unmount
+  }, [dispatch]);
+
   useEffect(() => {
     setCartItems(readCartCount());
   }, []);
@@ -111,6 +155,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setIsLoggedIn(false);
     setUserName('');
     localStorage.removeItem("jwt"); 
+    localStorage.removeItem('loginTimestamp'); // Clear login timestamp on logout
     dispatch(reduxLogoutAction());  
   }, [dispatch]);
 

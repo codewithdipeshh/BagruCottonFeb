@@ -1,89 +1,104 @@
 const orderService = require("../services/order.service");
 
-
-const getOrderAnalytics = async (req, res) => {
-    try {
-        const timeframe = req.query.timeframe || 'month'; 
-        
-        
-        const analytics = await orderService.getOrderAnalyticsMetrics(timeframe);
-        
-        return res.status(200).send({
-            success: true,
-            timeframe,
-            data: analytics
-        });
-    } catch (error) {
-        return res.status(500).send({ success: false, error: error.message });
-    }
-};
-
-
+// GET ALL ORDERS FOR ADMIN
 const getAllOrders = async (req, res) => {
     try {
         const orders = await orderService.getAllOrders();
         return res.status(200).send(orders);
     } catch (error) {
-        return res.status(500).send({ error: error.message });
+        console.error("Error in getAllOrders:", error);
+        return res.status(500).send({ error: error.message || "Failed to fetch orders" });
     }
 };
 
-const confirmedOrders = async (req, res) => {
-    const orderId = req.params.orderId;
+// CONFIRM AN ORDER
+const confirmedOrder = async (req, res) => {
     try {
+        const { id: orderId } = req.params;
+        if (!orderId) {
+            return res.status(400).send({ error: "Order ID parameter is required" });
+        }
+
         const order = await orderService.confirmedOrder(orderId);
         return res.status(200).send(order);
     } catch (error) {
-        return res.status(500).send({ error: error.message });
+        console.error(`Error confirming order ${req.params.id}:`, error);
+        return res.status(500).send({ error: error.message || "Failed to confirm order" });
     }
 };
 
-const shipOrders = async (req, res) => {
-    const orderId = req.params.orderId;
+// MARK ORDER AS SHIPPED
+const shippedOrder = async (req, res) => {
     try {
+        const { id: orderId } = req.params;
+        if (!orderId) {
+            return res.status(400).send({ error: "Order ID parameter is required" });
+        }
+
         const order = await orderService.shipOrder(orderId);
         return res.status(200).send(order);
     } catch (error) {
-        return res.status(500).send({ error: error.message });
+        console.error(`Error shipping order ${req.params.id}:`, error);
+        return res.status(500).send({ error: error.message || "Failed to mark order as shipped" });
     }
 };
 
-const deliverOrders = async (req, res) => {
-    const orderId = req.params.orderId;
+// MARK ORDER AS DELIVERED
+const deliveredOrder = async (req, res) => {
     try {
+        const { id: orderId } = req.params;
+        if (!orderId) {
+            return res.status(400).send({ error: "Order ID parameter is required" });
+        }
+
         const order = await orderService.deliverOrder(orderId);
         return res.status(200).send(order);
     } catch (error) {
-        return res.status(500).send({ error: error.message });
+        console.error(`Error delivering order ${req.params.id}:`, error);
+        return res.status(500).send({ error: error.message || "Failed to mark order as delivered" });
     }
 };
 
-const cancelledOrders = async (req, res) => {
-    const orderId = req.params.orderId;
+// CANCEL AN ORDER
+const cancelOrder = async (req, res) => {
     try {
+        const { id: orderId } = req.params;
+        if (!orderId) {
+            return res.status(400).send({ error: "Order ID parameter is required" });
+        }
+
         const order = await orderService.cancelledOrder(orderId);
         return res.status(200).send(order);
     } catch (error) {
-        return res.status(500).send({ error: error.message });
+        console.error(`Error cancelling order ${req.params.id}:`, error);
+        return res.status(500).send({ error: error.message || "Failed to cancel order" });
     }
 };
 
-const deleteOrders = async (req, res) => {
-    const orderId = req.params.orderId;
+// DELETE AN ORDER
+const deleteOrder = async (req, res) => {
     try {
-        const order = await orderService.deleteOrder(orderId);
-        return res.status(200).send(order);
+        const { id: orderId } = req.params;
+        if (!orderId) {
+            return res.status(400).send({ error: "Order ID parameter is required" });
+        }
+
+        await orderService.deleteOrder(orderId);
+        return res.status(200).send({
+            message: "Order deleted successfully",
+            orderId: orderId,
+        });
     } catch (error) {
-        return res.status(500).send({ error: error.message });
+        console.error(`Error deleting order ${req.params.id}:`, error);
+        return res.status(500).send({ error: error.message || "Failed to delete order" });
     }
 };
 
 module.exports = {
-    getOrderAnalytics,
     getAllOrders,
-    confirmedOrders,
-    shipOrders,
-    deliverOrders,
-    cancelledOrders,
-    deleteOrders,
+    confirmedOrder,
+    shippedOrder,
+    deliveredOrder,
+    cancelOrder,
+    deleteOrder,
 };

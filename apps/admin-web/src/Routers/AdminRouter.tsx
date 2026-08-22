@@ -5,6 +5,7 @@ import ForgotPassword from '../pages/ForgotPassword';
 import ResetPassword from '../pages/ResetPassword';
 import ProtectedRoute from '../components/ProtectedRoute';
 
+
 const AdminRouter = () => {
   return (
     <div>
@@ -13,7 +14,8 @@ const AdminRouter = () => {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route element={<ProtectedRoute />}>
-          <Route path="/*" element={<Admin />} />
+        <Route path="/*" element={<Admin />} />
+        
         </Route>
       </Routes>
     </div>

@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { API_BASE_URL } from '../config/apiConfig';
-// 👈 Nayi API createDirectBuyOrder ko import kiya
 import { createOrder, createDirectBuyOrder, getOrderById } from '../State/Order/Action';
 import { getCart } from '../State/Cart/Action';
 

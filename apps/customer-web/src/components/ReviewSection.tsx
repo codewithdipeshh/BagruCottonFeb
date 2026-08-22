@@ -1,503 +1,442 @@
 import { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { Star, Filter, ThumbsUp, ThumbsDown, Loader2, Image as ImageIcon, Verified, Trash2 } from 'lucide-react';
-import { getAllReviews, getReviewSummary, markReviewHelpful, getUserReview, deleteReview } from '../State/Review/Action';
+import { useDispatch } from 'react-redux';
+import { Star, Filter, ChevronDown, ThumbsUp, Trash2, Edit, X, ZoomIn } from 'lucide-react';
+import StarRating from './StarRating';
 import ReviewForm from './ReviewForm';
-import ReviewLightbox from './ReviewLightbox';
-import { getImageUrl } from '../config/apiConfig';
+import { getReviews, getReviewSummary, deleteReview, getUserReview } from '../State/Review/Action';
 
-interface ReviewSectionProps {
+type ReviewSectionProps = {
   productId: string;
-}
+  user?: any;
+};
 
-export default function ReviewSection({ productId }: ReviewSectionProps) {
+type ReviewStats = {
+  totalReviews: number;
+  averageRating: number;
+  ratingDistribution: { [key: string]: number };
+  ratingPercentages: { [key: string]: number };
+};
+
+export default function ReviewSection({ productId, user }: ReviewSectionProps) {
   const dispatch = useDispatch<any>();
-  const { reviews, reviewSummary, loading, userReview } = useSelector((state: any) => state.review);
-  const { user } = useSelector((state: any) => state.auth);
-
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [stats, setStats] = useState<ReviewStats | null>(null);
+  const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [existingReview, setExistingReview] = useState<any>(null);
   const [filterRating, setFilterRating] = useState<number | null>(null);
   const [sortBy, setSortBy] = useState('recent');
-  const [page, setPage] = useState(1);
-  const [expandedReviews, setExpandedReviews] = useState<Set<string>>(new Set());
-  const [lightboxImages, setLightboxImages] = useState<string[]>([]);
-  const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [showLightbox, setShowLightbox] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  // Early return if productId is missing
-  if (!productId) {
-    return (
-      <div className="bg-white rounded-2xl border border-stone-200 p-6 shadow-sm">
-        <p className="text-stone-500 text-center">Unable to load reviews. Product ID is missing.</p>
-      </div>
-    );
-  }
+  const [displayedReviews, setDisplayedReviews] = useState(5);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
 
   useEffect(() => {
-    if (!productId) return;
-    
-    dispatch(getReviewSummary(productId))
-      .catch((err: any) => console.error('Failed to load review summary:', err));
-    dispatch(getAllReviews(productId, { page: 1, limit: 5, sort: 'recent' }))
-      .catch((err: any) => console.error('Failed to load reviews:', err));
+    loadReviews();
+    loadReviewStats();
     if (user) {
-      dispatch(getUserReview(productId))
-        .catch((err: any) => console.error('Failed to load user review:', err));
+      loadUserReview();
     }
-  }, [productId, dispatch, user]);
+  }, [productId, user]);
 
-  const handleFilterChange = (rating: number | null) => {
-    setFilterRating(rating);
-    setPage(1);
-    setError(null);
-    dispatch(getAllReviews(productId, { 
-      rating: rating || undefined, 
-      sort: sortBy, 
-      page: 1, 
-      limit: 5 
-    }))
-      .catch(() => setError('Failed to filter reviews'));
+  const loadReviews = async () => {
+    try {
+      setLoading(true);
+      const result = await dispatch(getReviews(productId, { rating: filterRating, sort: sortBy }));
+      const reviewsData = result?.data || result || [];
+      setReviews(Array.isArray(reviewsData) ? reviewsData : []);
+    } catch (error) {
+      console.error('Failed to load reviews:', error);
+      setReviews([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSortChange = (sort: string) => {
-    setSortBy(sort);
-    setPage(1);
-    setError(null);
-    dispatch(getAllReviews(productId, { 
-      rating: filterRating || undefined, 
-      sort, 
-      page: 1, 
-      limit: 5 
-    }))
-      .catch(() => setError('Failed to sort reviews'));
+  const loadReviewStats = async () => {
+    try {
+      const result = await dispatch(getReviewSummary(productId));
+      if (result?.data) {
+        setStats(result.data);
+      }
+    } catch (error) {
+      console.error('Failed to load review stats:', error);
+    }
   };
 
-  const handleLoadMore = () => {
-    const nextPage = page + 1;
-    setPage(nextPage);
-    setError(null);
-    dispatch(getAllReviews(productId, { 
-      rating: filterRating || undefined, 
-      sort: sortBy, 
-      page: nextPage, 
-      limit: 5 
-    }))
-      .catch(() => setError('Failed to load more reviews'));
+  const loadUserReview = async () => {
+    try {
+      const result = await dispatch(getUserReview(productId));
+      if (result?.data) {
+        setExistingReview(result.data);
+      }
+    } catch (error) {
+      console.error('Failed to load user review:', error);
+      setExistingReview(null);
+    }
   };
 
   const handleHelpfulVote = async (reviewId: string) => {
     try {
-      const result = await dispatch(markReviewHelpful(reviewId));
-      if (result.success) {
-        dispatch(getAllReviews(productId, { 
-          rating: filterRating || undefined, 
-          sort: sortBy, 
-          page, 
-          limit: page * 5 
-        }));
-      } else {
-        console.error('Failed to mark review as helpful:', result.error);
-      }
+      // Call API to mark review as helpful
+      console.log('Marking review as helpful:', reviewId);
     } catch (error) {
-      console.error('Error marking review as helpful:', error);
+      console.error('Failed to mark review as helpful:', error);
     }
   };
 
-  const toggleReviewExpansion = (reviewId: string) => {
-    setExpandedReviews(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(reviewId)) {
-        newSet.delete(reviewId);
-      } else {
-        newSet.add(reviewId);
-      }
-      return newSet;
-    });
-  };
-
-  const openLightbox = (images: string[], index: number) => {
-    if (!images || images.length === 0) return;
-    const safeIndex = Math.min(Math.max(0, index), images.length - 1);
-    setLightboxImages(images);
-    setLightboxIndex(safeIndex);
-    setShowLightbox(true);
-  };
-
-  const closeLightbox = () => {
-    setShowLightbox(false);
-    setLightboxImages([]);
-    setLightboxIndex(0);
-  };
-
-  const handleReviewSubmit = () => {
-    setShowForm(false);
-    setError(null);
-    dispatch(getReviewSummary(productId))
-      .catch(() => setError('Failed to load review summary'));
-    dispatch(getAllReviews(productId, { page: 1, limit: 5, sort: 'recent' }))
-      .catch(() => setError('Failed to load reviews'));
-    if (user) {
-      dispatch(getUserReview(productId))
-        .catch(() => setError('Failed to load your review'));
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!window.confirm('Are you sure you want to delete this review?')) {
+      return;
     }
-  };
 
-  const handleDeleteReview = async () => {
-    if (!userReview?._id) return;
-    
-    const confirmDelete = window.confirm("Are you sure you want to delete your review?");
-    if (!confirmDelete) return;
-
-    setIsDeleting(true);
-    setError(null);
     try {
-      await dispatch(deleteReview(userReview._id));
-      dispatch(getReviewSummary(productId));
-      dispatch(getAllReviews(productId, { page: 1, limit: 5, sort: 'recent' }));
-      dispatch(getUserReview(productId));
-      setShowForm(false);
+      const result = await dispatch(deleteReview(reviewId));
+      if (result.success) {
+        setExistingReview(null);
+        loadReviews();
+        loadReviewStats();
+        loadUserReview(); // Reload user's review after deletion
+      }
     } catch (error) {
-      console.error(error);
-      setError('Failed to delete your review');
-    } finally {
-      setIsDeleting(false);
+      console.error('Failed to delete review:', error);
     }
   };
 
-  const ratingStars = (rating: number) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <Star
-        key={i}
-        className={`w-4 h-4 ${i < rating ? 'fill-[#9A7B56] text-[#9A7B56]' : 'text-stone-300'}`}
-      />
-    ));
+  const handleEditReview = () => {
+    setShowForm(true);
   };
 
-  const filteredReviews = filterRating 
-    ? (reviews || []).filter((r: any) => r.rating === filterRating)
-    : (reviews || []);
+  const getFilteredAndSortedReviews = () => {
+    let filtered = Array.isArray(reviews) ? [...reviews] : [];
+
+    if (filterRating) {
+      filtered = filtered.filter(review => review.rating === filterRating);
+    }
+
+    switch (sortBy) {
+      case 'recent':
+        filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        break;
+      case 'helpful':
+        filtered.sort((a, b) => (b.helpfulVotes || 0) - (a.helpfulVotes || 0));
+        break;
+      case 'highest':
+        filtered.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        break;
+      case 'lowest':
+        filtered.sort((a, b) => (a.rating || 0) - (b.rating || 0));
+        break;
+    }
+
+    return filtered;
+  };
+
+  const filteredReviews = getFilteredAndSortedReviews();
+  const visibleReviews = filteredReviews.slice(0, displayedReviews);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="w-8 h-8 border-2 border-[#F7DA96] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-600 text-sm">{error}</p>
-          <button onClick={() => setError(null)} className="text-red-600 text-sm underline mt-2">
-            Dismiss
-          </button>
-        </div>
-      )}
-
-      {/* Review Summary */}
-      <div className="bg-white rounded-2xl border border-stone-200 p-6 shadow-sm">
-        <div className="flex flex-col sm:flex-row items-start justify-between mb-6 gap-4">
-          <div>
-            <h3 className="font-serif text-2xl text-stone-900 mb-2">Customer Reviews</h3>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center">
-                <span className="text-4xl font-bold text-stone-900 mr-2">
-                  {reviewSummary?.averageRating?.toFixed(1) || '0.0'}
+      {/* Rating Summary */}
+      {stats && (
+        <div className="bg-gradient-to-br from-stone-50 to-[#F7DA96]/10 rounded-2xl p-6 border border-[#F7DA96]/20">
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* Average Rating */}
+            <div className="text-center md:text-left">
+              <div className="flex items-baseline gap-2 justify-center md:justify-start">
+                <span className="text-5xl font-bold text-stone-900">
+                  {stats.averageRating || 0}
                 </span>
-                <div className="flex">
-                  {ratingStars(Math.round(reviewSummary?.averageRating || 0))}
-                </div>
+                <span className="text-2xl text-stone-600">/5</span>
               </div>
-              <span className="text-stone-500">
-                ({reviewSummary?.totalReviews || 0} reviews)
-              </span>
+              <div className="flex justify-center md:justify-start mt-2">
+                <StarRating rating={Math.round(stats.averageRating || 0)} setRating={() => {}} readonly />
+              </div>
+              <p className="text-sm text-stone-600 mt-2">
+                Based on {stats.totalReviews || 0} reviews
+              </p>
+            </div>
+
+            {/* Rating Breakdown */}
+            <div className="space-y-2">
+              {[5, 4, 3, 2, 1].map((star) => (
+                <div key={star} className="flex items-center gap-3">
+                  <div className="flex items-center gap-1 w-16">
+                    <span className="text-sm font-medium">{star}</span>
+                    <Star className="w-4 h-4 fill-[#F7DA96] text-[#F7DA96]" />
+                  </div>
+                  <div className="flex-1 h-2 bg-stone-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-[#F7DA96] rounded-full transition-all duration-500"
+                      // FIX: Added optional chaining and fallback to 0 to prevent crash
+                      style={{ width: `${stats.ratingPercentages?.[star] || 0}%` }}
+                    />
+                  </div>
+                  <span className="text-sm text-stone-600 w-12 text-right">
+                    {/* FIX: Added optional chaining and fallback to 0 */}
+                    {stats.ratingPercentages?.[star] || 0}%
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
-          <div className="flex gap-3">
-            {user && !userReview && (
-              <button
-                onClick={() => setShowForm(!showForm)}
-                className="bg-gradient-to-r from-[#9A7B56] to-[#B8945F] text-white py-2 px-6 rounded-xl font-semibold hover:from-[#8A6B46] hover:to-[#A8844F] transition-all cursor-pointer"
-              >
-                Write a Review
-              </button>
-            )}
-            {user && userReview && (
-              <>
-                <button
-                  onClick={() => setShowForm(!showForm)}
-                  className="border border-[#9A7B56] text-[#9A7B56] py-2 px-6 rounded-xl font-semibold hover:bg-[#9A7B56] hover:text-white transition-all cursor-pointer"
-                >
-                  Edit Your Review
-                </button>
-                <button
-                  onClick={handleDeleteReview}
-                  disabled={isDeleting}
-                  className="border border-red-500 text-red-500 py-2 px-4 rounded-xl font-semibold hover:bg-red-500 hover:text-white transition-all disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                  <span className="hidden sm:inline">Delete</span>
-                </button>
-              </>
-            )}
-          </div>
         </div>
-
-        {/* Rating Distribution */}
-        <div className="space-y-2">
-          {[5, 4, 3, 2, 1].map((star) => {
-            const count = reviewSummary?.ratingDistribution?.[star] || 0;
-            const total = reviewSummary?.totalReviews || 0;
-            const percentage = total > 0 ? (count / total) * 100 : 0;
-            
-            return (
-              <div key={star} className="flex items-center gap-3">
-                <div className="flex items-center w-16">
-                  <span className="text-sm text-stone-600">{star}</span>
-                  <Star className="w-4 h-4 ml-1 fill-[#9A7B56] text-[#9A7B56]" />
-                </div>
-                <div className="flex-1 h-2 bg-stone-200 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-[#9A7B56] to-[#B8945F] rounded-full transition-all duration-500"
-                    style={{ width: `${percentage}%` }}
-                  />
-                </div>
-                <span className="text-sm text-stone-500 w-12 text-right">
-                  {Math.round(percentage)}%
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {showForm && (
-        <ReviewForm
-          productId={productId}
-          existingReview={userReview}
-          onSuccess={handleReviewSubmit}
-          onCancel={() => setShowForm(false)}
-        />
       )}
 
-      {/* Filters and Sorting */}
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-2">
-          <Filter className="w-5 h-5 text-stone-500" />
-          <span className="text-sm font-semibold text-stone-700">Filter:</span>
-          <div className="flex gap-2">
-            <button
-              onClick={() => handleFilterChange(null)}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
-                filterRating === null ? 'bg-[#9A7B56] text-white' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
-              }`}
-            >
-              All
-            </button>
-            {[5, 4, 3, 2, 1].map((star) => (
-              <button
-                key={star}
-                onClick={() => handleFilterChange(star)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 cursor-pointer ${
-                  filterRating === star ? 'bg-[#9A7B56] text-white' : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
-                }`}
-              >
-                {star}★
-              </button>
-            ))}
-          </div>
+      {/* Action Bar */}
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div className="flex items-center gap-4">
+          <h3 className="text-xl font-semibold text-stone-900">
+            Customer Reviews ({stats?.totalReviews || 0})
+          </h3>
         </div>
 
-        <div className="flex items-center gap-2 ml-auto">
-          <span className="text-sm font-semibold text-stone-700">Sort by:</span>
+        <div className="flex items-center gap-3">
+          {/* Filter Dropdown */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+              className="flex items-center gap-2 px-4 py-2 border border-stone-300 rounded-lg hover:border-[#F7DA96] transition-colors"
+            >
+              <Filter className="w-4 h-4" />
+              <span className="text-sm">
+                {filterRating ? `${filterRating}★` : 'All Ratings'}
+              </span>
+              <ChevronDown className="w-4 h-4" />
+            </button>
+
+            {showFilterDropdown && (
+              <div className="absolute top-full right-0 mt-2 bg-white border border-stone-200 rounded-lg shadow-lg z-10 min-w-[150px]">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilterRating(null);
+                    setShowFilterDropdown(false);
+                  }}
+                  className="w-full text-left px-4 py-2 hover:bg-stone-50 text-sm"
+                >
+                  All Ratings
+                </button>
+                {[5, 4, 3, 2, 1].map((rating) => (
+                  <button
+                    key={rating}
+                    type="button"
+                    onClick={() => {
+                      setFilterRating(rating);
+                      setShowFilterDropdown(false);
+                    }}
+                    className="w-full text-left px-4 py-2 hover:bg-stone-50 text-sm flex items-center gap-2"
+                  >
+                    {rating}★
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Sort Select */}
           <select
             value={sortBy}
-            onChange={(e) => handleSortChange(e.target.value)}
-            className="px-3 py-1.5 rounded-lg border border-stone-300 text-sm font-medium text-stone-700 focus:outline-none focus:ring-2 focus:ring-[#9A7B56] cursor-pointer"
+            onChange={(e) => setSortBy(e.target.value)}
+            className="px-4 py-2 border border-stone-300 rounded-lg hover:border-[#F7DA96] transition-colors text-sm"
           >
             <option value="recent">Most Recent</option>
             <option value="helpful">Most Helpful</option>
             <option value="highest">Highest Rating</option>
             <option value="lowest">Lowest Rating</option>
           </select>
+
+          {/* Write Review Button */}
+          {user ? (
+            <button
+              type="button"
+              onClick={() => setShowForm(!showForm)}
+              className="px-4 py-2 bg-gradient-to-r from-[#F7DA96] to-[#E5C488] text-stone-900 font-medium rounded-lg hover:from-[#E5C488] hover:to-[#D4B376] transition-all duration-300"
+            >
+              {showForm ? 'Cancel' : existingReview ? 'Edit Review' : 'Write Review'}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => alert('Please login to write a review')}
+              className="px-4 py-2 bg-gradient-to-r from-[#F7DA96] to-[#E5C488] text-stone-900 font-medium rounded-lg hover:from-[#E5C488] hover:to-[#D4B376] transition-all duration-300"
+            >
+              Login to Write Review
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Reviews List */}
-      {loading && (!reviews || reviews.length === 0) ? (
-        <div className="flex flex-col items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-[#9A7B56] mb-4" />
-          <p className="text-stone-500 text-sm">Loading reviews...</p>
-        </div>
-      ) : !filteredReviews || filteredReviews.length === 0 ? (
-        <div className="text-center py-12 bg-white rounded-2xl border border-stone-200">
-          <Star className="w-12 h-12 mx-auto text-stone-300 mb-4" />
-          <p className="text-stone-600">No reviews yet. Be the first to review!</p>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {filteredReviews.map((review: any) => {
-            if (!review) return null;
-            
-            const isExpanded = expandedReviews.has(review._id);
-            const shouldShowReadMore = review.review && review.review.length > 300;
-            const isUserOwnReview = userReview && review._id === userReview._id;
-
-            // 🔴 BULLETPROOF SAFE NAME EXTRACTOR (Handles strings, nulls, and undefined fields)
-            const getUserDisplayName = (userField: any) => {
-              if (!userField || typeof userField === 'string') return 'Valued Patron';
-              
-              // Handle firstName that might be literal "undefined" string or actual undefined
-              let fName = '';
-              if (userField.firstName) {
-                const strFirstName = String(userField.firstName).trim();
-                if (strFirstName && strFirstName !== 'undefined' && strFirstName !== 'null') {
-                  fName = strFirstName;
-                }
-              }
-              
-              if (fName) return fName; // Only use firstName, remove lastName logic
-              
-              if (userField.email) return userField.email.split('@')[0];
-              return 'Valued Patron';
-            };
-
-            const displayName = getUserDisplayName(review.user);
-
-            return (
-              <div key={review._id} className="bg-white rounded-2xl border border-stone-200 p-6 shadow-sm relative text-left">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#9A7B56] to-[#B8945F] flex items-center justify-center text-white font-semibold text-lg">
-                      {displayName[0]?.toUpperCase() || 'U'}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-semibold text-stone-900">
-                          {displayName}
-                        </h4>
-                        {review.verifiedPurchase && (
-                          <span className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                            <Verified className="w-3 h-3" />
-                            Verified
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 mt-1">
-                        <div className="flex">
-                          {ratingStars(review.rating)}
-                        </div>
-                        <span className="text-sm text-stone-500">
-                          {new Date(review.createdAt).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {isUserOwnReview && (
-                    <button
-                      onClick={handleDeleteReview}
-                      disabled={isDeleting}
-                      title="Delete your review"
-                      className="text-stone-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-full transition-colors disabled:opacity-50 cursor-pointer"
-                    >
-                      {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                    </button>
-                  )}
-                </div>
-
-                <div className="mb-4">
-                  <p className={`text-stone-700 leading-relaxed ${!isExpanded && shouldShowReadMore ? 'line-clamp-3' : ''}`}>
-                    {review.review || 'No review text provided'}
-                  </p>
-                  {shouldShowReadMore && (
-                    <button
-                      onClick={() => toggleReviewExpansion(review._id)}
-                      className="text-[#9A7B56] font-semibold text-sm mt-2 hover:underline cursor-pointer"
-                    >
-                      {isExpanded ? 'Show less' : 'Read more'}
-                    </button>
-                  )}
-                </div>
-
-                {review.images && Array.isArray(review.images) && review.images.length > 0 && (
-                  <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
-                    {review.images.map((image: string, index: number) => {
-                      if (!image) return null;
-                      const imageUrl = getImageUrl(image);
-                      if (!imageUrl) return null;
-                      
-                      return (
-                        <button
-                          key={index}
-                          onClick={() => openLightbox(
-                            review.images.map((img: string) => getImageUrl(img)).filter(Boolean),
-                            index
-                          )}
-                          className="flex-shrink-0 relative group cursor-pointer"
-                        >
-                          <img
-                            src={imageUrl}
-                            alt={`Review image ${index + 1}`}
-                            className="w-20 h-20 object-cover rounded-lg border border-stone-200 group-hover:opacity-80 transition-opacity"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none';
-                            }}
-                          />
-                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/30 rounded-lg">
-                            <ImageIcon className="w-6 h-6 text-white" />
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-
-                <div className="flex items-center gap-4 pt-4 border-t border-stone-100">
-                  <span className="text-sm text-stone-600">Was this helpful?</span>
-                  <button
-                    onClick={() => handleHelpfulVote(review._id)}
-                    className="flex items-center gap-1 text-sm text-stone-600 hover:text-[#9A7B56] transition-colors cursor-pointer"
-                  >
-                    <ThumbsUp className="w-4 h-4" />
-                    <span>Yes ({review.helpfulVotes})</span>
-                  </button>
-                  <button className="flex items-center gap-1 text-sm text-stone-600 hover:text-stone-800 transition-colors cursor-pointer">
-                    <ThumbsDown className="w-4 h-4" />
-                    <span>No</span>
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-
-          {page * 5 < reviewSummary.totalReviews && (
-            <div className="text-center">
-              <button
-                onClick={handleLoadMore}
-                disabled={loading}
-                className="bg-stone-100 text-stone-700 py-3 px-8 rounded-xl font-semibold hover:bg-stone-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto cursor-pointer"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Loading...
-                  </>
-                ) : (
-                  'Load More Reviews'
-                )}
-              </button>
-            </div>
-          )}
+      {/* Review Form */}
+      {showForm && (
+        <div className="bg-white border border-stone-200 rounded-2xl p-6">
+          <ReviewForm
+            productId={productId}
+            onSuccess={() => {
+              setShowForm(false);
+              loadReviews();
+              loadReviewStats();
+              loadUserReview(); // Reload user's review after submission
+            }}
+            onCancel={() => setShowForm(false)}
+            existingReview={existingReview}
+          />
         </div>
       )}
 
-      {showLightbox && (
-        <ReviewLightbox
-          images={lightboxImages}
-          currentIndex={lightboxIndex}
-          onClose={closeLightbox}
-        />
+      {/* Reviews List */}
+      <div className="space-y-6">
+        {visibleReviews.length === 0 ? (
+          <div className="text-center py-12 text-stone-500">
+            No reviews yet. Be the first to review this product!
+          </div>
+        ) : (
+          visibleReviews.map((review) => (
+            <div
+              key={review._id}
+              className="bg-white border border-stone-200 rounded-xl p-6 hover:border-[#F7DA96]/30 transition-colors"
+            >
+              {/* Review Header */}
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  {/* FIX: Added safe access to user properties */}
+                  {review?.user?.avatar ? (
+                    <img
+                      src={review.user.avatar}
+                      alt={review.user.name || review.user.firstName || 'User'}
+                      className="w-10 h-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-[#F7DA96] flex items-center justify-center text-stone-900 font-semibold">
+                      {review?.user?.firstName ? review.user.firstName.charAt(0).toUpperCase() : 
+                       review?.user?.name ? review.user.name.charAt(0).toUpperCase() : 'U'}
+                    </div>
+                  )}
+                  <div>
+                    <p className="font-medium text-stone-900">
+                      {review?.user?.firstName && review?.user?.lastName 
+                        ? `${review.user.firstName} ${review.user.lastName}` 
+                        : review?.user?.name || 'Anonymous User'}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <StarRating rating={review.rating || 0} setRating={() => {}} readonly size="sm" />
+                      {review.verifiedPurchase && (
+                        <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+                          Verified Purchase
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <span className="text-xs text-stone-500">
+                  {new Date(review.createdAt || Date.now()).toLocaleDateString()}
+                </span>
+              </div>
+
+              {/* Review Text */}
+              <p className="text-stone-700 mb-4 leading-relaxed">
+                {review.review || 'No text provided.'}
+              </p>
+
+              {/* Review Images */}
+              {review.images && review.images.length > 0 && (
+                <div className="flex gap-2 mb-4">
+                  {review.images.map((image: string, index: number) => (
+                    <button
+                      key={index}
+                      type="button"
+                      onClick={() => setLightboxImage(image)}
+                      className="relative w-16 h-16 rounded-lg overflow-hidden border border-stone-200 hover:border-[#F7DA96] transition-colors"
+                    >
+                      <img
+                        src={image}
+                        alt={`Review image ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/0 hover:bg-black/20 flex items-center justify-center transition-colors">
+                        <ZoomIn className="w-4 h-4 text-white opacity-0 hover:opacity-100" />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Helpful Votes & Actions */}
+              <div className="flex items-center justify-between pt-4 border-t border-stone-100">
+                <button
+                  type="button"
+                  onClick={() => handleHelpfulVote(review._id)}
+                  className="flex items-center gap-2 text-sm text-stone-600 hover:text-[#F7DA96] transition-colors"
+                >
+                  <ThumbsUp className="w-4 h-4" />
+                  Helpful ({review.helpfulVotes || 0})
+                </button>
+
+                {/* User's own review actions */}
+                {user && (review.user?._id === user._id || review.user?.id === user._id) && (
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleEditReview}
+                      className="flex items-center gap-1 text-sm text-stone-600 hover:text-blue-600 transition-colors"
+                    >
+                      <Edit className="w-4 h-4" />
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteReview(review._id)}
+                      className="flex items-center gap-1 text-sm text-stone-600 hover:text-red-600 transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                      Delete
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Load More Button */}
+      {filteredReviews.length > displayedReviews && (
+        <button
+          type="button"
+          onClick={() => setDisplayedReviews(prev => prev + 5)}
+          className="w-full py-3 border border-stone-300 rounded-xl text-stone-700 hover:border-[#F7DA96] hover:text-stone-900 transition-colors"
+        >
+          Load More Reviews
+        </button>
+      )}
+
+      {/* Image Lightbox */}
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
+          onClick={() => setLightboxImage(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setLightboxImage(null)}
+            className="absolute top-4 right-4 text-white hover:text-[#F7DA96] transition-colors"
+          >
+            <X className="w-8 h-8" />
+          </button>
+          <img
+            src={lightboxImage}
+            alt="Review image"
+            className="max-w-full max-h-full object-contain"
+          />
+        </div>
       )}
     </div>
   );

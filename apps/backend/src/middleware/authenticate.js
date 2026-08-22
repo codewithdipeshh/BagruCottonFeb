@@ -3,7 +3,16 @@ const userService = require("../services/user.service");
 
 const authenticate = async (req, res, next) => {
     try {
-        const token = req.cookies?.jwt;
+        // Check token from cookies first
+        let token = req.cookies?.jwt;
+        
+        // If not in cookies, check Authorization header
+        if (!token && req.headers?.authorization) {
+            const authHeader = req.headers.authorization;
+            if (authHeader.startsWith('Bearer ')) {
+                token = authHeader.substring(7);
+            }
+        }
 
         if (!token) {
             return res.status(401).send({ error: "Session expired or token not found. Please login again." });
@@ -26,4 +35,15 @@ const authenticate = async (req, res, next) => {
     }
 };
 
-module.exports = { authenticate };
+const isAdmin = async (req, res, next) => {
+    try {
+        if (!req.user || (req.user.role !== 'ADMIN' && req.user.role !== 'admin')) {
+            return res.status(403).send({ error: "Access denied. Admin only." });
+        }
+        next();
+    } catch (error) {
+        return res.status(403).send({ error: "Admin authorization failed: " + error.message });
+    }
+};
+
+module.exports = { authenticate, isAdmin };

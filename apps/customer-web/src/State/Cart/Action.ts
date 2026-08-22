@@ -35,13 +35,15 @@ export const getCart = () => async (dispatch: Dispatch) => {
 export const addItemToCart = (reqData: { productId: string | number; quantity: number }) => async (dispatch: Dispatch) => {
   dispatch({ type: ADD_ITEM_TO_CART_REQUEST });
   try {
-    
+    console.log("Adding item to cart:", reqData);
     const { data } = await api.put('/cart/add', reqData);
+    console.log("Cart response:", data);
     dispatch({
       type: ADD_ITEM_TO_CART_SUCCESS,
       payload: data
     });
   } catch (error: any) {
+    console.error("Cart error:", error);
     dispatch({
       type: ADD_ITEM_TO_CART_FAILURE,
       payload: error.response && error.response.data.message ? error.response.data.message : error.message

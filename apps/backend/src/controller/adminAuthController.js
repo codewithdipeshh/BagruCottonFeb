@@ -26,11 +26,13 @@ const adminLogin = async (req, res) => {
 
     return res.status(200).json({
       jwt: token,
+      admin_jwt: token,
       user: {
         id: user._id,
-        name: user.name,
+        name: user.name || user.firstName,
+        firstName: user.firstName,
         email: user.email,
-        role: user.role
+        role: user.role === 'admin' ? 'ADMIN' : user.role
       }
     });
 

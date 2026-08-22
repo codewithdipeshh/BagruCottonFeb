@@ -82,11 +82,12 @@ export default function AddProduct() {
 
       const updated = { ...prev, [name]: value };
       
+      // Safe math calculation to prevent NaN backend crashes
       if (name === "price" || name === "discountedPrice") {
-        const price = Number(name === "price" ? value : updated.price);
-        const discPrice = Number(name === "discountedPrice" ? value : updated.discountedPrice);
+        const price = Number(name === "price" ? value : prev.price) || 0;
+        const discPrice = Number(name === "discountedPrice" ? value : prev.discountedPrice) || 0;
         
-        if (price > 0 && discPrice > 0) {
+        if (price > 0 && discPrice > 0 && price >= discPrice) {
           updated.discountPercent = Math.round(((price - discPrice) / price) * 100);
         } else {
           updated.discountPercent = 0;
@@ -132,7 +133,7 @@ export default function AddProduct() {
 
     } catch (err: any) {
       console.error("Cloudinary multi-upload handshake cycle broken:", err);
-      setErrorMessage("Multi-image cloud upload failed.");
+      setErrorMessage("Multi-image cloud upload failed. Check your network or Cloudinary preset.");
     } finally {
       setUploadingImage(false);
     }
@@ -147,12 +148,25 @@ export default function AddProduct() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setSuccessMessage(null);
     setErrorMessage(null);
 
+    // ✅ FIX: Throw a visible error instead of just locking the button
+    if (formData.imageUrls.length === 0) {
+      setErrorMessage("Please upload at least one image before publishing.");
+      return;
+    }
+
+    setLoading(true);
+
     const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5454";
     const adminToken = localStorage.getItem("admin_jwt") || localStorage.getItem("jwt");
+
+    if (!adminToken) {
+      setErrorMessage("Authentication token missing. Please log in again.");
+      setLoading(false);
+      return;
+    }
 
     const config = {
       headers: {
@@ -161,24 +175,25 @@ export default function AddProduct() {
       },
     };
 
+    // ✅ FIX: Safely parse all numbers so Mongoose doesn't reject the payload
     const finalPayload = {
-      title: formData.title,
-      description: formData.philosophy, 
-      philosophy: formData.philosophy,
-      specifications: formData.specifications,
-      washCare: formData.washCare,
-      price: Number(formData.price),                
-      discountedPrice: Number(formData.discountedPrice), 
-      discountPercent: Number(formData.discountPercent),
-      quantity: Number(formData.quantity),
-      brand: formData.brand,
+      title: formData.title.trim(),
+      description: formData.philosophy.trim(), 
+      philosophy: formData.philosophy.trim(),
+      specifications: formData.specifications.trim(),
+      washCare: formData.washCare.trim(),
+      price: Number(formData.price) || 0,                
+      discountedPrice: Number(formData.discountedPrice) || 0, 
+      discountPercent: Number(formData.discountPercent) || 0,
+      quantity: Number(formData.quantity) || 1,
+      brand: formData.brand.trim(),
       category: formData.category, 
       imageUrl: formData.imageUrls[0] || "", 
       imageUrls: formData.imageUrls     
     };
 
     try {
-      const response = await axios.post(`${BASE_URL}/admin/products/create`, finalPayload, config);
+      const response = await axios.post(`${BASE_URL}/api/admin/products/create`, finalPayload, config);
       
       if (response.status === 201 || response.status === 200) {
         setSuccessMessage("Product mapped into live system catalog successfully! Redirecting...");
@@ -186,21 +201,10 @@ export default function AddProduct() {
       }
     } catch (err: any) {
       console.error("Master catalog logging error detail:", err.response?.data || err);
+      // Extracts exact validation error message from backend
       const serverErrorMessage = err.response?.data?.message || err.response?.data?.error || "Database entry validation check failed.";
       setErrorMessage(`Backend Reject: ${serverErrorMessage}`);
     } finally {
-      setFormData((prev) => ({
-        ...prev,
-        title: "",
-        philosophy: "",
-        specifications: "",
-        washCare: "",
-        price: 0,
-        discountedPrice: 0,
-        discountPercent: 0,
-        quantity: 1,
-        imageUrls: []
-      }));
       setLoading(false);
     }
   };
@@ -331,7 +335,7 @@ export default function AddProduct() {
                 name="quantity"
                 required
                 min={1}
-                value={formData.quantity}
+                value={formData.quantity || ""}
                 onChange={handleChange}
                 className="w-full px-4 py-3 bg-stone-50/50 border border-stone-200 rounded-xl focus:outline-none focus:border-stone-900 text-stone-800 font-medium"
               />
@@ -418,7 +422,8 @@ export default function AddProduct() {
 
           <button
             type="submit"
-            disabled={loading || uploadingImage || formData.imageUrls.length === 0}
+            // ✅ FIX: Removed imageUrls length check so the user can actually click the button to see the error message
+            disabled={loading || uploadingImage}
             className="w-full bg-stone-950 hover:bg-stone-900 disabled:bg-stone-300 text-stone-100 text-xs tracking-widest uppercase py-4 rounded-xl font-bold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer border-none outline-none"
           >
             {loading ? (

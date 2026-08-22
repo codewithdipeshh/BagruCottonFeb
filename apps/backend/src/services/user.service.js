@@ -14,8 +14,13 @@ const createUser = async (userData) => {
 
     password = await bcrypt.hash(password, 8);
 
+    // Ensure firstName is never empty
+    if (!firstName || firstName.trim() === '') {
+      firstName = email.split('@')[0] || 'User';
+    }
+
     const user = await User.create({
-      firstName,
+      firstName: firstName.trim(),
       email,
       password,
     });
